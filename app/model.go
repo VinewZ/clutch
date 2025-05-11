@@ -2,31 +2,43 @@ package app
 
 import (
 	e "embed"
+
+	"github.com/vinewz/clutch/backend/api"
+	"github.com/vinewz/clutch/setup"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-type Model struct {
-	App          *application.App
-	IsAppVisible bool
+type model struct {
+	App       *application.App
+	IsVisible bool
 }
 
-func (a *Model) New(assets e.FS) *application.App {
+func NewModel() *model {
+	return &model{}
+}
+
+func (a *model) Init(assets e.FS, config *setup.Setup) *application.App {
+	server := api.NewServer()
+	server.NewMux()
+	server.RegisterExtensionHandler(config.ExtensionsDir)
+
 	a.App = application.New(application.Options{
-		Name:        "Moda",
+		Name:        "Clutch",
 		Description: "An open source, cross-platform, extensible app launcher.",
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
 	})
 
-	a.IsAppVisible = true
-
 	a.App.NewWebviewWindowWithOptions(application.WebviewWindowOptions{
-		Title:         "Moda",
+		Title:         "Clutch",
 		Width:         800,
 		Height:        600,
 		DisableResize: true,
 		URL:           "/",
 	})
+
+	a.IsVisible = true
+
 	return a.App
 }

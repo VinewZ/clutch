@@ -22,6 +22,11 @@ export default function Header() {
       e.preventDefault()
       iptRef.current?.focus()
     }
+
+    if (e.key === "Escape") {
+      e.preventDefault()
+      // Application.Hide()
+    }
   }, [])
 
   useEffect(() => {
