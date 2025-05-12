@@ -1,13 +1,22 @@
-export function App() {
-  const API_URL = "http://127.0.0.1:9999/extensions/";
+import { useExtension } from "./hooks/useExtension";
 
+export function App() {
+
+  const path = "launcher";
+  const { htmlContent, error } = useExtension(path);
+
+  if (error) return <div>Error: {error}</div>;
+  if (!htmlContent) return <div>Loading…</div>;
 
   return (
-    <div className="h-dvh bg-stone-800 text-center">
-      IFRAME DOWN
-      <div className="size-96 bg-red-500">
-        <iframe title="plugin" src={`${API_URL}/index.html`} />
-      </div>
+    <div>
+      <p>IFRAME DOWN</p>
+      <iframe
+        srcDoc={htmlContent}
+        style={{ width: "100%", height: "100%" }}
+        title={path}
+      />
     </div>
+
   );
 }

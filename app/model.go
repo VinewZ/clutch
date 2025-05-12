@@ -22,6 +22,10 @@ func (a *model) Init(assets e.FS, config *setup.Setup) *application.App {
 	server.NewMux()
 	server.RegisterExtensionHandler(config.ExtensionsDir)
 
+	go func() {
+		api.NewProtoServer()
+	}()
+
 	a.App = application.New(application.Options{
 		Name:        "Clutch",
 		Description: "An open source, cross-platform, extensible app launcher.",
