@@ -1,4 +1,4 @@
-package setup 
+package setup
 
 import (
 	"os"
@@ -6,34 +6,34 @@ import (
 )
 
 type Setup struct {
-	UserHomeDir   string
-	ClutchDir string
+	UserConfigDir string
+	ClutchDir     string
 	ExtensionsDir string
 }
 
-func NewSetup() *Setup {
-	return &Setup{}
-}
-
-func (s *Setup) Config() error {
-	userHomeDir, err := os.UserHomeDir()
+func NewSetup() (*Setup, error) {
+	userConfigDir , err := os.UserConfigDir()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	s.UserHomeDir = userHomeDir
 
-	s.ClutchDir = filepath.Join(userHomeDir, ".config", "clutch")
-	if _, err := os.Stat(s.ClutchDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(s.ClutchDir, 0755); err != nil {
-			return err
-		}
-	}
-	s.ExtensionsDir = filepath.Join(s.ClutchDir, "extensions")
-	if _, err := os.Stat(s.ExtensionsDir); os.IsNotExist(err) {
-		if err := os.MkdirAll(s.ExtensionsDir, 0755); err != nil {
-			return err
+	clutchDir := filepath.Join(userConfigDir, "clutch")
+	if _, err := os.Stat(clutchDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(clutchDir, 0755); err != nil {
+			return nil, err
 		}
 	}
 
-	return nil
+	extensionsDir := filepath.Join(clutchDir, "extensions")
+	if _, err := os.Stat(extensionsDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(extensionsDir, 0755); err != nil {
+			return nil, err
+		}
+	}
+
+	return &Setup{
+		UserConfigDir:   userConfigDir,
+		ClutchDir:     clutchDir,
+		ExtensionsDir: extensionsDir,
+	}, nil
 }

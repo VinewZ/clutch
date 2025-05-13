@@ -3,11 +3,9 @@ module github.com/vinewz/clutch
 go 1.24.3
 
 require (
-	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
 	github.com/VinewZ/go-evdev-keyboard v1.0.0
 	github.com/rs/cors v1.11.1
-	github.com/vinewz/clutch-api/go v0.0.0-00010101000000-000000000000
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.9
 	golang.org/x/net v0.40.0
 )
@@ -54,7 +52,6 @@ require (
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/text v0.25.0 // indirect
 	golang.org/x/tools v0.33.0 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 )
