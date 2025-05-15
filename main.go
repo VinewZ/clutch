@@ -20,19 +20,13 @@ func main() {
 		log.Fatalf("Failed to setup config: %v", err)
 	}
 
-	extensionServerPort, err := utils.FindAvailablePort()
-	if err != nil {
-		log.Fatalf("Failed to find a port to host the extension server: %s", err.Error())
-	}
-	go startExtensionsServer(extensionServerPort, set.ExtensionsDir)
-
 	protoServerPort, err := utils.FindAvailablePort()
 	if err != nil {
 		log.Fatalf("Failed to find a port to host the proto server: %s", err.Error())
 	}
 	go startProtoServer(protoServerPort)
 
-	m := app.NewModel(extensionServerPort, protoServerPort)
+	m := app.NewModel(protoServerPort)
 	m.Setup(assets, set)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -46,15 +40,6 @@ func main() {
 
 	if err := m.App.Run(); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func startExtensionsServer(extensionServerPort int, extensionsDir string) {
-	extServer := api.NewExtensionsServer(extensionServerPort)
-	extServer.RegisterExtensionsHandler(extensionsDir)
-	err := extServer.ListenAndServe()
-	if err != nil {
-		log.Fatalf("Couldn't start extensions server: %s", err.Error())
 	}
 }
 

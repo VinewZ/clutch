@@ -4,39 +4,47 @@ import (
 	"context"
 	e "embed"
 	"log"
+	"log/slog"
 
 	keyboard "github.com/VinewZ/go-evdev-keyboard"
+	"github.com/vinewz/clutch/backend/api"
 	"github.com/vinewz/clutch/setup"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type model struct {
-	App                    *application.App
-	IsVisible              bool
-	ExtensionServerPort    int
-	ProtoServerPort        int
-	DevExtensionServerPort int
+	App             *application.App
+	UserHomeDir     string
+	UserConfigDir string
+	IsVisible       bool
+	ProtoServerPort int
 }
 
-func NewModel(extensionServerPort, protoServerPort int) *model {
+func NewModel(protoServerPort int) *model {
 	return &model{
-		IsVisible:           true,
-		ExtensionServerPort: extensionServerPort,
-		ProtoServerPort:     protoServerPort,
-		DevExtensionServerPort:     protoServerPort,
+		IsVisible:       true,
+		ProtoServerPort: protoServerPort,
 	}
 }
 
 func (m *model) Setup(assets e.FS, config *setup.Setup) *application.App {
+	m.UserHomeDir = config.UserHomeDIr
+
 	services := registerServices(m)
+
+	assetsServer := api.NewAssetsServer()
+	assetsServer.RegisterWailsAssetHandler(assets)
+	assetsServer.RegisterExtensionsHandler(config.ExtensionsDir)
 
 	m.App = application.New(application.Options{
 		Name:        "Clutch",
 		Description: "An open source, cross-platform, extensible app launcher.",
 		Assets: application.AssetOptions{
-			Handler: application.AssetFileServerFS(assets),
+			Handler:        assetsServer.Mux,
+			DisableLogging: true,
 		},
 		Services: services,
+		LogLevel: slog.LevelError,
 	})
 
 	m.App.NewWebviewWindowWithOptions(application.WebviewWindowOptions{

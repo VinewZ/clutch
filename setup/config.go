@@ -7,12 +7,18 @@ import (
 
 type Setup struct {
 	UserConfigDir string
+	UserHomeDIr   string
 	ClutchDir     string
 	ExtensionsDir string
 }
 
 func NewSetup() (*Setup, error) {
-	userConfigDir , err := os.UserConfigDir()
+	userHomeDIr, err := os.UserHomeDir()
+	if err != nil {
+		return nil, err
+	}
+
+	userConfigDir, err := os.UserConfigDir()
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +38,8 @@ func NewSetup() (*Setup, error) {
 	}
 
 	return &Setup{
-		UserConfigDir:   userConfigDir,
+		UserHomeDIr:   userHomeDIr,
+		UserConfigDir: userConfigDir,
 		ClutchDir:     clutchDir,
 		ExtensionsDir: extensionsDir,
 	}, nil

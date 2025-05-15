@@ -6,12 +6,29 @@
 // @ts-ignore: Unused imports
 import {Call as $Call, Create as $Create} from "@wailsio/runtime";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as $models from "./models.js";
+
 /**
- * @returns {Promise<number> & { cancel(): void }}
+ * @param {$models.DesktopApp} app
+ * @returns {Promise<void> & { cancel(): void }}
  */
-export function GetExtensionsServerPort() {
-    let $resultPromise = /** @type {any} */($Call.ByID(3654419836));
+export function ExecApp(app) {
+    let $resultPromise = /** @type {any} */($Call.ByID(2980717694, app));
     return $resultPromise;
+}
+
+/**
+ * @returns {Promise<{ [_: string]: $models.DesktopApp }> & { cancel(): void }}
+ */
+export function GetDesktopApps() {
+    let $resultPromise = /** @type {any} */($Call.ByID(2455285118));
+    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
+        return $$createType1($result);
+    }));
+    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+    return $typingPromise;
 }
 
 /**
@@ -21,3 +38,7 @@ export function GetProtoServerPort() {
     let $resultPromise = /** @type {any} */($Call.ByID(3908627508));
     return $resultPromise;
 }
+
+// Private type creation functions
+const $$createType0 = $models.DesktopApp.createFrom;
+const $$createType1 = $Create.Map($Create.Any, $$createType0);

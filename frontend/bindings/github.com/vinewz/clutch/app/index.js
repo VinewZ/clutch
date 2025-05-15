@@ -6,3 +6,5 @@ import * as ClutchServices from "./clutchservices.js";
 export {
     ClutchServices
 };
+
+export * from "./models.js";

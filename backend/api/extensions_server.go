@@ -1,32 +1,64 @@
 package api
 
 import (
-	"fmt"
+	e "embed"
+	"mime"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
+
+	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
 type server struct {
-	mux  *http.ServeMux
-	port int
+	Mux *http.ServeMux
 }
 
-func NewExtensionsServer(port int) *server {
+func NewAssetsServer() *server {
 	return &server{
-		mux: http.NewServeMux(),
-		port: port,
+		Mux: http.NewServeMux(),
 	}
 }
 
-func (s *server) RegisterExtensionsHandler(extensionsDirPath string) {
-	extensionsHandler := http.StripPrefix("/extensions/", http.FileServer(http.Dir(extensionsDirPath)))
-	s.mux.Handle("/extensions/", extensionsHandler)
+func (s *server) RegisterWailsAssetHandler(assets e.FS) {
+	s.Mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		assetsHandler := application.AssetFileServerFS(assets)
+		assetsHandler.ServeHTTP(w, r)
+	})
 }
 
-func (s *server) ListenAndServe() error {
-	fmt.Printf("Listening on port: :%d", s.port)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", s.port), s.mux)
-	if err != nil {
-		return err
-	}
-	return nil
+func (s *server) RegisterExtensionsHandler(extensionsDir string) {
+	s.Mux.Handle("/extensions/", http.StripPrefix("/extensions/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cleanPath := path.Clean(r.URL.Path)
+		fullPath := filepath.Join(extensionsDir, cleanPath)
+
+		info, err := os.Stat(fullPath)
+		if err != nil || info.IsDir() {
+			http.NotFound(w, r)
+			return
+		}
+
+		file, err := os.ReadFile(fullPath)
+		if err != nil {
+			http.Error(w, "File not found", http.StatusNotFound)
+			return
+		}
+
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Set("Pragma", "no-cache")
+		w.Header().Set("Expires", "0")
+		w.Header().Set(
+			"Content-Disposition",
+			"inline; filename=\""+filepath.Base(fullPath)+"\"",
+		)
+		ext := filepath.Ext(fullPath)
+		if mimeType := mime.TypeByExtension(ext); mimeType != "" {
+			w.Header().Set("Content-Type", mimeType)
+		} else {
+			http.ServeFile(w, r, fullPath)
+			return
+		}
+		w.Write(file)
+	})))
 }
