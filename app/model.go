@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	e "embed"
+	"fmt"
 	"log"
 	"log/slog"
 
@@ -62,6 +63,7 @@ func (m *model) SetupKeybindings(ctx context.Context) {
 	mgr := keyboard.NewManager()
 	mgr.SuppressRepeats()
 	mgr.RegisterBinding("META+SPACE", func() {
+		fmt.Println("Meta+Space pressed")
 		if m.IsVisible {
 			m.App.Hide()
 			m.IsVisible = false

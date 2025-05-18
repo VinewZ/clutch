@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { BackButton } from "@/components/back_button";
-import { Braces, Settings } from "lucide-react";
+import { Blocks, Braces, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
@@ -11,6 +11,11 @@ const linkMenus = [
     name: "General",
     to: "/settings/general",
     icon: Settings,
+  },
+  {
+    name: "Extensions",
+    to: "/settings/extensions",
+    icon: Blocks,
   },
   {
     name: "Developers",

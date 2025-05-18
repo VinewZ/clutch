@@ -14,7 +14,9 @@ import { Route as rootRoute } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings/route'
 import { Route as IndexImport } from './routes/index'
 import { Route as SettingsGeneralImport } from './routes/settings/general'
+import { Route as SettingsExtensionsImport } from './routes/settings/extensions'
 import { Route as SettingsDevelopersImport } from './routes/settings/developers'
+import { Route as ExtensionExtensionImport } from './routes/extension/$extension'
 
 // Create/Update Routes
 
@@ -36,10 +38,22 @@ const SettingsGeneralRoute = SettingsGeneralImport.update({
   getParentRoute: () => SettingsRouteRoute,
 } as any)
 
+const SettingsExtensionsRoute = SettingsExtensionsImport.update({
+  id: '/extensions',
+  path: '/extensions',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
+
 const SettingsDevelopersRoute = SettingsDevelopersImport.update({
   id: '/developers',
   path: '/developers',
   getParentRoute: () => SettingsRouteRoute,
+} as any)
+
+const ExtensionExtensionRoute = ExtensionExtensionImport.update({
+  id: '/extension/$extension',
+  path: '/extension/$extension',
+  getParentRoute: () => rootRoute,
 } as any)
 
 // Populate the FileRoutesByPath interface
@@ -60,11 +74,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsRouteImport
       parentRoute: typeof rootRoute
     }
+    '/extension/$extension': {
+      id: '/extension/$extension'
+      path: '/extension/$extension'
+      fullPath: '/extension/$extension'
+      preLoaderRoute: typeof ExtensionExtensionImport
+      parentRoute: typeof rootRoute
+    }
     '/settings/developers': {
       id: '/settings/developers'
       path: '/developers'
       fullPath: '/settings/developers'
       preLoaderRoute: typeof SettingsDevelopersImport
+      parentRoute: typeof SettingsRouteImport
+    }
+    '/settings/extensions': {
+      id: '/settings/extensions'
+      path: '/extensions'
+      fullPath: '/settings/extensions'
+      preLoaderRoute: typeof SettingsExtensionsImport
       parentRoute: typeof SettingsRouteImport
     }
     '/settings/general': {
@@ -81,11 +109,13 @@ declare module '@tanstack/react-router' {
 
 interface SettingsRouteRouteChildren {
   SettingsDevelopersRoute: typeof SettingsDevelopersRoute
+  SettingsExtensionsRoute: typeof SettingsExtensionsRoute
   SettingsGeneralRoute: typeof SettingsGeneralRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsDevelopersRoute: SettingsDevelopersRoute,
+  SettingsExtensionsRoute: SettingsExtensionsRoute,
   SettingsGeneralRoute: SettingsGeneralRoute,
 }
 
@@ -96,14 +126,18 @@ const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/extension/$extension': typeof ExtensionExtensionRoute
   '/settings/developers': typeof SettingsDevelopersRoute
+  '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/extension/$extension': typeof ExtensionExtensionRoute
   '/settings/developers': typeof SettingsDevelopersRoute
+  '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
 }
 
@@ -111,20 +145,36 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/settings': typeof SettingsRouteRouteWithChildren
+  '/extension/$extension': typeof ExtensionExtensionRoute
   '/settings/developers': typeof SettingsDevelopersRoute
+  '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/settings' | '/settings/developers' | '/settings/general'
+  fullPaths:
+    | '/'
+    | '/settings'
+    | '/extension/$extension'
+    | '/settings/developers'
+    | '/settings/extensions'
+    | '/settings/general'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/settings' | '/settings/developers' | '/settings/general'
+  to:
+    | '/'
+    | '/settings'
+    | '/extension/$extension'
+    | '/settings/developers'
+    | '/settings/extensions'
+    | '/settings/general'
   id:
     | '__root__'
     | '/'
     | '/settings'
+    | '/extension/$extension'
     | '/settings/developers'
+    | '/settings/extensions'
     | '/settings/general'
   fileRoutesById: FileRoutesById
 }
@@ -132,11 +182,13 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  ExtensionExtensionRoute: typeof ExtensionExtensionRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  ExtensionExtensionRoute: ExtensionExtensionRoute,
 }
 
 export const routeTree = rootRoute
@@ -150,7 +202,8 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
-        "/settings"
+        "/settings",
+        "/extension/$extension"
       ]
     },
     "/": {
@@ -160,11 +213,19 @@ export const routeTree = rootRoute
       "filePath": "settings/route.tsx",
       "children": [
         "/settings/developers",
+        "/settings/extensions",
         "/settings/general"
       ]
     },
+    "/extension/$extension": {
+      "filePath": "extension/$extension.tsx"
+    },
     "/settings/developers": {
       "filePath": "settings/developers.tsx",
+      "parent": "/settings"
+    },
+    "/settings/extensions": {
+      "filePath": "settings/extensions.tsx",
       "parent": "/settings"
     },
     "/settings/general": {

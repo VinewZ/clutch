@@ -11,6 +11,15 @@ import {Call as $Call, Create as $Create} from "@wailsio/runtime";
 import * as $models from "./models.js";
 
 /**
+ * @param {string} url
+ * @returns {Promise<void> & { cancel(): void }}
+ */
+export function DownloadExtension(url) {
+    let $resultPromise = /** @type {any} */($Call.ByID(1955004975, url));
+    return $resultPromise;
+}
+
+/**
  * @param {$models.DesktopApp} app
  * @returns {Promise<void> & { cancel(): void }}
  */
