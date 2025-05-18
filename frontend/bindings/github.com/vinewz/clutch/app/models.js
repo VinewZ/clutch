@@ -6,6 +6,34 @@
 // @ts-ignore: Unused imports
 import {Create as $Create} from "@wailsio/runtime";
 
+export class ClutchPkgJson {
+    /**
+     * Creates a new ClutchPkgJson instance.
+     * @param {Partial<ClutchPkgJson>} [$$source = {}] - The source object to create the ClutchPkgJson.
+     */
+    constructor($$source = {}) {
+        if (!("clutch" in $$source)) {
+            /**
+             * @member
+             * @type {{"name": string, "description": string, "longDescription": string, "dev": {"distDir": string, "devUrl": string}}}
+             */
+            this["clutch"] = {"name": "", "description": "", "longDescription": "", "dev": {"distDir": "", "devUrl": ""}};
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new ClutchPkgJson instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ClutchPkgJson}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ClutchPkgJson(/** @type {Partial<ClutchPkgJson>} */($$parsedSource));
+    }
+}
+
 export class DesktopApp {
     /**
      * Creates a new DesktopApp instance.

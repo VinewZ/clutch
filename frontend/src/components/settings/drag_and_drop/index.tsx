@@ -2,13 +2,31 @@ import { Check, FolderCode } from "lucide-react";
 import { Dialogs } from "@wailsio/runtime";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
+import { ClutchServices } from "../../../../bindings/github.com/vinewz/clutch/app/index";
+import type { Dispatch, SetStateAction } from "react";
+import type { ExtJson } from "@/routes/settings/developers";
 
-export function SelectDevExtension() {
+type SelectDevExtensionProps = {
+  setDevExtension: Dispatch<SetStateAction<ExtJson | undefined>>;
+};
+
+export function SelectDevExtension({
+  setDevExtension,
+}: SelectDevExtensionProps) {
   const [extensionPath, setExtensionPath] = useState("");
   const isJson = extensionPath.includes("package.json");
 
   useEffect(() => {
     if (extensionPath) {
+      try {
+        ClutchServices.ParseExtensionPkgJson(extensionPath).then((r) => {
+          if (r) {
+            setDevExtension(r);
+          }
+        });
+      } catch (error) {
+        console.log(error);
+      }
     }
   }, [extensionPath]);
 

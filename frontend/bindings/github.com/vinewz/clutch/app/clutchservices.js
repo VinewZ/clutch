@@ -48,6 +48,21 @@ export function GetProtoServerPort() {
     return $resultPromise;
 }
 
+/**
+ * @param {string} filePath
+ * @returns {Promise<$models.ClutchPkgJson | null> & { cancel(): void }}
+ */
+export function ParseExtensionPkgJson(filePath) {
+    let $resultPromise = /** @type {any} */($Call.ByID(1363765326, filePath));
+    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
+        return $$createType3($result);
+    }));
+    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+    return $typingPromise;
+}
+
 // Private type creation functions
 const $$createType0 = $models.DesktopApp.createFrom;
 const $$createType1 = $Create.Map($Create.Any, $$createType0);
+const $$createType2 = $models.ClutchPkgJson.createFrom;
+const $$createType3 = $Create.Nullable($$createType2);
