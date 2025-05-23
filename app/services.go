@@ -1,7 +1,6 @@
 package app
 
 import (
-
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -32,7 +31,7 @@ func (m *Model) RegisterServices() []application.Service {
 	return m.Services
 }
 
-func (s *ClutchServices) ToggleApp(){
+func (s *ClutchServices) ToggleApp() {
 	if s.IsVisible {
 		s.App.Hide()
 		s.IsVisible = false

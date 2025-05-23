@@ -16,10 +16,10 @@ func (s *ClutchServices) GetDesktopApps() map[string]DesktopApp {
 		"/usr/local/share/applications",
 		"/var/lib/snapd/desktop/applications",
 		"/var/lib/flatpak/exports/share/applications",
-		filepath.Join(s.UserHomeDir, ".local/share/applications"),
-		filepath.Join(s.UserHomeDir, ".local/share/flatpak/exports/share/applications"),
-		filepath.Join(s.UserHomeDir, ".gnome/apps"),
-		filepath.Join(s.UserHomeDir, ".kde/share/applnk"),
+		filepath.Join(s.Directories.UserHomeDir, ".local/share/applications"),
+		filepath.Join(s.Directories.UserHomeDir, ".local/share/flatpak/exports/share/applications"),
+		filepath.Join(s.Directories.UserHomeDir, ".gnome/apps"),
+		filepath.Join(s.Directories.UserHomeDir, ".kde/share/applnk"),
 	}
 	desktopFiles := map[string]DesktopApp{}
 	idCounter := 0

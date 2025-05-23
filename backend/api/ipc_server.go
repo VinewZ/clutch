@@ -77,6 +77,5 @@ func (t *ToggleWindowService) ToggleWindow(
 	req *connect.Request[ipcproto.ToggleWindowRequest],
 ) (*connect.Response[ipcproto.ToggleWindowResponse], error) {
 	t.toggleFn()
-	fmt.Println("ToggleWindow called")
 	return connect.NewResponse(&ipcproto.ToggleWindowResponse{}), nil
 }

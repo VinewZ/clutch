@@ -12,18 +12,18 @@ import (
 )
 
 type Model struct {
-	App             *application.App
-	IsVisible       bool
-	Services				[]application.Service
+	App       *application.App
+	IsVisible bool
+	Services  []application.Service
 	setup.Directories
 	setup.ServersPorts
 }
 
 func NewModel(dirs *setup.Directories, ports *setup.ServersPorts) *Model {
 	return &Model{
-		IsVisible:       true,
-		Directories:     *dirs,
-		ServersPorts:    *ports,
+		IsVisible:    true,
+		Directories:  *dirs,
+		ServersPorts: *ports,
 	}
 }
 
@@ -49,17 +49,18 @@ func (m *Model) Setup(assets e.FS) *application.App {
 		Height:        600,
 		DisableResize: true,
 		URL:           "/",
-		AlwaysOnTop: true,
+		AlwaysOnTop:   true,
 	})
 
 	return m.App
 }
 
 func (m *Model) BeforeStart() {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
 	services := NewClutchService(m)
 	m.Services = services.RegisterServices()
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
 
 	ipcServer := api.NewIPCServer(m.ServersPorts.IPCServerPort, []string{"*"})
 	toggleSvc := api.NewToggleWindowService(services.ToggleApp)

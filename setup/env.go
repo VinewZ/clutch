@@ -4,7 +4,7 @@ import "flag"
 
 type Environment struct {
 	Production bool
-	Toggle bool
+	Toggle     bool
 }
 
 func Env() *Environment {

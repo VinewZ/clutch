@@ -56,10 +56,7 @@ func tryToggle(ctx context.Context) bool {
 		}
 		conn.Close()
 
-		client := ipcprotoconnect.NewToggleWindowServiceClient(
-			http.DefaultClient,
-			"http://"+addr,
-		)
+		client := ipcprotoconnect.NewToggleWindowServiceClient(http.DefaultClient, "http://"+addr)
 		toCtx, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
 		defer cancel()
 
