@@ -1,34 +1,43 @@
 package app
 
 import (
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-type ClutchServices struct {
-	protoServerPort int
-	usrHomeDir      string
-}
-
 type DesktopApp struct {
-	Id          int
-	Name        string
-	GenericName string
-	Comment     string
-	Icon        string
-	Exec        string
-	Terminal    string
-	Keywords    []string
+	ID          int      `json:"id"`
+	Name        string   `json:"name"`
+	GenericName string   `json:"genericName"`
+	Comment     string   `json:"comment"`
+	Icon        string   `json:"icon"`
+	Exec        string   `json:"exec"`
+	Terminal    bool     `json:"terminal"`
+	Keywords    []string `json:"keywords"`
 }
 
-func registerServices(m *model) []application.Service {
-	appServices := ClutchServices{
-		usrHomeDir: m.UserHomeDir,
-	}
-	return []application.Service{
-		application.NewService(&appServices, application.DefaultServiceOptions),
-	}
+type ClutchServices struct {
+	*Model
 }
 
-func (s *ClutchServices) GetProtoServerPort() int {
-	return s.protoServerPort
+func NewClutchService(m *Model) *ClutchServices {
+	return &ClutchServices{Model: m}
+}
+
+func (m *Model) RegisterServices() []application.Service {
+	clutch := NewClutchService(m)
+	m.Services = []application.Service{
+		application.NewService(clutch, application.DefaultServiceOptions),
+	}
+	return m.Services
+}
+
+func (s *ClutchServices) ToggleApp(){
+	if s.IsVisible {
+		s.App.Hide()
+		s.IsVisible = false
+	} else {
+		s.App.Show()
+		s.IsVisible = true
+	}
 }

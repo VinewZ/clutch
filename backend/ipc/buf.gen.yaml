@@ -1,0 +1,16 @@
+version: v2
+inputs:
+  - directory: ./
+plugins:
+  # --- Go messages + Connect server bindings ---
+  - local: protoc-gen-go
+    out: ./gen
+    opt:
+      - paths=import
+      - module=github.com/vinewz/clutch/backend/ipc/gen
+
+  - local: protoc-gen-connect-go
+    out: ./gen
+    opt:
+      - paths=import
+      - module=github.com/vinewz/clutch/backend/ipc/gen

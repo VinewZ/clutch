@@ -3,11 +3,12 @@ module github.com/vinewz/clutch
 go 1.24.3
 
 require (
+	connectrpc.com/connect v1.18.1
 	connectrpc.com/cors v0.1.0
-	github.com/VinewZ/go-evdev-keyboard v1.0.0
 	github.com/rs/cors v1.11.1
 	github.com/wailsapp/wails/v3 v3.0.0-alpha.9
 	golang.org/x/net v0.40.0
+	google.golang.org/protobuf v1.36.6
 )
 
 require (
@@ -27,7 +28,6 @@ require (
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/google/uuid v1.6.0 // indirect
-	github.com/holoplot/go-evdev v0.0.0-20240306072622-217e18f17db1 // indirect
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jchv/go-winloader v0.0.0-20210711035445-715c2860da7e // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect

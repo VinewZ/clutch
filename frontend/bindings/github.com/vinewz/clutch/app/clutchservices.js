@@ -8,7 +8,22 @@ import {Call as $Call, Create as $Create} from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
+import * as embed$0 from "../../../../embed/models.js";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
+import * as application$0 from "../../../wailsapp/wails/v3/pkg/application/models.js";
+
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore: Unused imports
 import * as $models from "./models.js";
+
+/**
+ * @returns {Promise<void> & { cancel(): void }}
+ */
+export function BeforeStart() {
+    let $resultPromise = /** @type {any} */($Call.ByID(1617527707));
+    return $resultPromise;
+}
 
 /**
  * @param {string} url
@@ -41,14 +56,6 @@ export function GetDesktopApps() {
 }
 
 /**
- * @returns {Promise<number> & { cancel(): void }}
- */
-export function GetProtoServerPort() {
-    let $resultPromise = /** @type {any} */($Call.ByID(3908627508));
-    return $resultPromise;
-}
-
-/**
  * @param {string} filePath
  * @returns {Promise<$models.ClutchPkgJson | null> & { cancel(): void }}
  */
@@ -61,8 +68,45 @@ export function ParseExtensionPkgJson(filePath) {
     return $typingPromise;
 }
 
+/**
+ * @returns {Promise<application$0.Service[]> & { cancel(): void }}
+ */
+export function RegisterServices() {
+    let $resultPromise = /** @type {any} */($Call.ByID(2243616331));
+    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
+        return $$createType5($result);
+    }));
+    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+    return $typingPromise;
+}
+
+/**
+ * @param {embed$0.FS} assets
+ * @returns {Promise<application$0.App | null> & { cancel(): void }}
+ */
+export function Setup(assets) {
+    let $resultPromise = /** @type {any} */($Call.ByID(3477651003, assets));
+    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
+        return $$createType7($result);
+    }));
+    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+    return $typingPromise;
+}
+
+/**
+ * @returns {Promise<void> & { cancel(): void }}
+ */
+export function ToggleApp() {
+    let $resultPromise = /** @type {any} */($Call.ByID(559805133));
+    return $resultPromise;
+}
+
 // Private type creation functions
 const $$createType0 = $models.DesktopApp.createFrom;
 const $$createType1 = $Create.Map($Create.Any, $$createType0);
 const $$createType2 = $models.ClutchPkgJson.createFrom;
 const $$createType3 = $Create.Nullable($$createType2);
+const $$createType4 = application$0.Service.createFrom;
+const $$createType5 = $Create.Array($$createType4);
+const $$createType6 = application$0.App.createFrom;
+const $$createType7 = $Create.Nullable($$createType6);

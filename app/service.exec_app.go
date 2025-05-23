@@ -16,7 +16,7 @@ func (s *ClutchServices) ExecApp(app DesktopApp) error {
 
 	switch runtime.GOOS {
 	case "linux":
-		if app.Terminal == "true" {
+		if app.Terminal {
 			cmd = exec.Command(term, "-e", cleanCmd(execCmd))
 		} else {
 			cmd = exec.Command(cleanCmd(execCmd))

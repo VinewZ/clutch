@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -15,10 +16,10 @@ func (s *ClutchServices) GetDesktopApps() map[string]DesktopApp {
 		"/usr/local/share/applications",
 		"/var/lib/snapd/desktop/applications",
 		"/var/lib/flatpak/exports/share/applications",
-		filepath.Join(s.usrHomeDir, ".local/share/applications"),
-		filepath.Join(s.usrHomeDir, ".local/share/flatpak/exports/share/applications"),
-		filepath.Join(s.usrHomeDir, ".gnome/apps"),
-		filepath.Join(s.usrHomeDir, ".kde/share/applnk"),
+		filepath.Join(s.UserHomeDir, ".local/share/applications"),
+		filepath.Join(s.UserHomeDir, ".local/share/flatpak/exports/share/applications"),
+		filepath.Join(s.UserHomeDir, ".gnome/apps"),
+		filepath.Join(s.UserHomeDir, ".kde/share/applnk"),
 	}
 	desktopFiles := map[string]DesktopApp{}
 	idCounter := 0
@@ -36,7 +37,7 @@ func (s *ClutchServices) GetDesktopApps() map[string]DesktopApp {
 					fmt.Printf("Error parsing desktop file %s: %v\n", desktopFilePath, err)
 					continue
 				}
-				app.Id = idCounter
+				app.ID = idCounter
 				idCounter++
 				desktopFiles[app.Name] = app
 			}
@@ -104,9 +105,14 @@ func parseMainSection(section string) (DesktopApp, error) {
 		case "Icon":
 			app.Icon = value
 		case "Terminal":
-			app.Terminal = value
-    case "Keywords":
-      app.Keywords = strings.Split(value, ";")
+			v, err := strconv.ParseBool(value)
+			if err != nil {
+				app.Terminal = false
+			} else {
+				app.Terminal = v
+			}
+		case "Keywords":
+			app.Keywords = strings.Split(value, ";")
 		}
 	}
 

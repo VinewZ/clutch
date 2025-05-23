@@ -35,6 +35,7 @@ export function FocusableLi({
     if (e.key.toLowerCase() == "enter") {
       try {
         ClutchServices.ExecApp(app)
+        ClutchServices.ToggleApp()
       } catch (e) {
         toast(String(e), {
           type: "error",
@@ -62,14 +63,14 @@ export function FocusableLi({
       aria-disabled={disabled} // reflect disabled state
     >
       <div className="flex w-full justify-between text-white">
-        <p>{app.Name}</p>
+        <p>{app.name}</p>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
               <Info size={16} />
             </TooltipTrigger>
             <TooltipContent>
-              <p>Run: {app.Exec}</p>
+              <p>Run: {app.exec}</p>
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>

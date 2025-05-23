@@ -3,39 +3,34 @@ package app
 import (
 	"context"
 	e "embed"
-	"fmt"
-	"log"
 	"log/slog"
+	"time"
 
-	keyboard "github.com/VinewZ/go-evdev-keyboard"
 	"github.com/vinewz/clutch/backend/api"
 	"github.com/vinewz/clutch/setup"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-type model struct {
+type Model struct {
 	App             *application.App
-	UserHomeDir     string
-	UserConfigDir string
 	IsVisible       bool
-	ProtoServerPort int
+	Services				[]application.Service
+	setup.Directories
+	setup.ServersPorts
 }
 
-func NewModel(protoServerPort int) *model {
-	return &model{
+func NewModel(dirs *setup.Directories, ports *setup.ServersPorts) *Model {
+	return &Model{
 		IsVisible:       true,
-		ProtoServerPort: protoServerPort,
+		Directories:     *dirs,
+		ServersPorts:    *ports,
 	}
 }
 
-func (m *model) Setup(assets e.FS, config *setup.Setup) *application.App {
-	m.UserHomeDir = config.UserHomeDIr
-
-	services := registerServices(m)
-
+func (m *Model) Setup(assets e.FS) *application.App {
 	assetsServer := api.NewAssetsServer()
 	assetsServer.RegisterWailsAssetHandler(assets)
-	assetsServer.RegisterExtensionsHandler(config.ExtensionsDir)
+	assetsServer.RegisterExtensionsHandler(m.Directories.ExtensionsDir)
 
 	m.App = application.New(application.Options{
 		Name:        "Clutch",
@@ -44,7 +39,7 @@ func (m *model) Setup(assets e.FS, config *setup.Setup) *application.App {
 			Handler:        assetsServer.Mux,
 			DisableLogging: true,
 		},
-		Services: services,
+		Services: m.Services,
 		LogLevel: slog.LevelError,
 	})
 
@@ -54,48 +49,24 @@ func (m *model) Setup(assets e.FS, config *setup.Setup) *application.App {
 		Height:        600,
 		DisableResize: true,
 		URL:           "/",
+		AlwaysOnTop: true,
 	})
 
 	return m.App
 }
 
-func (m *model) SetupKeybindings(ctx context.Context) {
-	mgr := keyboard.NewManager()
-	mgr.SuppressRepeats()
-	mgr.RegisterBinding("META+SPACE", func() {
-		fmt.Println("Meta+Space pressed")
-		if m.IsVisible {
-			m.App.Hide()
-			m.IsVisible = false
-		} else {
-			m.App.Show()
-			m.IsVisible = true
-		}
-	})
+func (m *Model) BeforeStart() {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+	services := NewClutchService(m)
+	m.Services = services.RegisterServices()
 
-	// mgr.RegisterBinding("ESC", func() {
-	// 	if m.IsVisible {
-	// 		m.App.Hide()
-	// 		m.IsVisible = false
-	// 	}
-	// })
-
+	ipcServer := api.NewIPCServer(m.ServersPorts.IPCServerPort, []string{"*"})
+	toggleSvc := api.NewToggleWindowService(services.ToggleApp)
+	ipcServer.RegisterService(toggleSvc)
 	go func() {
-		events, err := keyboard.Listen()
-		if err != nil {
-			log.Fatalf("Error listening to keyboard: %v", err)
-		}
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case ev, ok := <-events:
-				if !ok {
-					return
-				}
-				mgr.HandleEvent(ev)
-			}
+		if err := ipcServer.ListenAndServe(ctx); err != nil {
+			slog.Error("failed to start IPC server", err)
 		}
 	}()
-
 }

@@ -40,61 +40,61 @@ export class DesktopApp {
      * @param {Partial<DesktopApp>} [$$source = {}] - The source object to create the DesktopApp.
      */
     constructor($$source = {}) {
-        if (!("Id" in $$source)) {
+        if (!("id" in $$source)) {
             /**
              * @member
              * @type {number}
              */
-            this["Id"] = 0;
+            this["id"] = 0;
         }
-        if (!("Name" in $$source)) {
+        if (!("name" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["Name"] = "";
+            this["name"] = "";
         }
-        if (!("GenericName" in $$source)) {
+        if (!("genericName" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["GenericName"] = "";
+            this["genericName"] = "";
         }
-        if (!("Comment" in $$source)) {
+        if (!("comment" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["Comment"] = "";
+            this["comment"] = "";
         }
-        if (!("Icon" in $$source)) {
+        if (!("icon" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["Icon"] = "";
+            this["icon"] = "";
         }
-        if (!("Exec" in $$source)) {
+        if (!("exec" in $$source)) {
             /**
              * @member
              * @type {string}
              */
-            this["Exec"] = "";
+            this["exec"] = "";
         }
-        if (!("Terminal" in $$source)) {
+        if (!("terminal" in $$source)) {
             /**
              * @member
-             * @type {string}
+             * @type {boolean}
              */
-            this["Terminal"] = "";
+            this["terminal"] = false;
         }
-        if (!("Keywords" in $$source)) {
+        if (!("keywords" in $$source)) {
             /**
              * @member
              * @type {string[]}
              */
-            this["Keywords"] = [];
+            this["keywords"] = [];
         }
 
         Object.assign(this, $$source);
@@ -108,8 +108,8 @@ export class DesktopApp {
     static createFrom($$source = {}) {
         const $$createField7_0 = $$createType0;
         let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        if ("Keywords" in $$parsedSource) {
-            $$parsedSource["Keywords"] = $$createField7_0($$parsedSource["Keywords"]);
+        if ("keywords" in $$parsedSource) {
+            $$parsedSource["keywords"] = $$createField7_0($$parsedSource["keywords"]);
         }
         return new DesktopApp(/** @type {Partial<DesktopApp>} */($$parsedSource));
     }

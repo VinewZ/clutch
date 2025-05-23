@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package ipc.proto.v1;
+
+option go_package = "github.com/vinewz/clutch/backend/ipc/gen;ipcproto";
+
+service ToggleWindowService {
+  rpc ToggleWindow(ToggleWindowRequest) returns (ToggleWindowResponse) {};
+}
+
+message ToggleWindowRequest {}
+
+message ToggleWindowResponse {}

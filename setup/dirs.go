@@ -5,15 +5,15 @@ import (
 	"path/filepath"
 )
 
-type Setup struct {
+type Directories struct {
 	UserConfigDir string
-	UserHomeDIr   string
+	UserHomeDir   string
 	ClutchDir     string
 	ExtensionsDir string
 }
 
-func NewSetup() (*Setup, error) {
-	userHomeDIr, err := os.UserHomeDir()
+func Dirs() (*Directories, error) {
+	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
 		return nil, err
 	}
@@ -37,8 +37,8 @@ func NewSetup() (*Setup, error) {
 		}
 	}
 
-	return &Setup{
-		UserHomeDIr:   userHomeDIr,
+	return &Directories{
+		UserHomeDir:   userHomeDir,
 		UserConfigDir: userConfigDir,
 		ClutchDir:     clutchDir,
 		ExtensionsDir: extensionsDir,
