@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useGlobalSlashFocus } from "@/hooks/useGlobalSlashFocus";
 import { AppsList } from "@/components/home/apps_list";
 
-import { RovingTabIndexProvider } from "react-roving-tabindex";
+import { RovingTabIndexProvider, useFocusEffect } from "react-roving-tabindex";
 
 import { ClutchServices } from "../../bindings/github.com/vinewz/clutch/app/index";
 import type { DesktopApp } from "../../bindings/github.com/vinewz/clutch/app/models";
@@ -24,13 +24,52 @@ function App() {
       // @ts-ignore
       setApps(apps);
     });
+
+    function handleKeyDown(e: KeyboardEvent) {
+      switch (e.key) {
+        case "Escape":
+          e.preventDefault();
+          ClutchServices.ToggleApp();
+          break;
+        case "ArrowDown":
+          e.preventDefault();
+          // const firstElement = document.querySelector("#clutch-app-list-first-element");
+          // if (firstElement) {
+          //   (firstElement as HTMLLIElement).focus();
+          // }
+          // @ts-ignore
+          useFocusEffect(focused, ref);
+          break;
+        case "ArrowUp":
+          e.preventDefault();
+          // const lastElement = document.querySelector("#clutch-app-list-last-element");
+          // if (lastElement) {
+          //   (lastElement as HTMLLIElement).focus();
+          // }
+          break;
+        default:
+          break
+      }
+
+    }
+
+
+    inputRef.current?.focus();
+
+    inputRef.current?.addEventListener("keydown", handleKeyDown);
+    return () => {
+      inputRef.current?.removeEventListener("keydown", handleKeyDown);
+    };
+
   }, []);
+
 
   return (
     <div className="App">
       <Input
         ref={inputRef}
         className="h-[50px] rounded-none border-0 border-b"
+        value={search}
         placeholder={`Type "/" to search...`}
         onChange={(e) => setSearch(e.target.value)}
         onBeforeInput={(e: React.FormEvent<HTMLInputElement>) => {
@@ -42,15 +81,19 @@ function App() {
       />
       <div className="h-[550px]">
         <RovingTabIndexProvider
-          options={{ direction: "vertical", focusOnClick: true }}
+          options={{
+            direction: "vertical",
+            focusOnClick: true,
+            loopAround: true
+          }}
         >
-          <div className="max-h-[250px] overflow-y-auto">
+          <div className="overflow-y-auto">
             <span className="m-2 mb-0 block text-sm font-medium text-zinc-400">
               Apps
             </span>
-            <AppsList apps={apps} search={search} />
+            <AppsList apps={apps} search={search} setSearch={setSearch} />
           </div>
-          <div className="max-h-[150px] overflow-y-auto pb-1.5">
+          <div className="overflow-y-auto pb-1.5">
             <span className="m-2 mb-0 block text-sm font-medium text-zinc-400">
               Extensions
             </span>
@@ -62,7 +105,7 @@ function App() {
               ext
             </Link>
           </div>
-          <div className="max-h-[150px] overflow-y-auto pb-1.5">
+          <div className="overflow-y-auto pb-2">
             <span className="m-2 mb-0 block text-sm font-medium text-zinc-400">
               Cmds
             </span>

@@ -1,6 +1,6 @@
 import { BackButton } from "@/components/back_button";
 import { useTheme } from "@/providers/theme";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
 export const Route = createFileRoute("/extension/$extension")({
@@ -9,35 +9,55 @@ export const Route = createFileRoute("/extension/$extension")({
 
 function RouteComponent() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const navigate = useNavigate();
   const params = Route.useParams();
   const { theme } = useTheme();
 
+  function handleExtensionReady(e: MessageEvent) {
+    iframeRef.current?.contentWindow?.postMessage(
+      { type: "theme", theme },
+      e.origin,
+    );
+  }
+
+  function handleExtensionNavigate(e: MessageEvent) {
+    console.log(e.data)
+    navigate({
+      from: "/extension/$extension",
+      to: e.data?.path,
+    });
+  }
+
   useEffect(() => {
-    const handleParentMessage = (e: MessageEvent) => {
-      if (e.data?.type === "clutch-extension-ready") {
-        iframeRef.current?.contentWindow?.postMessage(
-          { type: "theme", theme },
-          e.origin,
-        );
+    const handleMessage = (e: MessageEvent) => {
+      switch (e.data?.type) {
+        case "clutch-extension-ready":
+          handleExtensionReady(e);
+          break;
+        case "clutch-extension-navigate":
+          handleExtensionNavigate(e);
+          break;
+        default:
+          break;
       }
     };
 
-    window.addEventListener("message", handleParentMessage);
-    return () => window.removeEventListener("message", handleParentMessage);
-  }, [theme]);
+    const focusIframe = () => {
+      iframeRef.current?.focus();
+    }
 
-  useEffect(() => {
-    iframeRef.current?.contentWindow?.postMessage(
-      { type: "theme", theme },
-      "*",
-    );
+    window.addEventListener("message", handleMessage);
+    iframeRef.current?.addEventListener("load", focusIframe);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("load", focusIframe);
+    }
   }, [theme]);
 
   return (
     <div>
       <BackButton />
       <iframe
-        id="clutch-extension-iframe"
         ref={iframeRef}
         className="h-dvh w-dvw bg-transparent"
         src={`${params.extension}`}

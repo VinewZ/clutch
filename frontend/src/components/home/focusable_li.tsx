@@ -1,5 +1,6 @@
+import type { Dispatch, SetStateAction, KeyboardEvent } from "react";
 import { ClutchServices, DesktopApp } from "../../../bindings/github.com/vinewz/clutch/app/index";
-import { useRef, type KeyboardEvent } from "react";
+import { useRef } from "react";
 import { useFocusEffect, useRovingTabIndex } from "react-roving-tabindex";
 import {
   Tooltip,
@@ -12,13 +13,17 @@ import { Info } from "lucide-react";
 import { toast } from "react-toastify";
 
 type FocusableLiProps = {
+  id?: string;
   app: DesktopApp
   disabled?: boolean;
+  setSearch: Dispatch<SetStateAction<string>>
 };
 
 export function FocusableLi({
+  id,
   app,
   disabled = false,
+  setSearch
 }: FocusableLiProps) {
   const ref = useRef<HTMLLIElement>(null);
   const [tabIndex, focused, handleKeyDown, handleClick] = useRovingTabIndex(
@@ -32,10 +37,11 @@ export function FocusableLi({
 
   function handleEnter(e: KeyboardEvent<HTMLLIElement>) {
     e.preventDefault()
-    if (e.key.toLowerCase() == "enter") {
+    if (e.key === "Enter") {
       try {
         ClutchServices.ExecApp(app)
         ClutchServices.ToggleApp()
+        setSearch("")
       } catch (e) {
         toast(String(e), {
           type: "error",
@@ -48,6 +54,7 @@ export function FocusableLi({
 
   return (
     <li
+      id={id}
       ref={ref}
       tabIndex={tabIndex}
       onKeyDown={e => {
