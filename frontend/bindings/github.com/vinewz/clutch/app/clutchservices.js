@@ -27,7 +27,7 @@ export function BeforeStart() {
 
 /**
  * @param {string} url
- * @returns {Promise<void> & { cancel(): void }}
+ * @returns {Promise<string> & { cancel(): void }}
  */
 export function DownloadExtension(url) {
     let $resultPromise = /** @type {any} */($Call.ByID(1955004975, url));
@@ -56,13 +56,25 @@ export function GetDesktopApps() {
 }
 
 /**
+ * @returns {Promise<$models.ClutchPkgJson[]> & { cancel(): void }}
+ */
+export function GetExtensions() {
+    let $resultPromise = /** @type {any} */($Call.ByID(2246752440));
+    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
+        return $$createType3($result);
+    }));
+    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+    return $typingPromise;
+}
+
+/**
  * @param {string} filePath
  * @returns {Promise<$models.ClutchPkgJson | null> & { cancel(): void }}
  */
 export function ParseExtensionPkgJson(filePath) {
     let $resultPromise = /** @type {any} */($Call.ByID(1363765326, filePath));
     let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
-        return $$createType3($result);
+        return $$createType4($result);
     }));
     $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
     return $typingPromise;
@@ -74,7 +86,7 @@ export function ParseExtensionPkgJson(filePath) {
 export function RegisterServices() {
     let $resultPromise = /** @type {any} */($Call.ByID(2243616331));
     let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
-        return $$createType5($result);
+        return $$createType6($result);
     }));
     $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
     return $typingPromise;
@@ -87,7 +99,7 @@ export function RegisterServices() {
 export function Setup(assets) {
     let $resultPromise = /** @type {any} */($Call.ByID(3477651003, assets));
     let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
-        return $$createType7($result);
+        return $$createType8($result);
     }));
     $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
     return $typingPromise;
@@ -105,8 +117,9 @@ export function ToggleApp() {
 const $$createType0 = $models.DesktopApp.createFrom;
 const $$createType1 = $Create.Map($Create.Any, $$createType0);
 const $$createType2 = $models.ClutchPkgJson.createFrom;
-const $$createType3 = $Create.Nullable($$createType2);
-const $$createType4 = application$0.Service.createFrom;
-const $$createType5 = $Create.Array($$createType4);
-const $$createType6 = application$0.App.createFrom;
-const $$createType7 = $Create.Nullable($$createType6);
+const $$createType3 = $Create.Array($$createType2);
+const $$createType4 = $Create.Nullable($$createType2);
+const $$createType5 = application$0.Service.createFrom;
+const $$createType6 = $Create.Array($$createType5);
+const $$createType7 = application$0.App.createFrom;
+const $$createType8 = $Create.Nullable($$createType7);

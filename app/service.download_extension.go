@@ -27,14 +27,14 @@ type githubDir struct {
 	Files []githubFile
 }
 
-func (s *ClutchServices) DownloadExtension(url string) error {
+func (s *ClutchServices) DownloadExtension(url string) (extensionName string, err error) {
 	if url == "" {
-		return fmt.Errorf("URL is empty")
+		return "", fmt.Errorf("URL is empty")
 	}
 
 	parts := strings.Split(url, "/")
 	if len(parts) < 5 {
-		return fmt.Errorf("Invalid URL: %s\n Expected format: https://github.com/OWNER/REPO ", url)
+		return "", fmt.Errorf("Invalid URL: %s\n Expected format: https://github.com/OWNER/REPO ", url)
 	}
 
 	owner := parts[3]
@@ -42,22 +42,30 @@ func (s *ClutchServices) DownloadExtension(url string) error {
 
 	pkgJson := &githubFile{}
 	if err := pkgJson.fetchFile(owner, repo, "package.json"); err != nil {
-		log.Fatalf("Error fetching package.json: %v", err)
+		return "", fmt.Errorf("Error fetching package.json: %v", err)
 	}
 
-	ghRootDir := "dist"
-	dist := &githubDir{}
-	if err := dist.fetchDir(pkgJson.Owner, pkgJson.Repo, ghRootDir); err != nil {
-		ghRootDir = "build"
+	rootDir := "dist"
+	if err := (&githubDir{}).fetchDir(owner, repo, rootDir); err != nil {
+		rootDir = "build"
 	}
 
-	extensionDir := filepath.Join(os.Getenv("HOME"), ".config", "clutch", "extensions", pkgJson.Repo)
+	extensionDir := filepath.Join(os.Getenv("HOME"), ".config", "clutch", "extensions", repo)
+	distDir := filepath.Join(extensionDir, "dist")
 
-	if err := downloadGithubPath(pkgJson.Owner, pkgJson.Repo, ghRootDir, extensionDir); err != nil {
-		return fmt.Errorf("Error download %s tree: %s", ghRootDir, err.Error())
+	if err := os.MkdirAll(distDir, os.ModePerm); err != nil {
+		return "", fmt.Errorf("Error creating local dist directory: %v", err)
 	}
 
-	return nil
+	if err := pkgJson.downloadFile(extensionDir); err != nil {
+		return "", fmt.Errorf("Error downloading package.json: %v", err)
+	}
+
+	if err := downloadGithubPath(owner, repo, rootDir, distDir); err != nil {
+		return "", fmt.Errorf("Error downloading %s tree: %v", rootDir, err)
+	}
+
+	return repo, nil
 }
 
 func (e *githubFile) fetchFile(owner, repo, path string) error {
@@ -80,7 +88,8 @@ func (e *githubFile) fetchFile(owner, repo, path string) error {
 		return err
 	}
 
-	return json.Unmarshal(body, e)
+	res := json.Unmarshal(body, e)
+	return res
 }
 
 func (d *githubDir) fetchDir(owner, repo, path string) error {

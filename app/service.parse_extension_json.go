@@ -9,6 +9,7 @@ import (
 type ClutchPkgJson struct {
 	Clutch struct {
 		Name            string `json:"name"`
+		Repo            string `json:"repo"`
 		Description     string `json:"description"`
 		LongDescription string `json:"longDescription"`
 		Dev             struct {

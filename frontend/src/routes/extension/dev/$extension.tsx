@@ -3,7 +3,7 @@ import { useTheme } from "@/providers/theme";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef } from "react";
 
-export const Route = createFileRoute("/extension/$extension")({
+export const Route = createFileRoute("/extension/dev/$extension")({
   component: RouteComponent,
 });
 
@@ -60,7 +60,7 @@ function RouteComponent() {
       <iframe
         ref={iframeRef}
         className="h-dvh w-dvw bg-transparent"
-        src={`/extensions/${params.extension}/dist/index.html`}
+        src={`${params.extension}`}
       ></iframe>
     </div>
   );

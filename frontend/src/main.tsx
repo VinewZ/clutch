@@ -2,6 +2,7 @@ import { StrictMode } from "react";
 import ReactDOM from "react-dom/client";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 import { ToastContainer } from "react-toastify";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import "@/index.css";
 
 // Import the generated route tree
@@ -27,6 +28,8 @@ declare module "@tanstack/react-router" {
   }
 }
 
+const queryClient = new QueryClient();
+
 // Render the app
 const rootElement = document.getElementById("app");
 if (rootElement && !rootElement.innerHTML) {
@@ -34,8 +37,16 @@ if (rootElement && !rootElement.innerHTML) {
   root.render(
     <StrictMode>
       <ThemeProvider>
-        <RouterProvider router={router} />
-        <ToastContainer />
+        <QueryClientProvider client={queryClient}>
+          <RouterProvider router={router} />
+          <ToastContainer
+            position="bottom-right"
+            autoClose={3000}
+            closeOnClick={true}
+            pauseOnHover={true}
+            pauseOnFocusLoss={false}
+          />
+        </QueryClientProvider>
       </ThemeProvider>
     </StrictMode>,
   );

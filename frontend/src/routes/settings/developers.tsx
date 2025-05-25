@@ -56,7 +56,7 @@ function RouteComponent() {
               <TableCell>Dev Url</TableCell>
               <TableCell>
                 <Link
-                  to="/extension/$extension"
+                  to="/extension/dev/$extension"
                   params={{ extension: devExtension.clutch.dev.devUrl }}
                   className="underline"
                 >

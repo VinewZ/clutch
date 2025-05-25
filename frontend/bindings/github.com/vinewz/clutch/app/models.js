@@ -15,9 +15,9 @@ export class ClutchPkgJson {
         if (!("clutch" in $$source)) {
             /**
              * @member
-             * @type {{"name": string, "description": string, "longDescription": string, "dev": {"distDir": string, "devUrl": string}}}
+             * @type {{"name": string, "repo": string, "description": string, "longDescription": string, "dev": {"distDir": string, "devUrl": string}}}
              */
-            this["clutch"] = {"name": "", "description": "", "longDescription": "", "dev": {"distDir": "", "devUrl": ""}};
+            this["clutch"] = {"name": "", "repo": "", "description": "", "longDescription": "", "dev": {"distDir": "", "devUrl": ""}};
         }
 
         Object.assign(this, $$source);

@@ -67,7 +67,7 @@ func (m *Model) BeforeStart() {
 	ipcServer.RegisterService(toggleSvc)
 	go func() {
 		if err := ipcServer.ListenAndServe(ctx); err != nil {
-			slog.Error("failed to start IPC server", err)
+			slog.Error("failed to start IPC server", "err", err)
 		}
 	}()
 }

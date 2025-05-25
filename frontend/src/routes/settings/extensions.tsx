@@ -3,13 +3,15 @@ import { createFileRoute } from "@tanstack/react-router";
 import { ClutchServices } from "../../../bindings/github.com/vinewz/clutch/app/index";
 import { toast } from "react-toastify";
 import { Button } from "@/components/ui/button";
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 
 export const Route = createFileRoute("/settings/extensions")({
   component: RouteComponent,
 });
 
 function RouteComponent() {
+  const [error, setError] = useState("")
+
   async function installExtension(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
@@ -17,23 +19,20 @@ function RouteComponent() {
     if (!url) {
       toast("Please enter a valid URL", {
         type: "error",
-        position: "bottom-right",
-        autoClose: 2000,
-        closeOnClick: true,
       });
       return;
     }
 
     try {
       const res = await ClutchServices.DownloadExtension(url);
-      console.log(res);
+      toast(`${res} downloaded`)
+      setError("")
     } catch (error) {
+      console.log(error)
       toast("Failed to install extension", {
         type: "error",
-        position: "bottom-right",
-        autoClose: 2000,
-        closeOnClick: true,
       });
+      setError(String(error))
     }
   }
 
@@ -45,6 +44,7 @@ function RouteComponent() {
         <Input placeholder="https://github.com/OWNER/REPO" name="url" />
         <Button>Install</Button>
       </form>
+      {error && <p className="text-xs text-red-500 pt-1.5">{error}</p>}
     </div>
   );
 }
