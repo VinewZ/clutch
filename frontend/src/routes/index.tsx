@@ -151,8 +151,8 @@ function App() {
             const list = sectioned[sectionKey];
             return (
               <div key={sectionKey}>
-                <p className="text-xs px-2 my-1.5 text-zinc-400">
-                  {sectionKey.charAt(0).toUpperCase() + sectionKey.slice(1)}
+                <p className="text-xs px-2 my-1.5 text-zinc-400 capitalize">
+                  {sectionKey}
                 </p>
                 <ul>
                   {list.map((item) => {
