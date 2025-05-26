@@ -1,14 +1,25 @@
 import { Link } from "@tanstack/react-router";
 import type { ClutchPkgJson } from "bindings/github.com/vinewz/clutch/app";
+import type { Dispatch, RefObject, SetStateAction } from "react";
 
 type ExtensionsListProps = {
+  ref: RefObject<HTMLLIElement | null>[]
   extensions: ClutchPkgJson[];
+  search: string;
+  setSearch: Dispatch<SetStateAction<string>>
 }
 
-export function ExtensionsList({ extensions }: ExtensionsListProps) {
+export function ExtensionsList({ ref, extensions }: ExtensionsListProps) {
   return (
-    extensions.map(ext => (
-      <li key={ext.clutch.repo}>
+    extensions.map((ext, idx) => (
+      <li
+        ref={el => {
+          if (el && ref[idx]) {
+            ref[idx].current = el;
+          }
+        }}
+        key={ext.clutch.repo}
+      >
         <Link
           to="/extension/$extension"
           params={{ extension: ext.clutch.repo }}

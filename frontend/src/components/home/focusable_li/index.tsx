@@ -1,4 +1,4 @@
-import type { Dispatch, SetStateAction, KeyboardEvent, Ref } from "react";
+import type { Dispatch, SetStateAction, KeyboardEvent } from "react";
 import { ClutchServices, DesktopApp } from "../../../../bindings/github.com/vinewz/clutch/app/index";
 import {
   Tooltip,
@@ -11,24 +11,18 @@ import { Info } from "lucide-react";
 import { toast } from "react-toastify";
 
 type FocusableLiProps = {
-  ref: Ref<HTMLLIElement> | undefined
-  focused: boolean;
   app: DesktopApp
-  disabled?: boolean;
   setSearch: Dispatch<SetStateAction<string>>
 };
 
 export function FocusableLi({
-  ref,
-  focused,
   app,
   setSearch
 }: FocusableLiProps) {
   function handleEnter(e: KeyboardEvent<HTMLLIElement>) {
     e.preventDefault()
-    console.log("Key pressed:", e.key);
     if (e.key === "Enter") {
-        console.log("Running app:", app.name);
+      console.log("Running app:", app.name);
       try {
         ClutchServices.ExecApp(app)
         ClutchServices.ToggleApp()
@@ -45,14 +39,11 @@ export function FocusableLi({
 
   return (
     <li
-      ref={ref}
-      onKeyDown={e => {
-        handleEnter(e)
-      }}
       className={cn(
         "mx-1 flex items-center gap-2 rounded p-2 text-sm font-medium",
-        focused ? "bg-zinc-700" : "text-zinc-300",
+        // tabIndex ? "bg-zinc-700" : "text-zinc-300",
       )}
+      onKeyDown={handleEnter}
     >
       <div className="flex w-full justify-between text-white">
         <p>{app.name}</p>
