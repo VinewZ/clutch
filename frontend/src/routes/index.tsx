@@ -10,7 +10,14 @@ import { Footer } from "@/components/home/footer";
 import { useDesktopApps } from "@/hooks/useDesktopApps";
 import { useDesktopExtensions } from "@/hooks/useExtensions";
 import { cn } from "@/lib/utils";
+import { Info } from "lucide-react"
 import { ClutchServices } from "../../bindings/github.com/vinewz/clutch/app";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 type Route = {
   path: string;
@@ -168,13 +175,29 @@ function App() {
                           handleLaunch();
                         }}
                         className={cn(
-                          "mx-1 flex items-center gap-2 rounded p-2 text-sm cursor-pointer",
+                          "mx-1 flex items-center gap-2 rounded p-2 text-sm cursor-pointer justify-between",
                           isFocused ? "bg-zinc-700" : "text-zinc-300",
                         )}
                         onMouseEnter={() => setFocusedId(item._uid)}
                         onMouseLeave={() => setFocusedId('')}
                       >
-                        {label}
+                        <span>
+                          {label}
+                        </span>
+                        {
+                          item.exec && (
+                            <TooltipProvider>
+                              <Tooltip>
+                                <TooltipTrigger>
+                                  <Info size={16} />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Runs: {item.exec}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </TooltipProvider>
+                          )
+                        }
                       </li>
                     );
                   })}
