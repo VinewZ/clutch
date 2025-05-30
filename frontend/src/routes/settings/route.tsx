@@ -1,6 +1,6 @@
 import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { BackButton } from "@/components/back_button";
-import { Blocks, Braces, Settings } from "lucide-react";
+import { Blocks, Braces, Link as IconLink, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({
   component: RouteComponent,
@@ -22,13 +22,18 @@ const linkMenus = [
     to: "/settings/developers",
     icon: Braces,
   },
+  {
+    name: "Quicklinks",
+    to: "/settings/quicklinks",
+    icon: IconLink,
+  },
 ];
 
 function RouteComponent() {
   return (
     <div className="relative flex h-dvh text-white">
       <BackButton />
-      <div className="w-64 bg-zinc-900 pt-16">
+      <div className="w-54 bg-zinc-900 pt-16">
         <span className="pl-4 text-xs text-zinc-200 capitalize">Settings</span>
         <div className="mt-2 flex flex-col gap-2 text-sm">
           {linkMenus.map((menu) => (

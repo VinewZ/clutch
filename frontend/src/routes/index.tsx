@@ -1,23 +1,26 @@
 import type { FormEvent } from "react";
-
 import { Input } from "@/components/ui/input";
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, type UseNavigateResult } from "@tanstack/react-router";
 import { createRef, useEffect, useMemo, useRef, useState } from "react";
 import { useGlobalSlashFocus } from "@/hooks/useGlobalSlashFocus";
-
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Footer } from "@/components/home/footer";
 import { useDesktopApps } from "@/hooks/useDesktopApps";
 import { useDesktopExtensions } from "@/hooks/useExtensions";
-import { cn } from "@/lib/utils";
-import { Info } from "lucide-react"
-import { ClutchServices } from "../../bindings/github.com/vinewz/clutch/app";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { ClutchPkgJson, ClutchServices, DesktopApp } from "../../bindings/github.com/vinewz/clutch/app";
+import type { Quicklink } from "./settings/quicklinks";
+import { useLocalStorage } from "@uidotdev/usehooks";
+import { Section } from "@/components/home/section";
+
+type SectionedT = {
+  _section: string;
+  _uid: string;
+}
+
+type AppsT = SectionedT & DesktopApp
+type RoutesT = SectionedT & Route
+type ExtensionsT = SectionedT & ClutchPkgJson
+type QuickLinksT = SectionedT & Quicklink
 
 type Route = {
   path: string;
@@ -37,33 +40,44 @@ function App() {
   const { data: apps } = useDesktopApps()
   const { data: extensions } = useDesktopExtensions()
   const routes: Route[] = [{ path: "/settings/general", label: "Settings", }];
+  const [quicklinks] = useLocalStorage<QuickLinksT[]>("quickLinks", [])
 
   const sectioned = useMemo(() => {
     const filterBy = (label: string) =>
       label.toLowerCase().includes(search.toLowerCase());
 
-    if (!apps || !extensions || !routes) {
-      return { apps: [], extensions: [], routes: [] };
+    if (!apps || !extensions || !routes || !quicklinks) {
+      return { apps: [], extensions: [], routes: [], quicklinks: [] };
     }
-    const filteredApps = apps
+
+    const filteredApps: AppsT[] = apps
       .filter((a) => filterBy(a.name))
       .map((a) => ({ ...a, _section: 'Apps', _uid: `apps-${a.name}` }));
-    const filteredExtensions = extensions
+    const filteredExtensions: ExtensionsT[] = extensions
       .filter((e) => filterBy(e.clutch.name))
       .map((e) => ({ ...e, _section: 'Extensions', _uid: `ext-${e.clutch.name}` }));
-    const filteredRoutes = routes
+    const filteredRoutes: RoutesT[] = routes
       .filter((r) => filterBy(r.label))
       .map((r) => ({ ...r, _section: 'Routes', _uid: `route-${r.label}` }));
+    const filteredQuickLinks: QuickLinksT[] = quicklinks
+      .filter((q) => filterBy(q.command))
+      .map((q) => ({ ...q, _section: 'Quicklinks', _uid: `quicklink-${q.command}` }));
 
-    const result = { apps: filteredApps, extensions: filteredExtensions, routes: filteredRoutes }
+    const result = {
+      apps: filteredApps,
+      extensions: filteredExtensions,
+      routes: filteredRoutes,
+      quicklinks: filteredQuickLinks,
+    }
     return result;
-  }, [search, apps, extensions, routes]);
+  }, [search, apps, extensions, routes, quicklinks]);
 
   const flatOrder = useMemo(
     () => [
       ...sectioned.apps,
       ...sectioned.extensions,
       ...sectioned.routes,
+      ...sectioned.quicklinks
     ].map((it) => it._uid),
     [sectioned]
   );
@@ -90,8 +104,11 @@ function App() {
           setFocusedId(prev);
           refs.current[prev].current?.scrollIntoView({ block: 'nearest' });
           break;
+        case 'Escape':
+          ClutchServices.ToggleApp()
+          break
         case 'Enter':
-          handleLaunch();
+          handleSubmit();
           break;
         default:
           break
@@ -109,33 +126,28 @@ function App() {
     inputRef.current?.focus();
   }, [])
 
-  function handleLaunch() {
+  function handleSubmit() {
     const focusedItem = sectioned.apps.find((a) => a._uid === focusedId) ||
       sectioned.extensions.find((e) => e._uid === focusedId) ||
       sectioned.routes.find((r) => r._uid === focusedId);
     if (focusedItem) {
-      if (focusedItem._section === 'Apps') {
-        // @ts-ignore
-        ClutchServices.ExecApp(focusedItem);
-        ClutchServices.ToggleApp();
-      } else if (focusedItem._section === 'Extensions') {
-        navigate({
-          to: '/extension/$extension',
-          // @ts-ignore
-          params: { extension: focusedItem.clutch.repo },
-        });
-      } else if (focusedItem._section === 'Routes') {
-        navigate({
-          // @ts-ignore
-          to: focusedItem.path,
-        });
+      switch (focusedItem._section) {
+        case "Apps":
+          handleApp(focusedItem as AppsT);
+          break
+        case "Extensions":
+          handleExtensions(navigate, focusedItem as ExtensionsT);
+          break
+        case "Routes":
+          handleRoutes(navigate, focusedItem as RoutesT);
+          break
       }
       setSearch("");
     }
   }
 
   return (
-    <div>
+    <main>
       <Input
         ref={inputRef}
         className="h-[50px] rounded-none border-0 border-b"
@@ -154,60 +166,38 @@ function App() {
       />
       <ScrollArea className="h-[515px] pb-1.5">
         <ul className="flex h-full w-full flex-col overflow-hidden">
-          {['apps', 'extensions', 'routes'].map((sectionKey) => {
-            const list = sectioned[sectionKey];
-            return (
-              <div key={sectionKey}>
-                <p className="text-xs px-2 my-1.5 text-zinc-400 capitalize">
-                  {sectionKey}
-                </p>
-                <ul>
-                  {list.map((item) => {
-                    const label = item.name || item.label || item.clutch?.name
-                    const isFocused = item._uid === focusedId;
-                    return (
-                      <li
-                        key={item._uid}
-                        id={item._uid}
-                        ref={refs.current[item._uid]}
-                        onClick={() => {
-                          setFocusedId(item._uid);
-                          handleLaunch();
-                        }}
-                        className={cn(
-                          "mx-1 flex items-center gap-2 rounded p-2 text-sm cursor-pointer justify-between",
-                          isFocused ? "bg-zinc-700" : "text-zinc-300",
-                        )}
-                        onMouseEnter={() => setFocusedId(item._uid)}
-                        onMouseLeave={() => setFocusedId('')}
-                      >
-                        <span>
-                          {label}
-                        </span>
-                        {
-                          item.exec && (
-                            <TooltipProvider>
-                              <Tooltip>
-                                <TooltipTrigger>
-                                  <Info size={16} />
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                  <p>Runs: {item.exec}</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            </TooltipProvider>
-                          )
-                        }
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })}
+          {Object.entries(sectioned).map(([key, list]) => (
+            <Section
+              key={key}
+              sectionKey={key}
+              list={list}
+              focusedId={focusedId}
+              refs={refs}
+              handleSubmit={handleSubmit}
+              setFocusedId={setFocusedId}
+            />
+          ))}
         </ul>
       </ScrollArea>
       <Footer />
-    </div >
+    </main >
   );
+}
+
+function handleApp(app: AppsT) {
+  ClutchServices.ExecApp(app)
+  ClutchServices.ToggleApp()
+}
+
+function handleExtensions(navigate: UseNavigateResult<string>, extension: ExtensionsT) {
+  navigate({
+    to: '/extension/$extension',
+    params: { extension: extension.clutch.repo },
+  });
+}
+
+function handleRoutes(navigate: UseNavigateResult<string>, routes: RoutesT) {
+  navigate({
+    to: routes.path,
+  });
 }

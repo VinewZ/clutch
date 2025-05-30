@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings/route'
 import { Route as IndexImport } from './routes/index'
+import { Route as SettingsQuicklinksImport } from './routes/settings/quicklinks'
 import { Route as SettingsGeneralImport } from './routes/settings/general'
 import { Route as SettingsExtensionsImport } from './routes/settings/extensions'
 import { Route as SettingsDevelopersImport } from './routes/settings/developers'
@@ -31,6 +32,12 @@ const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRoute,
+} as any)
+
+const SettingsQuicklinksRoute = SettingsQuicklinksImport.update({
+  id: '/quicklinks',
+  path: '/quicklinks',
+  getParentRoute: () => SettingsRouteRoute,
 } as any)
 
 const SettingsGeneralRoute = SettingsGeneralImport.update({
@@ -109,6 +116,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsGeneralImport
       parentRoute: typeof SettingsRouteImport
     }
+    '/settings/quicklinks': {
+      id: '/settings/quicklinks'
+      path: '/quicklinks'
+      fullPath: '/settings/quicklinks'
+      preLoaderRoute: typeof SettingsQuicklinksImport
+      parentRoute: typeof SettingsRouteImport
+    }
     '/extension/dev/$extension': {
       id: '/extension/dev/$extension'
       path: '/extension/dev/$extension'
@@ -125,12 +139,14 @@ interface SettingsRouteRouteChildren {
   SettingsDevelopersRoute: typeof SettingsDevelopersRoute
   SettingsExtensionsRoute: typeof SettingsExtensionsRoute
   SettingsGeneralRoute: typeof SettingsGeneralRoute
+  SettingsQuicklinksRoute: typeof SettingsQuicklinksRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
   SettingsDevelopersRoute: SettingsDevelopersRoute,
   SettingsExtensionsRoute: SettingsExtensionsRoute,
   SettingsGeneralRoute: SettingsGeneralRoute,
+  SettingsQuicklinksRoute: SettingsQuicklinksRoute,
 }
 
 const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
@@ -144,6 +160,7 @@ export interface FileRoutesByFullPath {
   '/settings/developers': typeof SettingsDevelopersRoute
   '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quicklinks': typeof SettingsQuicklinksRoute
   '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
@@ -154,6 +171,7 @@ export interface FileRoutesByTo {
   '/settings/developers': typeof SettingsDevelopersRoute
   '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quicklinks': typeof SettingsQuicklinksRoute
   '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
@@ -165,6 +183,7 @@ export interface FileRoutesById {
   '/settings/developers': typeof SettingsDevelopersRoute
   '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quicklinks': typeof SettingsQuicklinksRoute
   '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
@@ -177,6 +196,7 @@ export interface FileRouteTypes {
     | '/settings/developers'
     | '/settings/extensions'
     | '/settings/general'
+    | '/settings/quicklinks'
     | '/extension/dev/$extension'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -186,6 +206,7 @@ export interface FileRouteTypes {
     | '/settings/developers'
     | '/settings/extensions'
     | '/settings/general'
+    | '/settings/quicklinks'
     | '/extension/dev/$extension'
   id:
     | '__root__'
@@ -195,6 +216,7 @@ export interface FileRouteTypes {
     | '/settings/developers'
     | '/settings/extensions'
     | '/settings/general'
+    | '/settings/quicklinks'
     | '/extension/dev/$extension'
   fileRoutesById: FileRoutesById
 }
@@ -237,7 +259,8 @@ export const routeTree = rootRoute
       "children": [
         "/settings/developers",
         "/settings/extensions",
-        "/settings/general"
+        "/settings/general",
+        "/settings/quicklinks"
       ]
     },
     "/extension/$extension": {
@@ -253,6 +276,10 @@ export const routeTree = rootRoute
     },
     "/settings/general": {
       "filePath": "settings/general.tsx",
+      "parent": "/settings"
+    },
+    "/settings/quicklinks": {
+      "filePath": "settings/quicklinks.tsx",
       "parent": "/settings"
     },
     "/extension/dev/$extension": {
