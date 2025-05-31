@@ -4,75 +4,78 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import {Create as $Create} from "@wailsio/runtime";
+import { Create as $Create } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
 import * as slog$0 from "../../../../../../log/slog/models.js";
 
 export class App {
-    /**
-     * Creates a new App instance.
-     * @param {Partial<App>} [$$source = {}] - The source object to create the App.
-     */
-    constructor($$source = {}) {
-        if (!("ApplicationMenu" in $$source)) {
-            /**
-             * The main application menu
-             * @member
-             * @type {Menu | null}
-             */
-            this["ApplicationMenu"] = null;
-        }
-        if (!("Logger" in $$source)) {
-            /**
-             * @member
-             * @type {slog$0.Logger | null}
-             */
-            this["Logger"] = null;
-        }
+	/**
+	 * Creates a new App instance.
+	 * @param {Partial<App>} [$$source = {}] - The source object to create the App.
+	 */
+	constructor($$source = {}) {
+		if (!("ApplicationMenu" in $$source)) {
+			/**
+			 * The main application menu
+			 * @member
+			 * @type {Menu | null}
+			 */
+			this["ApplicationMenu"] = null;
+		}
+		if (!("Logger" in $$source)) {
+			/**
+			 * @member
+			 * @type {slog$0.Logger | null}
+			 */
+			this["Logger"] = null;
+		}
 
-        Object.assign(this, $$source);
-    }
+		Object.assign(this, $$source);
+	}
 
-    /**
-     * Creates a new App instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {App}
-     */
-    static createFrom($$source = {}) {
-        const $$createField0_0 = $$createType1;
-        const $$createField1_0 = $$createType3;
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        if ("ApplicationMenu" in $$parsedSource) {
-            $$parsedSource["ApplicationMenu"] = $$createField0_0($$parsedSource["ApplicationMenu"]);
-        }
-        if ("Logger" in $$parsedSource) {
-            $$parsedSource["Logger"] = $$createField1_0($$parsedSource["Logger"]);
-        }
-        return new App(/** @type {Partial<App>} */($$parsedSource));
-    }
+	/**
+	 * Creates a new App instance from a string or object.
+	 * @param {any} [$$source = {}]
+	 * @returns {App}
+	 */
+	static createFrom($$source = {}) {
+		const $$createField0_0 = $$createType1;
+		const $$createField1_0 = $$createType3;
+		const $$parsedSource =
+			typeof $$source === "string" ? JSON.parse($$source) : $$source;
+		if ("ApplicationMenu" in $$parsedSource) {
+			$$parsedSource["ApplicationMenu"] = $$createField0_0(
+				$$parsedSource["ApplicationMenu"],
+			);
+		}
+		if ("Logger" in $$parsedSource) {
+			$$parsedSource["Logger"] = $$createField1_0($$parsedSource["Logger"]);
+		}
+		return new App(/** @type {Partial<App>} */ ($$parsedSource));
+	}
 }
 
 export class Menu {
-    /**
-     * Creates a new Menu instance.
-     * @param {Partial<Menu>} [$$source = {}] - The source object to create the Menu.
-     */
-    constructor($$source = {}) {
+	/**
+	 * Creates a new Menu instance.
+	 * @param {Partial<Menu>} [$$source = {}] - The source object to create the Menu.
+	 */
+	constructor($$source = {}) {
+		Object.assign(this, $$source);
+	}
 
-        Object.assign(this, $$source);
-    }
-
-    /**
-     * Creates a new Menu instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {Menu}
-     */
-    static createFrom($$source = {}) {
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        return new Menu(/** @type {Partial<Menu>} */($$parsedSource));
-    }
+	/**
+	 * Creates a new Menu instance from a string or object.
+	 * @param {any} [$$source = {}]
+	 * @returns {Menu}
+	 */
+	static createFrom($$source = {}) {
+		const $$parsedSource =
+			typeof $$source === "string" ? JSON.parse($$source) : $$source;
+		return new Menu(/** @type {Partial<Menu>} */ ($$parsedSource));
+	}
 }
 
 /**
@@ -81,24 +84,24 @@ export class Menu {
  * Valid values may only be obtained by calling [NewService].
  */
 export class Service {
-    /**
-     * Creates a new Service instance.
-     * @param {Partial<Service>} [$$source = {}] - The source object to create the Service.
-     */
-    constructor($$source = {}) {
+	/**
+	 * Creates a new Service instance.
+	 * @param {Partial<Service>} [$$source = {}] - The source object to create the Service.
+	 */
+	constructor($$source = {}) {
+		Object.assign(this, $$source);
+	}
 
-        Object.assign(this, $$source);
-    }
-
-    /**
-     * Creates a new Service instance from a string or object.
-     * @param {any} [$$source = {}]
-     * @returns {Service}
-     */
-    static createFrom($$source = {}) {
-        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
-        return new Service(/** @type {Partial<Service>} */($$parsedSource));
-    }
+	/**
+	 * Creates a new Service instance from a string or object.
+	 * @param {any} [$$source = {}]
+	 * @returns {Service}
+	 */
+	static createFrom($$source = {}) {
+		const $$parsedSource =
+			typeof $$source === "string" ? JSON.parse($$source) : $$source;
+		return new Service(/** @type {Partial<Service>} */ ($$parsedSource));
+	}
 }
 
 // Private type creation functions

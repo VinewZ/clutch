@@ -21,7 +21,6 @@ function RouteComponent() {
   }
 
   function handleExtensionNavigate(e: MessageEvent) {
-    console.log(e.data)
     navigate({
       from: "/extension/$extension",
       to: e.data?.path,
@@ -44,24 +43,25 @@ function RouteComponent() {
 
     const focusIframe = () => {
       iframeRef.current?.focus();
-    }
+    };
 
     window.addEventListener("message", handleMessage);
     iframeRef.current?.addEventListener("load", focusIframe);
     return () => {
       window.removeEventListener("message", handleMessage);
       window.removeEventListener("load", focusIframe);
-    }
+    };
   }, [theme]);
 
   return (
     <div>
       <BackButton />
       <iframe
+        title={params.extension}
         ref={iframeRef}
         className="h-dvh w-dvw bg-transparent"
         src={`${params.extension}`}
-      ></iframe>
+      />
     </div>
   );
 }

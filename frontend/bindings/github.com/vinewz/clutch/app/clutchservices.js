@@ -4,7 +4,7 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import {Call as $Call, Create as $Create} from "@wailsio/runtime";
+import { Call as $Call, Create as $Create } from "@wailsio/runtime";
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
@@ -21,8 +21,8 @@ import * as $models from "./models.js";
  * @returns {Promise<void> & { cancel(): void }}
  */
 export function BeforeStart() {
-    let $resultPromise = /** @type {any} */($Call.ByID(1617527707));
-    return $resultPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(1617527707));
+	return $resultPromise;
 }
 
 /**
@@ -30,8 +30,8 @@ export function BeforeStart() {
  * @returns {Promise<string> & { cancel(): void }}
  */
 export function DownloadExtension(url) {
-    let $resultPromise = /** @type {any} */($Call.ByID(1955004975, url));
-    return $resultPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(1955004975, url));
+	return $resultPromise;
 }
 
 /**
@@ -39,32 +39,36 @@ export function DownloadExtension(url) {
  * @returns {Promise<void> & { cancel(): void }}
  */
 export function ExecApp(app) {
-    let $resultPromise = /** @type {any} */($Call.ByID(2980717694, app));
-    return $resultPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(2980717694, app));
+	return $resultPromise;
 }
 
 /**
  * @returns {Promise<{ [_: string]: $models.DesktopApp }> & { cancel(): void }}
  */
 export function GetDesktopApps() {
-    let $resultPromise = /** @type {any} */($Call.ByID(2455285118));
-    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
-        return $$createType1($result);
-    }));
-    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
-    return $typingPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(2455285118));
+	const $typingPromise = /** @type {any} */ (
+		$resultPromise.then(($result) => {
+			return $$createType1($result);
+		})
+	);
+	$typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+	return $typingPromise;
 }
 
 /**
  * @returns {Promise<$models.ClutchPkgJson[]> & { cancel(): void }}
  */
 export function GetExtensions() {
-    let $resultPromise = /** @type {any} */($Call.ByID(2246752440));
-    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
-        return $$createType3($result);
-    }));
-    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
-    return $typingPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(2246752440));
+	const $typingPromise = /** @type {any} */ (
+		$resultPromise.then(($result) => {
+			return $$createType3($result);
+		})
+	);
+	$typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+	return $typingPromise;
 }
 
 /**
@@ -72,24 +76,28 @@ export function GetExtensions() {
  * @returns {Promise<$models.ClutchPkgJson | null> & { cancel(): void }}
  */
 export function ParseExtensionPkgJson(filePath) {
-    let $resultPromise = /** @type {any} */($Call.ByID(1363765326, filePath));
-    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
-        return $$createType4($result);
-    }));
-    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
-    return $typingPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(1363765326, filePath));
+	const $typingPromise = /** @type {any} */ (
+		$resultPromise.then(($result) => {
+			return $$createType4($result);
+		})
+	);
+	$typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+	return $typingPromise;
 }
 
 /**
  * @returns {Promise<application$0.Service[]> & { cancel(): void }}
  */
 export function RegisterServices() {
-    let $resultPromise = /** @type {any} */($Call.ByID(2243616331));
-    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
-        return $$createType6($result);
-    }));
-    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
-    return $typingPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(2243616331));
+	const $typingPromise = /** @type {any} */ (
+		$resultPromise.then(($result) => {
+			return $$createType6($result);
+		})
+	);
+	$typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+	return $typingPromise;
 }
 
 /**
@@ -97,20 +105,22 @@ export function RegisterServices() {
  * @returns {Promise<application$0.App | null> & { cancel(): void }}
  */
 export function Setup(assets) {
-    let $resultPromise = /** @type {any} */($Call.ByID(3477651003, assets));
-    let $typingPromise = /** @type {any} */($resultPromise.then(($result) => {
-        return $$createType8($result);
-    }));
-    $typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
-    return $typingPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(3477651003, assets));
+	const $typingPromise = /** @type {any} */ (
+		$resultPromise.then(($result) => {
+			return $$createType8($result);
+		})
+	);
+	$typingPromise.cancel = $resultPromise.cancel.bind($resultPromise);
+	return $typingPromise;
 }
 
 /**
  * @returns {Promise<void> & { cancel(): void }}
  */
 export function ToggleApp() {
-    let $resultPromise = /** @type {any} */($Call.ByID(559805133));
-    return $resultPromise;
+	const $resultPromise = /** @type {any} */ ($Call.ByID(559805133));
+	return $resultPromise;
 }
 
 // Private type creation functions

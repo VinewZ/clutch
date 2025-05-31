@@ -21,7 +21,6 @@ function RouteComponent() {
   }
 
   function handleExtensionNavigate(e: MessageEvent) {
-    console.log(e.data)
     navigate({
       from: "/extension/$extension",
       to: e.data?.path,
@@ -37,31 +36,30 @@ function RouteComponent() {
         case "clutch-extension-navigate":
           handleExtensionNavigate(e);
           break;
-        default:
-          break;
       }
     };
 
     const focusIframe = () => {
       iframeRef.current?.focus();
-    }
+    };
 
     window.addEventListener("message", handleMessage);
     iframeRef.current?.addEventListener("load", focusIframe);
     return () => {
       window.removeEventListener("message", handleMessage);
       window.removeEventListener("load", focusIframe);
-    }
-  }, [theme]);
+    };
+  }, [theme, handleExtensionReady, handleExtensionNavigate]);
 
   return (
     <div>
       <BackButton />
       <iframe
+        title={params.extension}
         ref={iframeRef}
         className="h-dvh w-dvw bg-transparent"
         src={`/extensions/${params.extension}/dist/index.html`}
-      ></iframe>
+      />
     </div>
   );
 }

@@ -13,19 +13,19 @@ import { ThemeProvider } from "./providers/theme.tsx";
 
 // Create a new router instance
 const router = createRouter({
-  routeTree,
-  context: {},
-  defaultPreload: "intent",
-  scrollRestoration: true,
-  defaultStructuralSharing: true,
-  defaultPreloadStaleTime: 0,
+	routeTree,
+	context: {},
+	defaultPreload: "intent",
+	scrollRestoration: true,
+	defaultStructuralSharing: true,
+	defaultPreloadStaleTime: 0,
 });
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
-  interface Register {
-    router: typeof router;
-  }
+	interface Register {
+		router: typeof router;
+	}
 }
 
 const queryClient = new QueryClient();
@@ -33,23 +33,23 @@ const queryClient = new QueryClient();
 // Render the app
 const rootElement = document.getElementById("app");
 if (rootElement && !rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement);
-  root.render(
-    <StrictMode>
-      <ThemeProvider>
-        <QueryClientProvider client={queryClient}>
-          <RouterProvider router={router} />
-          <ToastContainer
-            position="bottom-right"
-            autoClose={3000}
-            closeOnClick={true}
-            pauseOnHover={true}
-            pauseOnFocusLoss={false}
-          />
-        </QueryClientProvider>
-      </ThemeProvider>
-    </StrictMode>,
-  );
+	const root = ReactDOM.createRoot(rootElement);
+	root.render(
+		<StrictMode>
+			<ThemeProvider>
+				<QueryClientProvider client={queryClient}>
+					<RouterProvider router={router} />
+					<ToastContainer
+						position="bottom-right"
+						autoClose={3000}
+						closeOnClick={true}
+						pauseOnHover={true}
+						pauseOnFocusLoss={false}
+					/>
+				</QueryClientProvider>
+			</ThemeProvider>
+		</StrictMode>,
+	);
 }
 
 // If you want to start measuring performance in your app, pass a function
