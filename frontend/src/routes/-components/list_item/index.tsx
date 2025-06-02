@@ -23,7 +23,7 @@ type ItemProps = {
 	setFocusedId: (id: string) => void;
 };
 
-export const Item = forwardRef<HTMLLIElement, ItemProps>(
+export const ListItem = forwardRef<HTMLLIElement, ItemProps>(
 	({ item, isFocused, handleSubmit, setFocusedId }, ref) => {
 		const label =
 			item.name || item.label || item.clutch?.name || item.command || "—";

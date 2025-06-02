@@ -4,11 +4,7 @@ import type {
 	DesktopApp,
 } from "bindings/github.com/vinewz/clutch/app";
 import { useMemo } from "react";
-
-export type ListRoute = {
-	path: string;
-	label: string;
-};
+import type { ListRoute } from "./useRoutes";
 
 function filterAndSection<T, K extends string>(
 	items: T[] | undefined,

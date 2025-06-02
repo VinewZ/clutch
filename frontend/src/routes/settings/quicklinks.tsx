@@ -1,10 +1,11 @@
+import type { FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { useState, type FormEvent } from "react";
+import { useState } from "react";
 import { Edit, Trash } from "lucide-react";
 import { QuicklinkEdit } from "@/components/settings/quicklink_edit";
 import { QuicklinkDelete } from "@/components/settings/quicklink_delete";

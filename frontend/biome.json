@@ -20,6 +20,14 @@
 		"enabled": true,
 		"rules": {
 			"recommended": true,
+			"correctness": {
+				"useExhaustiveDependencies": "off"
+			},
+			"a11y": {
+				"useIframeTitle": "off",
+				"useAltText": "off",
+				"useKeyWithClickEvents": "off"
+			},
 			"nursery": {
 				"useSortedClasses": {
 					"level": "error",

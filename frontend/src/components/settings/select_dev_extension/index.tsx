@@ -35,7 +35,7 @@ export function SelectDevExtension({
 			<div className="mb-5 w-full">
 				<Button
 					variant="ghost"
-					className={`flex h-fit w-full cursor-pointer flex-col items-center justify-center gap-0 rounded-2xl border border-gray-300 border-dashed bg-zinc-800 py-9 transition-colors hover:bg-zinc-700`}
+					className="flex h-fit w-full cursor-pointer flex-col items-center justify-center gap-0 rounded-2xl border border-gray-300 border-dashed bg-zinc-800 py-9 transition-colors hover:bg-zinc-700"
 					onClick={async () => {
 						const res = await Dialogs.OpenFile({
 							AllowsMultipleSelection: false,

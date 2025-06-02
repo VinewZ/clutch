@@ -1,4 +1,4 @@
-import { SelectDevExtension } from "@/components/settings/drag_and_drop";
+import { SelectDevExtension } from "@/components/settings/select_dev_extension";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
