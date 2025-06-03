@@ -1,106 +1,115 @@
 import { useEffect, useCallback } from "react";
 import type { Dispatch, RefObject, SetStateAction } from "react";
 import { ClutchServices } from "../../bindings/github.com/vinewz/clutch/app";
+import { useActionHandler } from "./useActionHandler";
 
 export interface KeyboardNavOptions {
-	flatUids: string[];
-	focusedId: string;
-	setFocusedId: (id: string) => void;
-	refs: Record<string, RefObject<HTMLElement | null>>;
-	handleSubmit: () => void;
-	toggleHelp: () => void;
-	setShowLaunchKeys: Dispatch<SetStateAction<boolean>>;
+  flatUids: string[];
+  focusedId: string;
+  setFocusedId: (id: string) => void;
+  refs: Record<string, RefObject<HTMLElement | null>>;
+  toggleHelp: () => void;
+  setShowLaunchKeys: Dispatch<SetStateAction<boolean>>;
 }
 
 export function useKeyboardNav({
-	flatUids,
-	focusedId,
-	setFocusedId,
-	refs,
-	handleSubmit,
-	toggleHelp,
-	setShowLaunchKeys,
+  flatUids,
+  focusedId,
+  setFocusedId,
+  refs,
+  toggleHelp,
+  setShowLaunchKeys,
 }: KeyboardNavOptions) {
-	const moveFocus = useCallback(
-		(direction: "up" | "down") => {
-			if (!flatUids.length) return;
+  const actionHandler = useActionHandler()
+  const moveFocus = useCallback(
+    (direction: "up" | "down") => {
+      if (!flatUids.length) return;
 
-			const idx = flatUids.indexOf(focusedId);
-			if (idx < 0) return;
-			const len = flatUids.length;
+      const idx = flatUids.indexOf(focusedId);
+      if (idx < 0) return;
+      const len = flatUids.length;
 
-			const nextId =
-				direction === "down"
-					? flatUids[(idx + 1) % len]
-					: flatUids[(idx - 1 + len) % len];
+      const nextId =
+        direction === "down"
+          ? flatUids[(idx + 1) % len]
+          : flatUids[(idx - 1 + len) % len];
 
-			setFocusedId(nextId);
-			refs[nextId]?.current?.scrollIntoView({ block: "nearest" });
-		},
-		[flatUids, focusedId, refs, setFocusedId],
-	);
+      setFocusedId(nextId);
+      refs[nextId]?.current?.scrollIntoView({ block: "nearest" });
+    },
+    [flatUids, focusedId, refs, setFocusedId],
+  );
 
-	const onKeyDown = useCallback(
-		(e: KeyboardEvent) => {
-			if (!flatUids.length) return;
+  const onKeyDown = useCallback(
+    (e: KeyboardEvent) => {
+      if (!flatUids.length) return;
 
-			if (e.ctrlKey) {
-				setShowLaunchKeys(true);
-			}
+      if (e.ctrlKey) {
+        setShowLaunchKeys(true);
+      }
 
-			switch (true) {
-				case e.ctrlKey && /^[1-5]$/.test(e.key):
-					e.preventDefault();
-					console.log("Launch key pressed:", e.key);
-					break;
+      switch (true) {
+        case e.ctrlKey && /^[1-5]$/.test(e.key):
+          e.preventDefault();
+          console.log("Launch key pressed:", e.key);
+          break;
 
-				case e.key === "ArrowDown":
-					e.preventDefault();
-					moveFocus("down");
-					break;
+        case e.key === "ArrowDown":
+          e.preventDefault();
+          moveFocus("down");
+          break;
 
-				case e.key === "ArrowUp":
-					e.preventDefault();
-					moveFocus("up");
-					break;
+        case e.key === "ArrowUp":
+          e.preventDefault();
+          moveFocus("up");
+          break;
 
-				case e.key === "Enter":
-					handleSubmit();
-					break;
+        case e.key === "Enter":
+          e.preventDefault();
+          const currentItem = document.querySelector(`#${focusedId}`);
+          if (currentItem) {
+            const action = currentItem.getAttribute("data-action");
+            if (action) {
+              const [actionType, payload] = action.split("-");
+              console.log("Action triggered:", actionType, payload);
+              actionHandler({ action: actionType, payload: payload });
+            }
+          }
+          break;
 
-				case e.key === "Escape":
-					ClutchServices.ToggleApp();
-					break;
+        case e.key === "Escape":
+          ClutchServices.ToggleApp();
+          break;
 
-				case e.key === "F1":
-					e.preventDefault();
-					toggleHelp();
-					break;
+        case e.key === "F1":
+          e.preventDefault();
+          toggleHelp();
+          break;
 
-				default:
-					return;
-			}
-		},
-		[flatUids, moveFocus, handleSubmit, toggleHelp],
-	);
+        default:
+          return;
+      }
+    },
+    [flatUids, moveFocus, toggleHelp],
+  );
 
-	const onKeyUp = useCallback(
-		(e: KeyboardEvent) => {
-			if (!flatUids.length) return;
+  const onKeyUp = useCallback(
+    (e: KeyboardEvent) => {
+      if (!flatUids.length) return;
 
-			if (e.ctrlKey) {
-				setShowLaunchKeys(false);
-			}
-		},
-		[flatUids, moveFocus, handleSubmit, toggleHelp],
-	);
+      if (e.ctrlKey) {
+        setShowLaunchKeys(false);
+      }
+    },
+    [flatUids, moveFocus, toggleHelp],
+  );
 
-	useEffect(() => {
-		window.addEventListener("keydown", onKeyDown);
-		window.addEventListener("keyup", onKeyUp);
-		return () => {
-			window.removeEventListener("keydown", onKeyDown);
-			window.removeEventListener("keyup", onKeyUp);
-		};
-	}, [onKeyDown]);
+  useEffect(() => {
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("keyup", onKeyUp);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("keyup", onKeyUp);
+    };
+  }, [onKeyDown]);
 }

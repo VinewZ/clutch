@@ -1,3 +1,4 @@
+import type { SectionedListItem } from "@/hooks/useSectionedlist";
 import {
   Tooltip,
   TooltipTrigger,
@@ -7,17 +8,17 @@ import {
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { forwardRef } from "react";
-import type { SectionedListItem } from "@/hooks/useSectionedlist";
+import { useActionHandler } from "@/hooks/useActionHandler";
 
 type ItemProps = {
   item: SectionedListItem;
   isFocused: boolean;
-  handleSubmit: () => void;
   setFocusedId: (id: string) => void;
 };
 
 export const ListItem = forwardRef<HTMLLIElement, ItemProps>(
-  ({ item, isFocused, handleSubmit, setFocusedId }, ref) => {
+  ({ item, isFocused, setFocusedId }, ref) => {
+    const actionHandler = useActionHandler()
     const label = () => {
       switch (true) {
         case item._section === "Apps":
@@ -56,8 +57,11 @@ export const ListItem = forwardRef<HTMLLIElement, ItemProps>(
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          console.log("Clicked item:", item._uid);
-          handleSubmit();
+          const action = e.currentTarget.dataset.action?.split("-")[0];
+          actionHandler({
+            action: action || "unknown",
+            payload: item,
+          });
         }}
         onMouseEnter={() => setFocusedId(item._uid)}
         onMouseLeave={() => setFocusedId("")}
