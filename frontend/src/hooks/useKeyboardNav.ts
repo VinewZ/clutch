@@ -3,7 +3,7 @@ import type { Dispatch, RefObject, SetStateAction } from "react";
 import { ClutchServices } from "../../bindings/github.com/vinewz/clutch/app";
 
 export interface KeyboardNavOptions {
-	flatOrder: string[];
+	flatUids: string[];
 	focusedId: string;
 	setFocusedId: (id: string) => void;
 	refs: Record<string, RefObject<HTMLElement | null>>;
@@ -13,7 +13,7 @@ export interface KeyboardNavOptions {
 }
 
 export function useKeyboardNav({
-	flatOrder,
+	flatUids,
 	focusedId,
 	setFocusedId,
 	refs,
@@ -23,32 +23,31 @@ export function useKeyboardNav({
 }: KeyboardNavOptions) {
 	const moveFocus = useCallback(
 		(direction: "up" | "down") => {
-			if (!flatOrder.length) return;
+			if (!flatUids.length) return;
 
-			const idx = flatOrder.indexOf(focusedId);
+			const idx = flatUids.indexOf(focusedId);
 			if (idx < 0) return;
-			const len = flatOrder.length;
+			const len = flatUids.length;
 
 			const nextId =
 				direction === "down"
-					? flatOrder[(idx + 1) % len]
-					: flatOrder[(idx - 1 + len) % len];
+					? flatUids[(idx + 1) % len]
+					: flatUids[(idx - 1 + len) % len];
 
 			setFocusedId(nextId);
 			refs[nextId]?.current?.scrollIntoView({ block: "nearest" });
 		},
-		[flatOrder, focusedId, refs, setFocusedId],
+		[flatUids, focusedId, refs, setFocusedId],
 	);
 
 	const onKeyDown = useCallback(
 		(e: KeyboardEvent) => {
-			if (!flatOrder.length) return;
+			if (!flatUids.length) return;
 
-			if (e.key === "Control") {
+			if (e.ctrlKey) {
 				setShowLaunchKeys(true);
 			}
 
-			console.log(e.key);
 			switch (true) {
 				case e.ctrlKey && /^[1-5]$/.test(e.key):
 					e.preventDefault();
@@ -82,18 +81,18 @@ export function useKeyboardNav({
 					return;
 			}
 		},
-		[flatOrder, moveFocus, handleSubmit, toggleHelp],
+		[flatUids, moveFocus, handleSubmit, toggleHelp],
 	);
 
 	const onKeyUp = useCallback(
 		(e: KeyboardEvent) => {
-			if (!flatOrder.length) return;
+			if (!flatUids.length) return;
 
-			if (e.key === "Control") {
+			if (e.ctrlKey) {
 				setShowLaunchKeys(false);
 			}
 		},
-		[flatOrder, moveFocus, handleSubmit, toggleHelp],
+		[flatUids, moveFocus, handleSubmit, toggleHelp],
 	);
 
 	useEffect(() => {

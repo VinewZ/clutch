@@ -1,63 +1,89 @@
 import {
-	Tooltip,
-	TooltipTrigger,
-	TooltipProvider,
-	TooltipContent,
+  Tooltip,
+  TooltipTrigger,
+  TooltipProvider,
+  TooltipContent,
 } from "@/components/ui/tooltip";
 import { Info } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { forwardRef } from "react";
+import type { SectionedListItem } from "@/hooks/useSectionedlist";
 
 type ItemProps = {
-	item: {
-		_uid: string;
-		name?: string;
-		label?: string;
-		clutch?: { name: string };
-		command?: string;
-		icon?: string;
-		exec?: string;
-	};
-	isFocused: boolean;
-	handleSubmit: () => void;
-	setFocusedId: (id: string) => void;
+  item: SectionedListItem;
+  isFocused: boolean;
+  handleSubmit: () => void;
+  setFocusedId: (id: string) => void;
 };
 
 export const ListItem = forwardRef<HTMLLIElement, ItemProps>(
-	({ item, isFocused, handleSubmit, setFocusedId }, ref) => {
-		const label =
-			item.name || item.label || item.clutch?.name || item.command || "—";
+  ({ item, isFocused, handleSubmit, setFocusedId }, ref) => {
+    const label = () => {
+      switch (true) {
+        case item._section === "Apps":
+          return item.name;
+        case item._section === "Extensions":
+          return item.clutch?.name
+        case item._section === "Routes":
+          return item.label;
+        case item._section === "Quicklinks":
+          return item.name;
+        default:
+          return "—";
+      }
+    }
 
-		return (
-			<li
-				ref={ref}
-				id={item._uid}
-				onClick={handleSubmit}
-				onMouseEnter={() => setFocusedId(item._uid)}
-				onMouseLeave={() => setFocusedId("")}
-				className={cn(
-					"mx-1 flex cursor-pointer items-center justify-between gap-2 rounded p-2 text-sm",
-					isFocused ? "bg-zinc-700" : "text-zinc-300",
-				)}
-			>
-				<div className="flex items-center gap-1">
-					{item.icon && <img className="size-4" src={item.icon} />}
-					{item.command && <span>{item.command} – </span>}
-					<span>{label}</span>
-				</div>
-				{item.exec && (
-					<TooltipProvider>
-						<Tooltip>
-							<TooltipTrigger>
-								<Info size={16} />
-							</TooltipTrigger>
-							<TooltipContent>
-								<p>Runs: {item.exec}</p>
-							</TooltipContent>
-						</Tooltip>
-					</TooltipProvider>
-				)}
-			</li>
-		);
-	},
+    const action = () => {
+      switch (true) {
+        case item._section === "Apps":
+          return `app-${item.exec}`
+        case item._section === "Extensions":
+          return `extension-${item.clutch?.repo}`;
+        case item._section === "Routes":
+          return `route-${item.label}`;
+        case item._section === "Quicklinks":
+          return `quicklink-${item.command}`;
+        default:
+          return "unknown";
+      }
+    }
+
+    return (
+      <li
+        ref={ref}
+        id={item._uid}
+        data-action={action()}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          console.log("Clicked item:", item._uid);
+          handleSubmit();
+        }}
+        onMouseEnter={() => setFocusedId(item._uid)}
+        onMouseLeave={() => setFocusedId("")}
+        className={cn(
+          "mx-1 flex cursor-pointer items-center justify-between gap-2 rounded p-2 text-sm",
+          isFocused ? "bg-zinc-700" : "text-zinc-300",
+        )}
+      >
+        <div className="flex items-center gap-1">
+          {item._section === "Quicklinks" && <img className="size-4" src={item.icon} />}
+          {item._section === "Quicklinks" && <span>{item.command} – </span>}
+          <span>{label()}</span>
+        </div>
+        {item._section === "Apps" && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <Info size={16} />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Runs: {item.exec}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+      </li>
+    );
+  },
 );
