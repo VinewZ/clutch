@@ -4,7 +4,7 @@ import { useDesktopExtensions } from "@/hooks/useExtensions";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useRoutes } from "./useRoutes";
 
-export function useDesktopData() {
+export  function useDesktopData() {
 	const { data: apps } = useDesktopApps();
 	const { data: extensions } = useDesktopExtensions();
 	const [quicklinks] = useLocalStorage<Quicklink[]>("quickLinks", []);

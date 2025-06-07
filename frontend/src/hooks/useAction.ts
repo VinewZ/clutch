@@ -1,20 +1,17 @@
 import type { SectionedListItem } from "./useSectionedlist";
 import type { ListRoute } from "./useRoutes";
 import type { Quicklink } from "@/routes/settings/quicklinks";
-import type { DesktopApp } from "../../bindings/github.com/vinewz/clutch/app";
+import type { DesktopApp, ClutchPkgJson } from "../../bindings/github.com/vinewz/clutch/app";
 import { useNavigate } from "@tanstack/react-router";
-import {
-  type ClutchPkgJson,
-  ClutchServices,
-} from "../../bindings/github.com/vinewz/clutch/app";
+import { ClutchServices } from "../../bindings/github.com/vinewz/clutch/app";
 import { Browser } from "@wailsio/runtime";
 
 type UseSelectedListItemProps = {
   action: string
-  payload: SectionedListItem
+  listItem: SectionedListItem
 };
 
-export function useActionHandler() {
+export function useAction() {
   const navigate = useNavigate();
 
   function handleApp(app: DesktopApp) {
@@ -44,22 +41,23 @@ export function useActionHandler() {
     ClutchServices.ToggleApp();
   }
 
-  return function handler({ action, payload }: UseSelectedListItemProps) {
+  return function handler({ action, listItem }: UseSelectedListItemProps) {
     switch (action) {
-      case "app":
-        handleApp(payload as DesktopApp);
+      case "apps":
+        const d = listItem as DesktopApp
+        handleApp(d);
         break;
-      case "extension":
-        handleExtensions(payload as ClutchPkgJson);
+      case "extensions":
+        const e = listItem as ClutchPkgJson
+        handleExtensions(e);
         break;
-      case "route":
-        handleRoutes(payload as ListRoute);
+      case "routes":
+        const l = listItem as ListRoute
+        handleRoutes(l);
         break;
-      case "quicklink":
-        handleQuicklink(
-          payload as Quicklink,
-          (payload as Quicklink).command || "",
-        );
+      case "quicklinks":
+        const q = listItem as Quicklink
+        handleQuicklink(q, q.command || "");
         break;
       default:
         console.warn("Unknown action:", action);

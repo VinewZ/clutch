@@ -10,234 +10,234 @@
 
 // Import Routes
 
-import { Route as rootRoute } from "./routes/__root";
-import { Route as SettingsRouteImport } from "./routes/settings/route";
-import { Route as IndexImport } from "./routes/index";
-import { Route as SettingsQuicklinksImport } from "./routes/settings/quicklinks";
-import { Route as SettingsGeneralImport } from "./routes/settings/general";
-import { Route as SettingsExtensionsImport } from "./routes/settings/extensions";
-import { Route as SettingsDevelopersImport } from "./routes/settings/developers";
-import { Route as ExtensionExtensionImport } from "./routes/extension/$extension";
-import { Route as ExtensionDevExtensionImport } from "./routes/extension/dev/$extension";
+import { Route as rootRoute } from './routes/__root'
+import { Route as SettingsRouteImport } from './routes/settings/route'
+import { Route as IndexImport } from './routes/index'
+import { Route as SettingsQuicklinksImport } from './routes/settings/quicklinks'
+import { Route as SettingsGeneralImport } from './routes/settings/general'
+import { Route as SettingsExtensionsImport } from './routes/settings/extensions'
+import { Route as SettingsDevelopersImport } from './routes/settings/developers'
+import { Route as ExtensionExtensionImport } from './routes/extension/$extension'
+import { Route as ExtensionDevExtensionImport } from './routes/extension/dev/$extension'
 
 // Create/Update Routes
 
 const SettingsRouteRoute = SettingsRouteImport.update({
-	id: "/settings",
-	path: "/settings",
-	getParentRoute: () => rootRoute,
-} as any);
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const IndexRoute = IndexImport.update({
-	id: "/",
-	path: "/",
-	getParentRoute: () => rootRoute,
-} as any);
+  id: '/',
+  path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const SettingsQuicklinksRoute = SettingsQuicklinksImport.update({
-	id: "/quicklinks",
-	path: "/quicklinks",
-	getParentRoute: () => SettingsRouteRoute,
-} as any);
+  id: '/quicklinks',
+  path: '/quicklinks',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 
 const SettingsGeneralRoute = SettingsGeneralImport.update({
-	id: "/general",
-	path: "/general",
-	getParentRoute: () => SettingsRouteRoute,
-} as any);
+  id: '/general',
+  path: '/general',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 
 const SettingsExtensionsRoute = SettingsExtensionsImport.update({
-	id: "/extensions",
-	path: "/extensions",
-	getParentRoute: () => SettingsRouteRoute,
-} as any);
+  id: '/extensions',
+  path: '/extensions',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 
 const SettingsDevelopersRoute = SettingsDevelopersImport.update({
-	id: "/developers",
-	path: "/developers",
-	getParentRoute: () => SettingsRouteRoute,
-} as any);
+  id: '/developers',
+  path: '/developers',
+  getParentRoute: () => SettingsRouteRoute,
+} as any)
 
 const ExtensionExtensionRoute = ExtensionExtensionImport.update({
-	id: "/extension/$extension",
-	path: "/extension/$extension",
-	getParentRoute: () => rootRoute,
-} as any);
+  id: '/extension/$extension',
+  path: '/extension/$extension',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const ExtensionDevExtensionRoute = ExtensionDevExtensionImport.update({
-	id: "/extension/dev/$extension",
-	path: "/extension/dev/$extension",
-	getParentRoute: () => rootRoute,
-} as any);
+  id: '/extension/dev/$extension',
+  path: '/extension/dev/$extension',
+  getParentRoute: () => rootRoute,
+} as any)
 
 // Populate the FileRoutesByPath interface
 
-declare module "@tanstack/react-router" {
-	interface FileRoutesByPath {
-		"/": {
-			id: "/";
-			path: "/";
-			fullPath: "/";
-			preLoaderRoute: typeof IndexImport;
-			parentRoute: typeof rootRoute;
-		};
-		"/settings": {
-			id: "/settings";
-			path: "/settings";
-			fullPath: "/settings";
-			preLoaderRoute: typeof SettingsRouteImport;
-			parentRoute: typeof rootRoute;
-		};
-		"/extension/$extension": {
-			id: "/extension/$extension";
-			path: "/extension/$extension";
-			fullPath: "/extension/$extension";
-			preLoaderRoute: typeof ExtensionExtensionImport;
-			parentRoute: typeof rootRoute;
-		};
-		"/settings/developers": {
-			id: "/settings/developers";
-			path: "/developers";
-			fullPath: "/settings/developers";
-			preLoaderRoute: typeof SettingsDevelopersImport;
-			parentRoute: typeof SettingsRouteImport;
-		};
-		"/settings/extensions": {
-			id: "/settings/extensions";
-			path: "/extensions";
-			fullPath: "/settings/extensions";
-			preLoaderRoute: typeof SettingsExtensionsImport;
-			parentRoute: typeof SettingsRouteImport;
-		};
-		"/settings/general": {
-			id: "/settings/general";
-			path: "/general";
-			fullPath: "/settings/general";
-			preLoaderRoute: typeof SettingsGeneralImport;
-			parentRoute: typeof SettingsRouteImport;
-		};
-		"/settings/quicklinks": {
-			id: "/settings/quicklinks";
-			path: "/quicklinks";
-			fullPath: "/settings/quicklinks";
-			preLoaderRoute: typeof SettingsQuicklinksImport;
-			parentRoute: typeof SettingsRouteImport;
-		};
-		"/extension/dev/$extension": {
-			id: "/extension/dev/$extension";
-			path: "/extension/dev/$extension";
-			fullPath: "/extension/dev/$extension";
-			preLoaderRoute: typeof ExtensionDevExtensionImport;
-			parentRoute: typeof rootRoute;
-		};
-	}
+declare module '@tanstack/react-router' {
+  interface FileRoutesByPath {
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRoute
+    }
+    '/extension/$extension': {
+      id: '/extension/$extension'
+      path: '/extension/$extension'
+      fullPath: '/extension/$extension'
+      preLoaderRoute: typeof ExtensionExtensionImport
+      parentRoute: typeof rootRoute
+    }
+    '/settings/developers': {
+      id: '/settings/developers'
+      path: '/developers'
+      fullPath: '/settings/developers'
+      preLoaderRoute: typeof SettingsDevelopersImport
+      parentRoute: typeof SettingsRouteImport
+    }
+    '/settings/extensions': {
+      id: '/settings/extensions'
+      path: '/extensions'
+      fullPath: '/settings/extensions'
+      preLoaderRoute: typeof SettingsExtensionsImport
+      parentRoute: typeof SettingsRouteImport
+    }
+    '/settings/general': {
+      id: '/settings/general'
+      path: '/general'
+      fullPath: '/settings/general'
+      preLoaderRoute: typeof SettingsGeneralImport
+      parentRoute: typeof SettingsRouteImport
+    }
+    '/settings/quicklinks': {
+      id: '/settings/quicklinks'
+      path: '/quicklinks'
+      fullPath: '/settings/quicklinks'
+      preLoaderRoute: typeof SettingsQuicklinksImport
+      parentRoute: typeof SettingsRouteImport
+    }
+    '/extension/dev/$extension': {
+      id: '/extension/dev/$extension'
+      path: '/extension/dev/$extension'
+      fullPath: '/extension/dev/$extension'
+      preLoaderRoute: typeof ExtensionDevExtensionImport
+      parentRoute: typeof rootRoute
+    }
+  }
 }
 
 // Create and export the route tree
 
 interface SettingsRouteRouteChildren {
-	SettingsDevelopersRoute: typeof SettingsDevelopersRoute;
-	SettingsExtensionsRoute: typeof SettingsExtensionsRoute;
-	SettingsGeneralRoute: typeof SettingsGeneralRoute;
-	SettingsQuicklinksRoute: typeof SettingsQuicklinksRoute;
+  SettingsDevelopersRoute: typeof SettingsDevelopersRoute
+  SettingsExtensionsRoute: typeof SettingsExtensionsRoute
+  SettingsGeneralRoute: typeof SettingsGeneralRoute
+  SettingsQuicklinksRoute: typeof SettingsQuicklinksRoute
 }
 
 const SettingsRouteRouteChildren: SettingsRouteRouteChildren = {
-	SettingsDevelopersRoute: SettingsDevelopersRoute,
-	SettingsExtensionsRoute: SettingsExtensionsRoute,
-	SettingsGeneralRoute: SettingsGeneralRoute,
-	SettingsQuicklinksRoute: SettingsQuicklinksRoute,
-};
+  SettingsDevelopersRoute: SettingsDevelopersRoute,
+  SettingsExtensionsRoute: SettingsExtensionsRoute,
+  SettingsGeneralRoute: SettingsGeneralRoute,
+  SettingsQuicklinksRoute: SettingsQuicklinksRoute,
+}
 
 const SettingsRouteRouteWithChildren = SettingsRouteRoute._addFileChildren(
-	SettingsRouteRouteChildren,
-);
+  SettingsRouteRouteChildren,
+)
 
 export interface FileRoutesByFullPath {
-	"/": typeof IndexRoute;
-	"/settings": typeof SettingsRouteRouteWithChildren;
-	"/extension/$extension": typeof ExtensionExtensionRoute;
-	"/settings/developers": typeof SettingsDevelopersRoute;
-	"/settings/extensions": typeof SettingsExtensionsRoute;
-	"/settings/general": typeof SettingsGeneralRoute;
-	"/settings/quicklinks": typeof SettingsQuicklinksRoute;
-	"/extension/dev/$extension": typeof ExtensionDevExtensionRoute;
+  '/': typeof IndexRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
+  '/extension/$extension': typeof ExtensionExtensionRoute
+  '/settings/developers': typeof SettingsDevelopersRoute
+  '/settings/extensions': typeof SettingsExtensionsRoute
+  '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quicklinks': typeof SettingsQuicklinksRoute
+  '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
 export interface FileRoutesByTo {
-	"/": typeof IndexRoute;
-	"/settings": typeof SettingsRouteRouteWithChildren;
-	"/extension/$extension": typeof ExtensionExtensionRoute;
-	"/settings/developers": typeof SettingsDevelopersRoute;
-	"/settings/extensions": typeof SettingsExtensionsRoute;
-	"/settings/general": typeof SettingsGeneralRoute;
-	"/settings/quicklinks": typeof SettingsQuicklinksRoute;
-	"/extension/dev/$extension": typeof ExtensionDevExtensionRoute;
+  '/': typeof IndexRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
+  '/extension/$extension': typeof ExtensionExtensionRoute
+  '/settings/developers': typeof SettingsDevelopersRoute
+  '/settings/extensions': typeof SettingsExtensionsRoute
+  '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quicklinks': typeof SettingsQuicklinksRoute
+  '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
 export interface FileRoutesById {
-	__root__: typeof rootRoute;
-	"/": typeof IndexRoute;
-	"/settings": typeof SettingsRouteRouteWithChildren;
-	"/extension/$extension": typeof ExtensionExtensionRoute;
-	"/settings/developers": typeof SettingsDevelopersRoute;
-	"/settings/extensions": typeof SettingsExtensionsRoute;
-	"/settings/general": typeof SettingsGeneralRoute;
-	"/settings/quicklinks": typeof SettingsQuicklinksRoute;
-	"/extension/dev/$extension": typeof ExtensionDevExtensionRoute;
+  __root__: typeof rootRoute
+  '/': typeof IndexRoute
+  '/settings': typeof SettingsRouteRouteWithChildren
+  '/extension/$extension': typeof ExtensionExtensionRoute
+  '/settings/developers': typeof SettingsDevelopersRoute
+  '/settings/extensions': typeof SettingsExtensionsRoute
+  '/settings/general': typeof SettingsGeneralRoute
+  '/settings/quicklinks': typeof SettingsQuicklinksRoute
+  '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
 export interface FileRouteTypes {
-	fileRoutesByFullPath: FileRoutesByFullPath;
-	fullPaths:
-		| "/"
-		| "/settings"
-		| "/extension/$extension"
-		| "/settings/developers"
-		| "/settings/extensions"
-		| "/settings/general"
-		| "/settings/quicklinks"
-		| "/extension/dev/$extension";
-	fileRoutesByTo: FileRoutesByTo;
-	to:
-		| "/"
-		| "/settings"
-		| "/extension/$extension"
-		| "/settings/developers"
-		| "/settings/extensions"
-		| "/settings/general"
-		| "/settings/quicklinks"
-		| "/extension/dev/$extension";
-	id:
-		| "__root__"
-		| "/"
-		| "/settings"
-		| "/extension/$extension"
-		| "/settings/developers"
-		| "/settings/extensions"
-		| "/settings/general"
-		| "/settings/quicklinks"
-		| "/extension/dev/$extension";
-	fileRoutesById: FileRoutesById;
+  fileRoutesByFullPath: FileRoutesByFullPath
+  fullPaths:
+    | '/'
+    | '/settings'
+    | '/extension/$extension'
+    | '/settings/developers'
+    | '/settings/extensions'
+    | '/settings/general'
+    | '/settings/quicklinks'
+    | '/extension/dev/$extension'
+  fileRoutesByTo: FileRoutesByTo
+  to:
+    | '/'
+    | '/settings'
+    | '/extension/$extension'
+    | '/settings/developers'
+    | '/settings/extensions'
+    | '/settings/general'
+    | '/settings/quicklinks'
+    | '/extension/dev/$extension'
+  id:
+    | '__root__'
+    | '/'
+    | '/settings'
+    | '/extension/$extension'
+    | '/settings/developers'
+    | '/settings/extensions'
+    | '/settings/general'
+    | '/settings/quicklinks'
+    | '/extension/dev/$extension'
+  fileRoutesById: FileRoutesById
 }
 
 export interface RootRouteChildren {
-	IndexRoute: typeof IndexRoute;
-	SettingsRouteRoute: typeof SettingsRouteRouteWithChildren;
-	ExtensionExtensionRoute: typeof ExtensionExtensionRoute;
-	ExtensionDevExtensionRoute: typeof ExtensionDevExtensionRoute;
+  IndexRoute: typeof IndexRoute
+  SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
+  ExtensionExtensionRoute: typeof ExtensionExtensionRoute
+  ExtensionDevExtensionRoute: typeof ExtensionDevExtensionRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
-	IndexRoute: IndexRoute,
-	SettingsRouteRoute: SettingsRouteRouteWithChildren,
-	ExtensionExtensionRoute: ExtensionExtensionRoute,
-	ExtensionDevExtensionRoute: ExtensionDevExtensionRoute,
-};
+  IndexRoute: IndexRoute,
+  SettingsRouteRoute: SettingsRouteRouteWithChildren,
+  ExtensionExtensionRoute: ExtensionExtensionRoute,
+  ExtensionDevExtensionRoute: ExtensionDevExtensionRoute,
+}
 
 export const routeTree = rootRoute
-	._addFileChildren(rootRouteChildren)
-	._addFileTypes<FileRouteTypes>();
+  ._addFileChildren(rootRouteChildren)
+  ._addFileTypes<FileRouteTypes>()
 
 /* ROUTE_MANIFEST_START
 {

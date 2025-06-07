@@ -32,10 +32,10 @@ export function HelpDialog({ isOpen, setIsOpen }: HelpDialogProps) {
 						<div className="flex items-center gap-1">
 							<span>Press</span>
 							<Kbd>
-								<ArrowUp size={12} />{" "}
+								<ArrowUp size={12} />
 							</Kbd>
 							<Kbd>
-								<ArrowDown size={12} />{" "}
+								<ArrowDown size={12} />
 							</Kbd>
 							<span>to navigate list</span>
 						</div>
@@ -44,8 +44,8 @@ export function HelpDialog({ isOpen, setIsOpen }: HelpDialogProps) {
 							<span>Press</span>
 							<Kbd>CTRL</Kbd>
 							<Kbd>1</Kbd>
-							<span>...</span>
-							<Kbd>5</Kbd>
+							<span>~</span>
+							<Kbd>9</Kbd>
 							<span>to quickly launch applications</span>
 						</div>
 					</DialogDescription>
