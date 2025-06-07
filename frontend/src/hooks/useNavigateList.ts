@@ -8,11 +8,12 @@ type useNavigateListProps = {
   liRefs: RefObject<HTMLLIElement[]>;
   selectedId: string;
   setSelectedId: Dispatch<SetStateAction<string>>;
+  setSearch: Dispatch<SetStateAction<string>>;
   setShowLaunchKeys: Dispatch<SetStateAction<boolean>>;
   setIsHelpDialogOpen: Dispatch<SetStateAction<boolean>>;
   flatList: SectionedList["flatList"];
 }
-export function useNavigateList({ inputRef, liRefs, selectedId, setSelectedId, setIsHelpDialogOpen, setShowLaunchKeys, flatList }: useNavigateListProps) {
+export function useNavigateList({ inputRef, liRefs, selectedId, setSelectedId, setSearch, setIsHelpDialogOpen, setShowLaunchKeys, flatList }: useNavigateListProps) {
   const actionHandler = useAction();
   function keyDown(e: KeyboardEvent) {
     switch (true) {
@@ -55,6 +56,7 @@ export function useNavigateList({ inputRef, liRefs, selectedId, setSelectedId, s
             listItem: selectedItem,
           });
         }
+        setSearch("");
         break
       }
       case e.key === "F1": {
@@ -64,6 +66,7 @@ export function useNavigateList({ inputRef, liRefs, selectedId, setSelectedId, s
       }
       case e.key === "Escape": {
         ClutchServices.ToggleApp()
+        setSearch("");
         break
       }
       case e.key === "Control": {

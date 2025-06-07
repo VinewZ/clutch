@@ -26,6 +26,7 @@ function App() {
     liRefs,
     selectedId,
     setSelectedId,
+    setSearch,
     setShowLaunchKeys,
     setIsHelpDialogOpen,
     flatList: sectionedListItems.flatList
