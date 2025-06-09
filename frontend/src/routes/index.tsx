@@ -7,6 +7,7 @@ import { useSectionedList } from "@/hooks/useSectionedlist";
 import { MainInput } from "./-components/main_input";
 import { Section } from "./-components/section";
 import { useNavigateList } from "@/hooks/useNavigateList";
+import { ConversorContainer } from "./-components/ConversorContainer";
 
 export const Route = createFileRoute("/")({
   component: App,
@@ -46,8 +47,8 @@ function App() {
   }, []);
 
   useEffect(() => {
-    setSelectedId(sectionedListItems.flatList[0]._uid || "");
-  }, [search]);
+    setSelectedId(sectionedListItems.flatList[0]?._uid || "");
+  }, [search, sectionedListItems]);
 
   return (
     <main>
@@ -58,6 +59,9 @@ function App() {
         setSearch={setSearch}
       />
       <ScrollArea className="h-[515px] pb-1.5 mt-[50px]">
+        <ConversorContainer
+          input={search}
+        />
         <ul className="flex h-full w-full flex-col overflow-hidden">
           {Object.entries(sectionedListItems).map(([key, list]) => {
             if (key === "flatList") return
