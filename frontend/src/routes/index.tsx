@@ -46,10 +46,6 @@ function App() {
     inputRef.current?.focus();
   }, []);
 
-  useEffect(() => {
-    setSelectedId(sectionedListItems.flatList[0]?._uid || "");
-  }, [search, sectionedListItems]);
-
   return (
     <main>
       <HelpDialog isOpen={isHelpDialogOpen} setIsOpen={setIsHelpDialogOpen} />

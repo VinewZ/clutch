@@ -22,7 +22,7 @@ export function ConversorContainer({ input }: ConversorContainerProps) {
     <div
       className={cn(
         "overflow-hidden transition-all",
-        result ? "h-48" : "h-0"
+        result && input.length >= 3 ? "h-48" : "h-0"
       )}
     >
       <div className="flex w-full h-full relative border-b">
