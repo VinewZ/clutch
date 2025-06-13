@@ -46,6 +46,11 @@ function App() {
     inputRef.current?.focus();
   }, []);
 
+  useEffect(() => {
+    setSelectedId(sectionedListItems.flatList[0]?._uid || "")
+  }, [search]);
+
+
   return (
     <main>
       <HelpDialog isOpen={isHelpDialogOpen} setIsOpen={setIsHelpDialogOpen} />
@@ -54,7 +59,7 @@ function App() {
         search={search}
         setSearch={setSearch}
       />
-      <ScrollArea className="h-[515px] pb-1.5 mt-[50px]">
+      <ScrollArea className="h-[515px] mt-[50px]">
         <ConversorContainer
           input={search}
         />

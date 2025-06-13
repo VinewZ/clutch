@@ -12,41 +12,73 @@ type useNavigateListProps = {
   setShowLaunchKeys: Dispatch<SetStateAction<boolean>>;
   setIsHelpDialogOpen: Dispatch<SetStateAction<boolean>>;
   flatList: SectionedList["flatList"];
-}
-export function useNavigateList({ inputRef, liRefs, selectedId, setSelectedId, setSearch, setIsHelpDialogOpen, setShowLaunchKeys, flatList }: useNavigateListProps) {
+};
+
+export function useNavigateList({
+  inputRef,
+  liRefs,
+  selectedId,
+  setSelectedId,
+  setSearch,
+  setIsHelpDialogOpen,
+  setShowLaunchKeys,
+  flatList,
+}: useNavigateListProps) {
   const actionHandler = useAction();
+
   function keyDown(e: KeyboardEvent) {
     switch (true) {
       case e.key === "ArrowDown": {
         e.preventDefault();
         setSelectedId((prev) => {
           const flatUids = flatList.map((item) => item._uid);
-          const prevIdx = flatUids.findIndex((item) => item === prev) + 1;
-          const nextId = flatUids[prevIdx < flatUids.length ? prevIdx : 0] || flatUids[0];
+          const idx = flatUids.indexOf(prev);
+          const nextIdx = idx < flatUids.length - 1 ? idx + 1 : 0;
+          const nextId = flatUids[nextIdx];
           liRefs.current[nextId].scrollIntoView({ block: "nearest" });
           return nextId;
         });
-        break
+        break;
       }
+
       case e.key === "ArrowUp": {
         e.preventDefault();
         setSelectedId((prev) => {
           const flatUids = flatList.map((item) => item._uid);
-          const prevIdx = flatUids.findIndex((item) => item === prev) - 1;
-          const nextId = flatUids[prevIdx >= 0 ? prevIdx : flatUids.length - 1] || flatUids[flatUids.length - 1];
+          const idx = flatUids.indexOf(prev);
+          const prevIdx = idx > 0 ? idx - 1 : flatUids.length - 1;
+          const nextId = flatUids[prevIdx];
           liRefs.current[nextId].scrollIntoView({ block: "nearest" });
           return nextId;
         });
-        break
+        break;
       }
+
       case e.key === "/": {
-        e.preventDefault();
-        if (inputRef?.current) {
-          inputRef.current.value = "";
-          inputRef.current.focus();
+        e.preventDefault(); // always prevent default browser find / char behavior
+        const inputEl = inputRef.current;
+        if (!inputEl) break;
+
+        if (document.activeElement !== inputEl) {
+          // if not focused, just focus
+          inputEl.focus();
+        } else {
+          // if already focused, insert slash at cursor
+          const { selectionStart, selectionEnd, value } = inputEl;
+          const start = selectionStart ?? value.length;
+          const end = selectionEnd ?? value.length;
+          const before = value.slice(0, start);
+          const after = value.slice(end);
+          const newVal = before + "/" + after;
+          setSearch(newVal);
+          // move cursor just after inserted slash
+          setTimeout(() => {
+            inputEl.setSelectionRange(start + 1, start + 1);
+          }, 0);
         }
-        break
+        break;
       }
+
       case e.key === "Enter": {
         e.preventDefault();
         const selectedItem = flatList.find((item) => item._uid === selectedId);
@@ -57,26 +89,32 @@ export function useNavigateList({ inputRef, liRefs, selectedId, setSelectedId, s
           });
         }
         setSearch("");
-        break
+        break;
       }
+
       case e.key === "F1": {
-        e.preventDefault()
+        e.preventDefault();
         setIsHelpDialogOpen((prev) => !prev);
-        break
+        break;
       }
+
       case e.key === "Escape": {
-        ClutchServices.ToggleApp()
+        ClutchServices.ToggleApp();
         setSearch("");
-        break
+        break;
       }
+
       case e.key === "Control": {
         setShowLaunchKeys(true);
-        break
+        break;
       }
-      case e.ctrlKey && /^[1-9]$/.test(e.key):
+
+      case e.ctrlKey && /^[1-9]$/.test(e.key): {
         e.preventDefault();
         const index = parseInt(e.key, 10) - 1;
-        const appItem = flatList.find((item) => item._section === "Apps" && item._uid === flatList[index]?._uid);
+        const appItem = flatList.find(
+          (item, i) => item._section === "Apps" && i === index
+        );
         if (appItem) {
           actionHandler({
             action: "apps",
@@ -84,6 +122,7 @@ export function useNavigateList({ inputRef, liRefs, selectedId, setSelectedId, s
           });
         }
         break;
+      }
     }
   }
 
