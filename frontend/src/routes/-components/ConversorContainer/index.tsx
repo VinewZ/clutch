@@ -1,54 +1,18 @@
 import { cn } from "@/lib/utils"
 import { ArrowRight } from "lucide-react"
-import { evaluate } from "mathjs"
-import { useEffect, useState } from "react"
-import * as chrono from 'chrono-node';
+import { useConversor } from "@/hooks/useConversor";
 
 type ConversorContainerProps = {
   input: string
 }
 
 export function ConversorContainer({ input }: ConversorContainerProps) {
-  const [result, setResult] = useState<string>("")
-
-  useEffect(() => {
-    let didCompute = false;
-
-    // 1) Try math evaluation
-    try {
-      const calcR = evaluate(input)
-      if (calcR != null && calcR.toString()) {
-        setResult(calcR.toString())
-        didCompute = true
-      }
-    } catch (err) {
-      // Not a valid math expression, fall through
-    }
-
-    // 2) Fallback to date parsing if math failed
-    if (!didCompute) {
-      const date = chrono.parseDate(input)
-      if (date) {
-        setResult(date.toLocaleDateString(navigator.language, {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }))
-        didCompute = true
-      }
-    }
-
-    // 3) Optionally clear result if neither parsed
-    if (!didCompute) {
-      setResult("")
-    }
-  }, [input])
+  const result = useConversor(input);
 
   return (
     <div
       className={cn(
-        "overflow-hidden transition-all h-48",
+        "overflow-hidden transition-all",
         result && result.length >= 3 ? "h-48" : "h-0"
       )}
     >
