@@ -7,7 +7,9 @@ import { useSectionedList } from "@/hooks/useSectionedlist";
 import { MainInput } from "./-components/main_input";
 import { Section } from "./-components/section";
 import { useNavigateList } from "@/hooks/useNavigateList";
-import { ConversorContainer } from "./-components/ConversorContainer";
+import { ConverterContainer } from "./-components/converter_container";
+import { Kbd } from "@/components/kbd";
+import { ArrowDown, ArrowUp } from "lucide-react";
 
 export const Route = createFileRoute("/")({
   component: App,
@@ -53,14 +55,13 @@ function App() {
 
   return (
     <main>
-      <HelpDialog isOpen={isHelpDialogOpen} setIsOpen={setIsHelpDialogOpen} />
       <MainInput
         inputRef={inputRef}
-        search={search}
-        setSearch={setSearch}
+        value={search}
+        setValue={setSearch}
       />
       <ScrollArea className="h-[515px] mt-[50px]">
-        <ConversorContainer
+        <ConverterContainer
           input={search}
         />
         <ul className="flex h-full w-full flex-col overflow-hidden">
@@ -82,6 +83,35 @@ function App() {
         </ul>
       </ScrollArea>
       <Footer />
+
+      <HelpDialog isOpen={isHelpDialogOpen} setIsOpen={setIsHelpDialogOpen} title="Keybindings">
+        <div className="flex items-center gap-1">
+          <span>Press</span>
+          <Kbd>/</Kbd>
+          <span>to focus input</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <span>Press</span>
+          <Kbd>
+            <ArrowUp size={12} />
+          </Kbd>
+          <Kbd>
+            <ArrowDown size={12} />
+          </Kbd>
+          <span>to navigate list</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <span>Press</span>
+          <Kbd>CTRL</Kbd>
+          <Kbd>1</Kbd>
+          <span>~</span>
+          <Kbd>9</Kbd>
+          <span>to quickly launch applications</span>
+        </div>
+      </HelpDialog>
+
     </main>
   );
 }

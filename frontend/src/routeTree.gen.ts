@@ -13,6 +13,7 @@
 import { Route as rootRoute } from './routes/__root'
 import { Route as SettingsRouteImport } from './routes/settings/route'
 import { Route as IndexImport } from './routes/index'
+import { Route as MathHistoryIndexImport } from './routes/math-history/index'
 import { Route as SettingsQuicklinksImport } from './routes/settings/quicklinks'
 import { Route as SettingsGeneralImport } from './routes/settings/general'
 import { Route as SettingsExtensionsImport } from './routes/settings/extensions'
@@ -31,6 +32,12 @@ const SettingsRouteRoute = SettingsRouteImport.update({
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const MathHistoryIndexRoute = MathHistoryIndexImport.update({
+  id: '/math-history/',
+  path: '/math-history/',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -123,6 +130,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SettingsQuicklinksImport
       parentRoute: typeof SettingsRouteImport
     }
+    '/math-history/': {
+      id: '/math-history/'
+      path: '/math-history'
+      fullPath: '/math-history'
+      preLoaderRoute: typeof MathHistoryIndexImport
+      parentRoute: typeof rootRoute
+    }
     '/extension/dev/$extension': {
       id: '/extension/dev/$extension'
       path: '/extension/dev/$extension'
@@ -161,6 +175,7 @@ export interface FileRoutesByFullPath {
   '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/quicklinks': typeof SettingsQuicklinksRoute
+  '/math-history': typeof MathHistoryIndexRoute
   '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
@@ -172,6 +187,7 @@ export interface FileRoutesByTo {
   '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/quicklinks': typeof SettingsQuicklinksRoute
+  '/math-history': typeof MathHistoryIndexRoute
   '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
@@ -184,6 +200,7 @@ export interface FileRoutesById {
   '/settings/extensions': typeof SettingsExtensionsRoute
   '/settings/general': typeof SettingsGeneralRoute
   '/settings/quicklinks': typeof SettingsQuicklinksRoute
+  '/math-history/': typeof MathHistoryIndexRoute
   '/extension/dev/$extension': typeof ExtensionDevExtensionRoute
 }
 
@@ -197,6 +214,7 @@ export interface FileRouteTypes {
     | '/settings/extensions'
     | '/settings/general'
     | '/settings/quicklinks'
+    | '/math-history'
     | '/extension/dev/$extension'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -207,6 +225,7 @@ export interface FileRouteTypes {
     | '/settings/extensions'
     | '/settings/general'
     | '/settings/quicklinks'
+    | '/math-history'
     | '/extension/dev/$extension'
   id:
     | '__root__'
@@ -217,6 +236,7 @@ export interface FileRouteTypes {
     | '/settings/extensions'
     | '/settings/general'
     | '/settings/quicklinks'
+    | '/math-history/'
     | '/extension/dev/$extension'
   fileRoutesById: FileRoutesById
 }
@@ -225,6 +245,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SettingsRouteRoute: typeof SettingsRouteRouteWithChildren
   ExtensionExtensionRoute: typeof ExtensionExtensionRoute
+  MathHistoryIndexRoute: typeof MathHistoryIndexRoute
   ExtensionDevExtensionRoute: typeof ExtensionDevExtensionRoute
 }
 
@@ -232,6 +253,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SettingsRouteRoute: SettingsRouteRouteWithChildren,
   ExtensionExtensionRoute: ExtensionExtensionRoute,
+  MathHistoryIndexRoute: MathHistoryIndexRoute,
   ExtensionDevExtensionRoute: ExtensionDevExtensionRoute,
 }
 
@@ -248,6 +270,7 @@ export const routeTree = rootRoute
         "/",
         "/settings",
         "/extension/$extension",
+        "/math-history/",
         "/extension/dev/$extension"
       ]
     },
@@ -281,6 +304,9 @@ export const routeTree = rootRoute
     "/settings/quicklinks": {
       "filePath": "settings/quicklinks.tsx",
       "parent": "/settings"
+    },
+    "/math-history/": {
+      "filePath": "math-history/index.tsx"
     },
     "/extension/dev/$extension": {
       "filePath": "extension/dev/$extension.tsx"

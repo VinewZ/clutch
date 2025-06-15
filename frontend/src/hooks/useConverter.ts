@@ -1,9 +1,14 @@
 import { evaluate } from "mathjs";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import * as chrono from "chrono-node";
 
-export function useConversor(input: string) {
-  const [result, setResult] = useState<string>("");
+type useConverterResult = {
+  type: string
+  result: string
+}
+
+export function useConverter(input: string): useConverterResult | null {
+  const [result, setResult] = useState<useConverterResult | null>(null)
   const abortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -15,30 +20,42 @@ export function useConversor(input: string) {
     parseCurrency(input, controller.signal)
       .then((res) => {
         if (res) {
-          setResult(res);
-          return;
+          const ret: useConverterResult = {
+            type: "currency",
+            result: res
+          }
+          setResult(ret)
+          return
         }
         // 2) math
         const mathRes = parseMath(input);
         if (mathRes) {
-          setResult(mathRes);
-          return;
+          const ret: useConverterResult = {
+            type: "math",
+            result: mathRes
+          }
+          setResult(ret)
+          return
         }
         // 3) date
         const dateRes = parseDate(input);
         if (dateRes) {
-          setResult(dateRes);
-          return;
+          const ret: useConverterResult = {
+            type: "date",
+            result: dateRes
+          }
+          setResult(ret)
+          return
         }
         // clear
-        setResult("");
+        setResult(null);
       })
       .catch((err) => {
         if (err.name !== "AbortError") console.error(err);
       });
   }, [input]);
 
-  return result;
+  return result
 }
 
 async function parseCurrency(
@@ -65,9 +82,9 @@ async function parseCurrency(
 
 function parseMath(input: string): string | null {
   try {
-    const value = evaluate(input);
+    const value = evaluate(input)
     if (value != null && !Number.isNaN(value as number)) {
-      return (+(+value).toFixed(2)).toString();
+      return parseFloat(value.toFixed(2)).toString()
     }
   } catch {
     // ignore
