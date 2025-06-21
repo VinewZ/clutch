@@ -108,10 +108,13 @@ function RouteComponent() {
         }
         {
           filteredHistory.map((value, idx) => (
-            <div className={cn(
-              "mx-1 flex cursor-pointer items-center justify-between gap-2 rounded p-2 text-sm relative",
-              selectedIdx === idx ? "bg-zinc-700" : "text-zinc-300",
-            )} >
+            <div
+              key={value.input + value.result}
+              className={cn(
+                "mx-1 flex cursor-pointer items-center justify-between gap-2 rounded p-2 text-sm relative",
+                selectedIdx === idx ? "bg-zinc-700" : "text-zinc-300",
+              )}
+            >
               <span>
                 {value.input}
               </span>
