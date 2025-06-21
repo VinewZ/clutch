@@ -84,8 +84,8 @@ export function useNavigateList({
         const selectedItem = flatList.find((item) => item._uid === selectedId);
         if (selectedItem) {
           actionHandler({
-            action: selectedItem._section.toLowerCase(),
             listItem: selectedItem,
+            input: inputRef.current?.value
           });
         }
         setSearch("");
@@ -117,7 +117,6 @@ export function useNavigateList({
         );
         if (appItem) {
           actionHandler({
-            action: "apps",
             listItem: appItem,
           });
         }

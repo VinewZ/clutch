@@ -5,9 +5,10 @@ import type { DesktopApp, ClutchPkgJson } from "../../bindings/github.com/vinewz
 import { useNavigate } from "@tanstack/react-router";
 import { ClutchServices } from "../../bindings/github.com/vinewz/clutch/app";
 import { Browser } from "@wailsio/runtime";
+import { toast } from "react-toastify";
 
 type UseSelectedListItemProps = {
-  action: string
+  input?: string
   listItem: SectionedListItem
 };
 
@@ -35,14 +36,15 @@ export function useAction() {
   function handleQuicklink(qLink: Quicklink, param: string) {
     try {
       Browser.OpenURL(`${qLink.link}${param}`);
+      ClutchServices.ToggleApp();
     } catch (err) {
-      console.log(err);
+      toast.error("An error happened")
+      console.error("Quicklink launch error: ", err)
     }
-    ClutchServices.ToggleApp();
   }
 
-  return function handler({ action, listItem }: UseSelectedListItemProps) {
-    switch (action) {
+  return function handler({ listItem, input }: UseSelectedListItemProps) {
+    switch (listItem._section.toLowerCase()) {
       case "apps":
         const d = listItem as DesktopApp
         handleApp(d);
@@ -57,10 +59,15 @@ export function useAction() {
         break;
       case "quicklinks":
         const q = listItem as Quicklink
-        handleQuicklink(q, q.command || "");
+        const val = input?.split(" ").slice(1).join(" ")
+        if (!val) {
+          toast.error("Please provide a parameter for the quicklink");
+          return;
+        }
+        handleQuicklink(q, val);
         break;
       default:
-        console.warn("Unknown action:", action);
+        console.warn("Unknown action:", listItem);
     }
   };
 }
