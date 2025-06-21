@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { ModeToggle } from "@/components/settings/mode_toggle";
 import { SelectLanguage } from "@/components/settings/select_language";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings/general")({
 	component: RouteComponent,

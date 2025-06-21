@@ -2,11 +2,11 @@ import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
+	DialogFooter,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-	DialogDescription,
-	DialogFooter,
 } from "@/components/ui/dialog";
 import type { Quicklink } from "@/routes/settings/quicklinks";
 import type { ReactNode } from "@tanstack/react-router";

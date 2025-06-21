@@ -1,5 +1,5 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router";
 import { BackButton } from "@/components/back_button";
+import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
 import { Blocks, Braces, Link as IconLink, Settings } from "lucide-react";
 
 export const Route = createFileRoute("/settings")({

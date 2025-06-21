@@ -1,3 +1,3 @@
-import {atom} from "jotai"
+import { atom } from "jotai";
 
-export const listSelectedItem = atom(0)
+export const listSelectedItem = atom(0);

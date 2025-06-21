@@ -1,10 +1,10 @@
-import { Check, FolderCode } from "lucide-react";
-import { Dialogs } from "@wailsio/runtime";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
-import { ClutchServices } from "../../../../bindings/github.com/vinewz/clutch/app/index";
-import type { Dispatch, SetStateAction } from "react";
 import type { ExtJson } from "@/routes/settings/developers";
+import { Dialogs } from "@wailsio/runtime";
+import { Check, FolderCode } from "lucide-react";
+import { useEffect, useState } from "react";
+import type { Dispatch, SetStateAction } from "react";
+import { ClutchServices } from "../../../../bindings/github.com/vinewz/clutch/app/index";
 
 type SelectDevExtensionProps = {
 	setDevExtension: Dispatch<SetStateAction<ExtJson | undefined>>;

@@ -1,9 +1,9 @@
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { createFileRoute } from "@tanstack/react-router";
-import { ClutchServices } from "../../../bindings/github.com/vinewz/clutch/app/index";
+import { type FormEvent, useState } from "react";
 import { toast } from "react-toastify";
-import { Button } from "@/components/ui/button";
-import { useState, type FormEvent } from "react";
+import { ClutchServices } from "../../../bindings/github.com/vinewz/clutch/app/index";
 
 export const Route = createFileRoute("/settings/extensions")({
 	component: RouteComponent,

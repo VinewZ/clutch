@@ -1,14 +1,14 @@
-import type { FormEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { QuicklinkDelete } from "@/components/settings/quicklink_delete";
+import { QuicklinkEdit } from "@/components/settings/quicklink_edit";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { createFileRoute } from "@tanstack/react-router";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { useState } from "react";
 import { Edit, Trash } from "lucide-react";
-import { QuicklinkEdit } from "@/components/settings/quicklink_edit";
-import { QuicklinkDelete } from "@/components/settings/quicklink_delete";
+import type { FormEvent } from "react";
+import { useState } from "react";
 
 export const Route = createFileRoute("/settings/quicklinks")({
 	component: RouteComponent,

@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
 	ClutchServices,
 	DesktopApp,
-} from "../../bindings/github.com/vinewz/clutch/app/"
+} from "../../bindings/github.com/vinewz/clutch/app/";
 
 async function getDesktopApps(): Promise<DesktopApp[]> {
 	try {

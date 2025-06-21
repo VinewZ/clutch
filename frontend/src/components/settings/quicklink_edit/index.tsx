@@ -2,17 +2,17 @@ import { Button } from "@/components/ui/button";
 import {
 	Dialog,
 	DialogContent,
+	DialogDescription,
 	DialogHeader,
 	DialogTitle,
 	DialogTrigger,
-	DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Quicklink } from "@/routes/settings/quicklinks";
 import type { ReactNode } from "@tanstack/react-router";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { useState, type FormEvent } from "react";
+import { type FormEvent, useState } from "react";
 
 type QuicklinkEditProps = {
 	quicklink: Quicklink;
