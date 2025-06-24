@@ -1,6 +1,8 @@
 package app
 
 import (
+	"sync"
+
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
@@ -17,6 +19,9 @@ type DesktopApp struct {
 
 type ClutchServices struct {
 	*Model
+	mu         sync.Mutex
+	pendingCmd string
+	confirmCh  chan bool
 }
 
 func NewClutchService(m *Model) *ClutchServices {
@@ -31,12 +36,3 @@ func (m *Model) RegisterServices() []application.Service {
 	return m.Services
 }
 
-func (s *ClutchServices) ToggleApp() {
-	if s.IsVisible {
-		s.App.Hide()
-		s.IsVisible = false
-	} else {
-		s.App.Show()
-		s.IsVisible = true
-	}
-}

@@ -4,26 +4,28 @@ import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/settings/general")({
-	component: RouteComponent,
+  component: RouteComponent,
 });
 
 function RouteComponent() {
-	return (
-		<Table>
-			<TableBody>
-				<TableRow>
-					<TableCell>Theme</TableCell>
-					<TableCell>
-						<ModeToggle />
-					</TableCell>
-				</TableRow>
-				<TableRow>
-					<TableCell>Language</TableCell>
-					<TableCell>
-						<SelectLanguage />
-					</TableCell>
-				</TableRow>
-			</TableBody>
-		</Table>
-	);
+  return (
+    <div>
+      <Table>
+        <TableBody>
+          <TableRow>
+            <TableCell>Theme</TableCell>
+            <TableCell>
+              <ModeToggle />
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell>Language</TableCell>
+            <TableCell>
+              <SelectLanguage />
+            </TableCell>
+          </TableRow>
+        </TableBody>
+      </Table>
+    </div>
+  );
 }

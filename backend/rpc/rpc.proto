@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package rpc.proto.v1;
+
+option go_package = "github.com/vinewz/clutch/backend/rpc/gen;rpcproto";
+
+service ToggleWindowService {
+  rpc ToggleWindow(ToggleWindowRequest) returns (ToggleWindowResponse) {}
+}
+
+message ToggleWindowRequest {}
+
+message ToggleWindowResponse {}
+
+// #################### //
+
+service UseShellService {
+  rpc UseShell(UseShellRequest) returns (UseShellResponse) {}
+}
+
+message UseShellRequest {
+  string app_name = 1;
+  string command = 2;
+}
+
+message UseShellResponse {
+  string output = 1;
+  string error = 2;
+}

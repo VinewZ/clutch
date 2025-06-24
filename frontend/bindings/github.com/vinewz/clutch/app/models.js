@@ -4,125 +4,115 @@
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore: Unused imports
-import { Create as $Create } from "@wailsio/runtime";
+import {Create as $Create} from "@wailsio/runtime";
 
 export class ClutchPkgJson {
-	/**
-	 * Creates a new ClutchPkgJson instance.
-	 * @param {Partial<ClutchPkgJson>} [$$source = {}] - The source object to create the ClutchPkgJson.
-	 */
-	constructor($$source = {}) {
-		if (!("clutch" in $$source)) {
-			/**
-			 * @member
-			 * @type {{"name": string, "repo": string, "description": string, "longDescription": string, "dev": {"distDir": string, "devUrl": string}}}
-			 */
-			this["clutch"] = {
-				name: "",
-				repo: "",
-				description: "",
-				longDescription: "",
-				dev: { distDir: "", devUrl: "" },
-			};
-		}
+    /**
+     * Creates a new ClutchPkgJson instance.
+     * @param {Partial<ClutchPkgJson>} [$$source = {}] - The source object to create the ClutchPkgJson.
+     */
+    constructor($$source = {}) {
+        if (!("clutch" in $$source)) {
+            /**
+             * @member
+             * @type {{"name": string, "repo": string, "description": string, "longDescription": string, "dev": {"distDir": string, "devUrl": string}}}
+             */
+            this["clutch"] = {"name": "", "repo": "", "description": "", "longDescription": "", "dev": {"distDir": "", "devUrl": ""}};
+        }
 
-		Object.assign(this, $$source);
-	}
+        Object.assign(this, $$source);
+    }
 
-	/**
-	 * Creates a new ClutchPkgJson instance from a string or object.
-	 * @param {any} [$$source = {}]
-	 * @returns {ClutchPkgJson}
-	 */
-	static createFrom($$source = {}) {
-		const $$parsedSource =
-			typeof $$source === "string" ? JSON.parse($$source) : $$source;
-		return new ClutchPkgJson(
-			/** @type {Partial<ClutchPkgJson>} */ ($$parsedSource),
-		);
-	}
+    /**
+     * Creates a new ClutchPkgJson instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {ClutchPkgJson}
+     */
+    static createFrom($$source = {}) {
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        return new ClutchPkgJson(/** @type {Partial<ClutchPkgJson>} */($$parsedSource));
+    }
 }
 
 export class DesktopApp {
-	/**
-	 * Creates a new DesktopApp instance.
-	 * @param {Partial<DesktopApp>} [$$source = {}] - The source object to create the DesktopApp.
-	 */
-	constructor($$source = {}) {
-		if (!("id" in $$source)) {
-			/**
-			 * @member
-			 * @type {number}
-			 */
-			this["id"] = 0;
-		}
-		if (!("name" in $$source)) {
-			/**
-			 * @member
-			 * @type {string}
-			 */
-			this["name"] = "";
-		}
-		if (!("genericName" in $$source)) {
-			/**
-			 * @member
-			 * @type {string}
-			 */
-			this["genericName"] = "";
-		}
-		if (!("comment" in $$source)) {
-			/**
-			 * @member
-			 * @type {string}
-			 */
-			this["comment"] = "";
-		}
-		if (!("icon" in $$source)) {
-			/**
-			 * @member
-			 * @type {string}
-			 */
-			this["icon"] = "";
-		}
-		if (!("exec" in $$source)) {
-			/**
-			 * @member
-			 * @type {string}
-			 */
-			this["exec"] = "";
-		}
-		if (!("terminal" in $$source)) {
-			/**
-			 * @member
-			 * @type {boolean}
-			 */
-			this["terminal"] = false;
-		}
-		if (!("keywords" in $$source)) {
-			/**
-			 * @member
-			 * @type {string[]}
-			 */
-			this["keywords"] = [];
-		}
+    /**
+     * Creates a new DesktopApp instance.
+     * @param {Partial<DesktopApp>} [$$source = {}] - The source object to create the DesktopApp.
+     */
+    constructor($$source = {}) {
+        if (!("id" in $$source)) {
+            /**
+             * @member
+             * @type {number}
+             */
+            this["id"] = 0;
+        }
+        if (!("name" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["name"] = "";
+        }
+        if (!("genericName" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["genericName"] = "";
+        }
+        if (!("comment" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["comment"] = "";
+        }
+        if (!("icon" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["icon"] = "";
+        }
+        if (!("exec" in $$source)) {
+            /**
+             * @member
+             * @type {string}
+             */
+            this["exec"] = "";
+        }
+        if (!("terminal" in $$source)) {
+            /**
+             * @member
+             * @type {boolean}
+             */
+            this["terminal"] = false;
+        }
+        if (!("keywords" in $$source)) {
+            /**
+             * @member
+             * @type {string[]}
+             */
+            this["keywords"] = [];
+        }
 
-		Object.assign(this, $$source);
-	}
+        Object.assign(this, $$source);
+    }
 
-	/**
-	 * Creates a new DesktopApp instance from a string or object.
-	 * @param {any} [$$source = {}]
-	 * @returns {DesktopApp}
-	 */
-	static createFrom($$source = {}) {
-		const $$createField7_0 = $$createType0;
-		const $$parsedSource =
-			typeof $$source === "string" ? JSON.parse($$source) : $$source;
-		if ("keywords" in $$parsedSource) {
-			$$parsedSource["keywords"] = $$createField7_0($$parsedSource["keywords"]);
-		}
-		return new DesktopApp(/** @type {Partial<DesktopApp>} */ ($$parsedSource));
-	}
+    /**
+     * Creates a new DesktopApp instance from a string or object.
+     * @param {any} [$$source = {}]
+     * @returns {DesktopApp}
+     */
+    static createFrom($$source = {}) {
+        const $$createField7_0 = $$createType0;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("keywords" in $$parsedSource) {
+            $$parsedSource["keywords"] = $$createField7_0($$parsedSource["keywords"]);
+        }
+        return new DesktopApp(/** @type {Partial<DesktopApp>} */($$parsedSource));
+    }
 }
 
 // Private type creation functions

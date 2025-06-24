@@ -33,7 +33,7 @@ function RouteComponent() {
 	return (
 		<div className="relative flex h-dvh text-white">
 			<BackButton />
-			<div className="w-54 bg-zinc-900 pt-16">
+			<div className="w-54 pt-16">
 				<span className="pl-4 text-xs text-zinc-200 capitalize">Settings</span>
 				<div className="mt-2 flex flex-col gap-2 text-sm">
 					{linkMenus.map((menu) => (
@@ -42,7 +42,7 @@ function RouteComponent() {
 							className="mx-2 flex items-center justify-start gap-2 py-1.5 pl-2"
 							to={menu.to}
 							activeProps={{
-								className: "bg-zinc-700 px-2 rounded-md",
+								className: "px-2 rounded-md",
 							}}
 						>
 							{<menu.icon className="size-4" />}
@@ -51,7 +51,7 @@ function RouteComponent() {
 					))}
 				</div>
 			</div>
-			<div className="flex-1 bg-zinc-950 p-4">
+			<div className="flex-1 p-4 border-l">
 				<Outlet />
 			</div>
 		</div>

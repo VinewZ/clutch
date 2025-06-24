@@ -47,7 +47,6 @@ export function Section({
 						onMouseLeave={() => setSelectedId("")}
 						onClick={() =>
 							actionHandler({
-								action: item._section.toLowerCase(),
 								listItem: item,
 							})
 						}

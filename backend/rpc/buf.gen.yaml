@@ -7,10 +7,10 @@ plugins:
     out: ./gen
     opt:
       - paths=import
-      - module=github.com/vinewz/clutch/backend/ipc/gen
+      - module=github.com/vinewz/clutch/backend/rpc/gen
 
   - local: protoc-gen-connect-go
     out: ./gen
     opt:
       - paths=import
-      - module=github.com/vinewz/clutch/backend/ipc/gen
+      - module=github.com/vinewz/clutch/backend/rpc/gen

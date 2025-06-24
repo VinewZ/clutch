@@ -6,13 +6,12 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"net/http"
 	"time"
 
-	"connectrpc.com/connect"
 	"github.com/vinewz/clutch/app"
-	ipcproto "github.com/vinewz/clutch/backend/ipc/gen"
-	"github.com/vinewz/clutch/backend/ipc/gen/ipcprotoconnect"
+	clutchRPCClient "github.com/vinewz/clutchRPC/go/pkg/client"
+	clutchRPCServer "github.com/vinewz/clutchRPC/go/pkg/server"
+
 	"github.com/vinewz/clutch/setup"
 )
 
@@ -21,6 +20,8 @@ var assets embed.FS
 
 func main() {
 	env := setup.Env()
+	// if called with --toggle flag, toggle running application
+	// if failed, launch new application
 	if env.Toggle {
 		if tryToggle(context.Background()) {
 			return
@@ -38,14 +39,24 @@ func main() {
 	}
 
 	m := app.NewModel(dirs, ports)
-	m.BeforeStart()
+
+	// set wails go/js bindings
+	services := app.NewClutchService(m)
+	m.Services = services.RegisterServices()
+
 	m.Setup(assets)
+
+	// set rpc server
+	svc := clutchRPCServer.New(m.App, services.ToggleApp)
+	go svc.ListenAndServe(fmt.Sprintf(":%d", m.ServersPorts.RPCServerPort))
 
 	if err := m.App.Run(); err != nil {
 		log.Fatal(err)
 	}
 }
 
+// TODO: Update RPC to use the new API and toggle the app
+// "github.com/vinewz/clutchRPC/go/pkg/server"
 func tryToggle(ctx context.Context) bool {
 	for _, port := range setup.PossiblePorts {
 		addr := fmt.Sprintf("127.0.0.1:%d", port)
@@ -56,17 +67,13 @@ func tryToggle(ctx context.Context) bool {
 		}
 		conn.Close()
 
-		client := ipcprotoconnect.NewToggleWindowServiceClient(http.DefaultClient, "http://"+addr)
-		toCtx, cancel := context.WithTimeout(ctx, 200*time.Millisecond)
-		defer cancel()
-
-		if _, err := client.ToggleWindow(toCtx,
-			connect.NewRequest(&ipcproto.ToggleWindowRequest{}),
-		); err == nil {
-			log.Printf("Toggled existing server on %d", port)
-			return true
+		cl, err := clutchRPCClient.New(ctx, port, 500)
+		if err != nil {
+			log.Fatalf("Failed to create clutchRPC client: %v", err)
 		}
-		log.Printf("Found listener on %d but toggle failed: %v", port, err)
+
+		cl.ToggleWindow(ctx, false)
+
 	}
 	return false
 }

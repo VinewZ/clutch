@@ -1,10 +1,8 @@
 package app
 
 import (
-	"context"
 	e "embed"
 	"log/slog"
-	"time"
 
 	"github.com/vinewz/clutch/backend/api"
 	"github.com/vinewz/clutch/setup"
@@ -53,21 +51,4 @@ func (m *Model) Setup(assets e.FS) *application.App {
 	})
 
 	return m.App
-}
-
-func (m *Model) BeforeStart() {
-	services := NewClutchService(m)
-	m.Services = services.RegisterServices()
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
-	defer cancel()
-
-	ipcServer := api.NewIPCServer(m.ServersPorts.IPCServerPort, []string{"*"})
-	toggleSvc := api.NewToggleWindowService(services.ToggleApp)
-	ipcServer.RegisterService(toggleSvc)
-	go func() {
-		if err := ipcServer.ListenAndServe(ctx); err != nil {
-			slog.Error("failed to start IPC server", "err", err)
-		}
-	}()
 }
