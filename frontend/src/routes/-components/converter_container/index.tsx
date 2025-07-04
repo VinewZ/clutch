@@ -51,24 +51,24 @@ export function ConverterContainer({ input }: ConverterContainerProps) {
 		};
 	}, [conversion, setMathHistory]);
 
-	return (
-		<div
-			className={cn(
-				"overflow-hidden transition-all",
-				conversion && conversion.result.length >= 3 ? "h-48" : "h-0",
-			)}
-		>
-			<div className="relative flex h-48 w-full border-b text-center">
-				<div className="grid w-1/2 place-content-center border-r p-4 text-4xl">
-					<p>{input || "Expression"}</p>
-				</div>
-				<div className="-translate-1/2 absolute top-1/2 left-1/2 z-10 bg-background py-5">
-					<ArrowRight />
-				</div>
-				<div className="grid w-1/2 place-content-center p-4 text-4xl">
-					<p>{conversion?.result || "Result"}</p>
-				</div>
-			</div>
-		</div>
-	);
+  return (
+    <div
+      className={cn(
+        "overflow-hidden transition-all",
+        conversion && conversion.result.length >= 0 ? "h-48" : "h-0"
+      )}
+    >
+      <div className="flex w-full h-48 relative border-b text-center">
+        <div className="grid place-content-center w-1/2 text-4xl p-4 border-r">
+          <p>{input || "Expression"}</p>
+        </div>
+        <div className="absolute left-1/2 top-1/2 -translate-1/2 py-5 z-10 bg-background">
+          <ArrowRight />
+        </div>
+        <div className="grid place-content-center w-1/2 text-4xl p-4">
+          <p>{conversion?.result || "Result"}</p>
+        </div>
+      </div>
+    </div>
+  );
 }
