@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=clutch-v2
+Exec=clutch-v2
+Icon=clutch-v2
+Categories=Development;
+Terminal=false
+Keywords=wails
+Version=1.0
+StartupNotify=false
