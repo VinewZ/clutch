@@ -1,11 +1,14 @@
 package desktopapps
 
 import (
+	"fmt"
 	"github.com/charmbracelet/log"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -75,4 +78,60 @@ func (da *DesktopApps) resolveIcon(icon string) string {
 func (da *DesktopApps) IconIndex() *IconIndex {
 	da.ensureInitialized()
 	return da.iconIndex
+}
+
+func (da *DesktopApps) Launch(app App) error {
+	var cmd *exec.Cmd
+
+	if app.Terminal {
+		term := getPreferredTerminal()
+		cmd = exec.Command(term, "-e", cleanCmd(app.Exec))
+	} else {
+		parts := strings.Fields(app.ExecRaw)
+		if len(parts) == 0 {
+			log.Error("Empty exec command", "app", app.Name)
+			return fmt.Errorf("empty exec command")
+		}
+		cmd = exec.Command(parts[0], parts[1:]...)
+	}
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
+
+	err := cmd.Start()
+	if err != nil {
+		log.Error("Failed to launch app", "name", app.Name, "error", err)
+		return err
+	}
+
+	log.Info("App launched", "name", app.Name, "terminal", app.Terminal)
+	return nil
+}
+
+func cleanCmd(s string) string {
+	split := strings.Split(s, " ")
+	return split[0]
+}
+
+func getPreferredTerminal() string {
+	if terminal := os.Getenv("TERMINAL"); terminal != "" {
+		return terminal
+	}
+	terminals := []string{
+		"x-terminal-emulator",
+		"gnome-terminal",
+		"konsole",
+		"xfce4-terminal",
+		"wezterm",
+		"ghostty",
+		"kitty",
+		"alacritty",
+		"lxterminal",
+		"st",
+	}
+	for _, term := range terminals {
+		if _, err := exec.LookPath(term); err == nil {
+			return term
+		}
+	}
+	return ""
 }
