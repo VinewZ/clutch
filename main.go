@@ -2,7 +2,7 @@ package main
 
 import (
 	"embed"
-	"log"
+	"github.com/charmbracelet/log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -48,7 +48,7 @@ func main() {
 	err := app.Run()
 
 	if err != nil {
-		log.Fatal(err)
+		log.Error("Application failed to run", "error", err)
 	}
 }
 func middleware(next http.Handler) http.Handler {

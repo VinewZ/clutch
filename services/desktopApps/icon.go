@@ -2,7 +2,7 @@ package desktopapps
 
 import (
 	"bufio"
-	"log"
+	"github.com/charmbracelet/log"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -30,7 +30,7 @@ type Theme struct {
 
 type IconIndex struct {
 	themes       map[string]Theme
-	pixmaps      map[string]string // Direct icon files from pixmaps
+	pixmaps      map[string]string 
 	cache        map[string]string
 	loaded       bool
 	mu           sync.Mutex
@@ -91,21 +91,20 @@ func (idx *IconIndex) loadThemesAsync() {
 		}
 	}
 
-	// Also scan pixmaps directories for direct icon files
 	pixmapPaths := []string{
 		"/usr/share/pixmaps",
 		filepath.Join(func() string { home, _ := os.UserHomeDir(); return home }(), ".local/share/pixmaps"),
 		"/var/lib/flatpak/exports/share/icons/hicolor/scalable/apps",
 	}
 
-	// Also scan flatpak hicolor icon directories
 	flatpakHicolorSizes := []string{"512x512", "256x256", "128x128", "96x96", "64x64", "48x48", "32x32", "16x16"}
 	for _, size := range flatpakHicolorSizes {
 		dirPath := filepath.Join("/var/lib/flatpak/exports/share/icons/hicolor", size, "apps")
 		pixmapPaths = append(pixmapPaths, dirPath)
 	}
 
-	// Also scan non-standard icon directories (like 0x0)
+	// Scan non-standard icon directories (like 0x0)
+	// For some reason, thats what Pinokio uses
 	nonstandardPaths := []string{
 		"/usr/share/icons/hicolor/0x0/apps",
 	}
@@ -137,7 +136,6 @@ func (idx *IconIndex) loadThemesAsync() {
 		}
 	}
 
-	// Also scan local hicolor icon directories (without index.theme)
 	home, _ := os.UserHomeDir()
 	hicolorSizes := []string{"512x512", "256x256", "128x128", "96x96", "64x64", "48x48", "32x32", "16x16"}
 	hicolorContexts := []string{"apps", "devices", "mimetypes", "places", "categories", "actions", "status", "panel", "emblems", "emotes", "legacy", "ui"}
@@ -183,7 +181,7 @@ func (idx *IconIndex) loadThemesAsync() {
 		idx.scanIconDir(path)
 	}
 
-	// Also scan symbolic directories (monochrome icons)
+	// Symbolic directories (monochrome icons)
 	symbolicPaths := []string{
 		filepath.Join(home, ".local/share/icons/hicolor/symbolic"),
 		filepath.Join(home, ".local/share/icons/Fluent/symbolic"),
@@ -193,7 +191,7 @@ func (idx *IconIndex) loadThemesAsync() {
 		idx.scanIconDir(path)
 	}
 
-	// Scan additional icon directories
+	// Additional icon directories
 	additionalPaths := []string{
 		"/usr/share/pixmaps",
 		"/usr/share/uim/pixmaps",
@@ -206,7 +204,7 @@ func (idx *IconIndex) loadThemesAsync() {
 
 	idx.loaded = true
 
-	log.Printf("Icon theme scan completed in %v - %d themes loaded, %d pixmaps indexed", time.Since(start), loadedThemes, len(idx.pixmaps))
+	log.Info("Icon theme scan completed", "duration", time.Since(start), "themes", loadedThemes, "pixmaps", len(idx.pixmaps))
 }
 
 func (idx *IconIndex) parseIndexTheme(path string) (Theme, error) {
@@ -335,6 +333,7 @@ func (idx *IconIndex) Resolve(iconName string, targetSize int) string {
 	if resolved == "" {
 		if pixmapPath, ok := idx.pixmaps[iconNameLower]; ok {
 			// Skip .xpm files - can't be rendered in HTML img tags
+			// Xterm and UXterm fk u
 			if !strings.HasSuffix(pixmapPath, ".xpm") {
 				resolved = pixmapPath
 			}
@@ -436,12 +435,10 @@ func (idx *IconIndex) findBestIcon(iconName string, targetSize int, theme Theme)
 }
 
 func (idx *IconIndex) iconExistsInDir(iconName, dirPath string) string {
-	// Check if directory exists
 	if _, err := os.Stat(dirPath); err != nil {
 		return ""
 	}
 
-	// Try common extensions
 	for _, ext := range []string{".svg", ".png"} {
 		iconPath := filepath.Join(dirPath, iconName+ext)
 		if _, err := os.Stat(iconPath); err == nil {
@@ -449,7 +446,6 @@ func (idx *IconIndex) iconExistsInDir(iconName, dirPath string) string {
 		}
 	}
 
-	// Scan directory for matching name (case-insensitive)
 	entries, err := os.ReadDir(dirPath)
 	if err != nil {
 		return ""
@@ -468,7 +464,6 @@ func (idx *IconIndex) iconExistsInDir(iconName, dirPath string) string {
 			return filepath.Join(dirPath, entry.Name())
 		}
 
-		// Also check name without extension
 		baseName := strings.TrimSuffix(nameLower, filepath.Ext(nameLower))
 		if baseName == iconName {
 			return filepath.Join(dirPath, entry.Name())

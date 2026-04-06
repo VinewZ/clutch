@@ -1,8 +1,8 @@
 package desktopapps
 
 import (
+	"github.com/charmbracelet/log"
 	"io/fs"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -63,7 +63,7 @@ func (da *DesktopApps) GetAll() []App {
 
 	da.apps = apps
 
-	log.Printf("Desktop apps scan completed in %v - found %d apps", time.Since(start), len(apps))
+	log.Info("Desktop apps scan completed", "duration", time.Since(start), "count", len(apps))
 
 	return apps
 }

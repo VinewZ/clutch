@@ -109,7 +109,7 @@ func parseKeywords(value string) []string {
 	}
 
 	var keywords []string
-	for _, k := range strings.Split(value, ";") {
+	for k := range strings.SplitSeq(value, ";") {
 		k = strings.TrimSpace(k)
 		if k != "" {
 			keywords = append(keywords, k)
