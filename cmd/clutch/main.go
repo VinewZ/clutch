@@ -4,6 +4,7 @@ import (
 	"embed"
 	"flag"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,6 +12,8 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/vinewz/clutch/internal/apps"
+	"github.com/vinewz/clutch/internal/clipboard"
+	"github.com/vinewz/clutch/internal/currency"
 	"github.com/vinewz/clutch/internal/socket"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -38,6 +41,8 @@ func main() {
 
 	da := &apps.DesktopApps{}
 	ac := &apps.AppController{}
+	cs := clipboard.NewClipboardService()
+	cr := currency.NewCurrencyService()
 
 	app := application.New(application.Options{
 		Name:        "clutch",
@@ -45,6 +50,8 @@ func main() {
 		Services: []application.Service{
 			application.NewService(da),
 			application.NewService(ac),
+			application.NewService(cs),
+			application.NewService(cr),
 		},
 		Assets: application.AssetOptions{
 			Handler:    application.AssetFileServerFS(assets),
@@ -64,29 +71,40 @@ func main() {
 
 	ac.SetWindow(win)
 
+	// Check if another instance is already running
+	if socketExists() {
+		log.Info("Another instance is running, exiting")
+		return
+	}
+
+	// Start socket server always (serves as single-instance lock)
+	srv := socket.NewServer(func(cmd socket.Command) error {
+		switch cmd {
+		case socket.CmdToggle:
+			ac.Toggle()
+		case socket.CmdShow:
+			ac.Show()
+		case socket.CmdHide:
+			ac.Hide()
+		}
+		return nil
+	})
+
+	if err := srv.Start(); err != nil {
+		log.Error("Failed to start socket server", "error", err)
+	}
+
+	// Start clipboard monitor
+	if cs.IsAvailable() {
+		if err := cs.StartMonitor(); err != nil {
+			log.Warn("Failed to start clipboard monitor", "error", err)
+		}
+	}
+
 	if *serverFlag {
 		da.EnsureInitialized()
 		da.GetAll()
-
-		srv := socket.NewServer(func(cmd socket.Command) error {
-			switch cmd {
-			case socket.CmdToggle:
-				ac.Toggle()
-			case socket.CmdShow:
-				ac.Show()
-			case socket.CmdHide:
-				ac.Hide()
-			}
-			return nil
-		})
-
-		if err := srv.Start(); err != nil {
-			log.Error("Failed to start socket server", "error", err)
-		} else {
-			ac.Hide()
-		}
-
-		defer srv.Stop()
+		ac.Hide()
 	}
 
 	err := app.Run()
@@ -134,4 +152,22 @@ func serveFile(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", contentType)
 	w.Write(data)
+}
+
+func socketExists() bool {
+	_, err := os.Stat(socket.SocketPath())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return false
+		}
+		return false
+	}
+
+	conn, err := net.Dial("unix", socket.SocketPath())
+	if err != nil {
+		os.Remove(socket.SocketPath())
+		return false
+	}
+	conn.Close()
+	return true
 }

@@ -58,6 +58,7 @@ cd frontend && pnpm biome check --write .
 
 ## Gotchas
 
+- **Never run `wails3 dev` directly** - it hangs indefinitely. Always use: `timeout <seconds> wails3 dev`
 - Wails bindings generated with `-ts` flag produce `.ts` files (requires sed fix)
 - Socket uses `bufio.Reader` with `ReadString('\n')` - commands must end with newline
 - AppController and DesktopApps both registered as Wails services
