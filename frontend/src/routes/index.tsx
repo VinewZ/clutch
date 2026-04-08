@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
+	type App,
 	AppController,
 	DesktopApps,
 } from "bindings/github.com/vinewz/clutch/internal/apps";
@@ -8,13 +9,22 @@ import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { useSearchMode } from "@/hooks/useSearchMode";
 import {
-  convertCurrency,
-  formatConversionResult,
-  formatLastUpdated,
-  parseCurrencyInput,
-  type ConversionResult,
+	type ConversionResult,
+	convertCurrency,
+	formatConversionResult,
+	formatLastUpdated,
+	parseCurrencyInput,
 } from "@/lib/currency";
 import { evaluateMath, formatMathResult, type MathResult } from "@/lib/math";
+
+type ListItem =
+	| { index: number; type: "section"; section: "apps" | "routes" }
+	| { index: number; type: "app"; app: App }
+	| { index: number; type: "route"; path: string; label: string };
+
+const ROUTES: { path: string; label: string }[] = [
+	{ path: "/clipboard", label: "Clipboard" },
+];
 
 export const Route = createFileRoute("/")({ component: AppContent });
 
@@ -26,13 +36,56 @@ function AppContent() {
 	const [searchQuery, setSearchQuery] = useState("");
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const [mathResult, setMathResult] = useState<MathResult | null>(null);
-	const [currencyResult, setCurrencyResult] =
-		useState<ConversionResult | null>(null);
+	const [currencyResult, setCurrencyResult] = useState<ConversionResult | null>(
+		null,
+	);
 	const [currencyLoading, setCurrencyLoading] = useState(false);
 	const [currencyError, setCurrencyError] = useState<string | null>(null);
 	const inputRef = useRef<HTMLInputElement>(null);
 
 	const { mode, filteredApps } = useSearchMode(searchQuery, apps);
+	const navigate = useNavigate();
+
+	const getUnifiedList = (): ListItem[] => {
+		const query = searchQuery.toLowerCase();
+		const filteredAppsList = filteredApps.filter((app) =>
+			app.name.toLowerCase().includes(query),
+		);
+		const filteredRoutes = ROUTES.filter((route) =>
+			route.label.toLowerCase().includes(query),
+		);
+
+		const list: ListItem[] = [];
+		let idx = 0;
+
+		if (filteredAppsList.length > 0) {
+			list.push({ index: idx++, type: "section", section: "apps" });
+			for (const app of filteredAppsList) {
+				list.push({ index: idx++, type: "app", app });
+			}
+		}
+
+		if (filteredRoutes.length > 0) {
+			list.push({ index: idx++, type: "section", section: "routes" });
+			for (const route of filteredRoutes) {
+				list.push({
+					index: idx++,
+					type: "route",
+					path: route.path,
+					label: route.label,
+				});
+			}
+		}
+
+		return list;
+	};
+
+	const getFirstSelectableIndex = (list: ListItem[]): number => {
+		const firstItem = list.find((item) => item.type !== "section");
+		return firstItem?.index ?? 0;
+	};
+
+	const unifiedList = getUnifiedList();
 
 	// Refs for keyboard handler to avoid dependency issues
 	const modeRef = useRef(mode);
@@ -40,6 +93,7 @@ function AppContent() {
 	const selectedIndexRef = useRef(selectedIndex);
 	const mathResultRef = useRef(mathResult);
 	const currencyResultRef = useRef(currencyResult);
+	const unifiedListRef = useRef<ListItem[]>([]);
 
 	// Update refs when state changes
 	useEffect(() => {
@@ -61,6 +115,10 @@ function AppContent() {
 	useEffect(() => {
 		currencyResultRef.current = currencyResult;
 	}, [currencyResult]);
+
+	useEffect(() => {
+		unifiedListRef.current = unifiedList;
+	}, [unifiedList]);
 
 	// Evaluate math when in math mode
 	useEffect(() => {
@@ -104,10 +162,10 @@ function AppContent() {
 			.finally(() => setCurrencyLoading(false));
 	}, [mode, searchQuery]);
 
-	// Reset selection when input changes
+	// Reset selection to first selectable when input changes
 	useEffect(() => {
-		setSelectedIndex(0);
-	}, []);
+		setSelectedIndex(getFirstSelectableIndex(unifiedList));
+	}, [unifiedList]);
 
 	// Scroll selected item into view
 	useEffect(() => {
@@ -133,52 +191,79 @@ function AppContent() {
 
 	const handleKeyDown = async (e: KeyboardEvent) => {
 		const currentMode = modeRef.current;
-		const currentApps = filteredAppsRef.current;
-		const currentSelectedIndex = selectedIndexRef.current;
 		const currentMathResult = mathResultRef.current;
 		const currentCurrencyResult = currencyResultRef.current;
+		const currentUnifiedList = unifiedListRef.current;
+		const currentSelectedIndex = selectedIndexRef.current;
+
+		const getFirstSelectableFromList = (list: ListItem[]): number => {
+			const firstItem = list.find((item) => item.type !== "section");
+			return firstItem?.index ?? 0;
+		};
 
 		switch (e.key) {
 			case "Escape":
 				setSearchQuery("");
-				setSelectedIndex(0);
+				setSelectedIndex(getFirstSelectableFromList(currentUnifiedList));
 				inputRef.current?.focus();
 				break;
 			case "ArrowDown":
 				e.preventDefault();
 				if (currentMode === "apps") {
-					setSelectedIndex((prev) =>
-						prev < currentApps.length - 1 ? prev + 1 : 0,
+					const nonSectionItems = currentUnifiedList.filter(
+						(item) => item.type !== "section",
 					);
+					if (nonSectionItems.length === 0) return;
+					const currentItem = currentUnifiedList[currentSelectedIndex];
+					const currentItemIndex = nonSectionItems.findIndex(
+						(item) => item.index === currentItem?.index,
+					);
+					const nextIndex = (currentItemIndex + 1) % nonSectionItems.length;
+					const nextItem = nonSectionItems[nextIndex];
+					const newSelectedIndex = currentUnifiedList.findIndex(
+						(item) => item.index === nextItem.index,
+					);
+					setSelectedIndex(newSelectedIndex);
 				}
 				break;
 			case "ArrowUp":
 				e.preventDefault();
 				if (currentMode === "apps") {
-					setSelectedIndex((prev) =>
-						prev > 0 ? prev - 1 : currentApps.length - 1,
+					const nonSectionItems = currentUnifiedList.filter(
+						(item) => item.type !== "section",
 					);
+					if (nonSectionItems.length === 0) return;
+					const currentItem = currentUnifiedList[currentSelectedIndex];
+					const currentItemIndex = nonSectionItems.findIndex(
+						(item) => item.index === currentItem?.index,
+					);
+					const prevIndex =
+						(currentItemIndex - 1 + nonSectionItems.length) %
+						nonSectionItems.length;
+					const prevItem = nonSectionItems[prevIndex];
+					const newSelectedIndex = currentUnifiedList.findIndex(
+						(item) => item.index === prevItem.index,
+					);
+					setSelectedIndex(newSelectedIndex);
 				}
 				break;
 			case "Enter":
 				e.preventDefault();
-				if (
-					currentMode === "apps" &&
-					currentApps[currentSelectedIndex]
-				) {
-					await DesktopApps.Launch(currentApps[currentSelectedIndex]);
-					AppController.Hide();
-				} else if (currentMode === "math" && currentMathResult) {
+				if (currentMode === "math" && currentMathResult) {
 					await copyToClipboard(currentMathResult.result.toString());
 					AppController.Hide();
-				} else if (
-					currentMode === "currency" &&
-					currentCurrencyResult
-				) {
-					await copyToClipboard(
-						currentCurrencyResult.result.toString(),
-					);
+				} else if (currentMode === "currency" && currentCurrencyResult) {
+					await copyToClipboard(currentCurrencyResult.result.toString());
 					AppController.Hide();
+				} else if (currentMode === "apps") {
+					const currentItem = currentUnifiedList[currentSelectedIndex];
+					if (!currentItem || currentItem.type === "section") return;
+					if (currentItem.type === "app") {
+						await DesktopApps.Launch(currentItem.app);
+						AppController.Hide();
+					} else if (currentItem.type === "route") {
+						navigate({ to: currentItem.path });
+					}
 				}
 				break;
 		}
@@ -195,11 +280,6 @@ function AppContent() {
 
 	return (
 		<div className="h-screen flex flex-col">
-      <Link
-      to="/clipboard"
-      >
-      Clipboard
-      </Link>
 			<div className="sticky top-0 z-10 p-4 border-b border-border bg-background/95 backdrop-blur">
 				<Input
 					ref={inputRef}
@@ -223,13 +303,11 @@ function AppContent() {
 								AppController.Hide();
 							}}
 						>
-<div className="text-2xl font-mono">
-          {mathResult.formatted}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Press Enter to copy
-        </div>
-      </button>
+							<div className="text-2xl font-mono">{mathResult.formatted}</div>
+							<div className="text-sm text-muted-foreground">
+								Press Enter to copy
+							</div>
+						</button>
 					</div>
 				)}
 
@@ -250,63 +328,95 @@ function AppContent() {
 								type="button"
 								className="flex items-center gap-4 p-4 w-full text-left bg-accent border-l-2 border-primary hover:bg-accent/80"
 								onClick={async () => {
-									await copyToClipboard(
-										currencyResult.result.toString(),
-									);
+									await copyToClipboard(currencyResult.result.toString());
 									AppController.Hide();
 								}}
 							>
-<div className="text-2xl font-mono">
-          {formatConversionResult(currencyResult)}
-        </div>
-        <div className="text-sm text-muted-foreground">
-          Press Enter to copy
-        </div>
-        <div className="text-xs text-muted-foreground">
-          Last updated: {formatLastUpdated(currencyResult.timestamp)}
-        </div>
-      </button>
+								<div className="text-2xl font-mono">
+									{formatConversionResult(currencyResult)}
+								</div>
+								<div className="text-sm text-muted-foreground">
+									Press Enter to copy
+								</div>
+								<div className="text-xs text-muted-foreground">
+									Last updated: {formatLastUpdated(currencyResult.timestamp)}
+								</div>
+							</button>
 						)}
 					</div>
 				)}
 
 				{mode === "apps" &&
-					(filteredApps.length === 0 ? (
+					(unifiedList.length === 0 ? (
 						<div className="p-8 text-center text-muted-foreground">
-							No apps found
+							No apps or routes found
 						</div>
 					) : (
 						<div className="divide-y divide-border">
-							{filteredApps.map((app, index) => (
-								<button
-									type="button"
-									key={app.path}
-									data-index={index}
-									className={`flex items-center gap-4 p-4 w-full text-left transition-colors ${
-										index === selectedIndex
-											? "bg-accent border-l-2 border-primary"
-											: "hover:bg-accent"
-									}`}
-									onClick={async () => {
-										await DesktopApps.Launch(app);
-										AppController.Hide();
-									}}
-								>
-									<img
-										width={28}
-										height={28}
-										className="rounded-md object-contain"
-										src={`/files/icon?path=${encodeURIComponent(app.iconPath)}`}
-										alt={app.name}
-										onError={(e) => {
-											e.currentTarget.style.display = "none";
-										}}
-									/>
-									<div className="font-medium truncate">
-										{app.name}
-									</div>
-								</button>
-							))}
+							{unifiedList.map((item) => {
+								if (item.type === "section") {
+									return (
+										<div
+											key={`section-${item.section}`}
+											className="px-4 py-2 text-sm font-semibold text-muted-foreground uppercase bg-muted/50"
+										>
+											{item.section}
+										</div>
+									);
+								}
+								if (item.type === "app") {
+									return (
+										<button
+											type="button"
+											key={item.app.path}
+											data-index={item.index}
+											className={`flex items-center gap-4 p-4 w-full text-left transition-colors ${
+												item.index === selectedIndex
+													? "bg-accent border-l-2 border-primary"
+													: "hover:bg-accent"
+											}`}
+											onClick={async () => {
+												await DesktopApps.Launch(item.app);
+												AppController.Hide();
+											}}
+										>
+											<img
+												width={28}
+												height={28}
+												className="rounded-md object-contain"
+												src={`/files/icon?path=${encodeURIComponent(item.app.iconPath)}`}
+												alt={item.app.name}
+												onError={(e) => {
+													e.currentTarget.style.display = "none";
+												}}
+											/>
+											<div className="font-medium truncate">
+												{item.app.name}
+											</div>
+										</button>
+									);
+								}
+								if (item.type === "route") {
+									return (
+										<button
+											type="button"
+											key={item.path}
+											data-index={item.index}
+											className={`flex items-center gap-4 p-4 w-full text-left transition-colors ${
+												item.index === selectedIndex
+													? "bg-accent border-l-2 border-primary"
+													: "hover:bg-accent"
+											}`}
+											onClick={() => {
+												navigate({ to: item.path });
+											}}
+										>
+											<div className="font-medium truncate">{item.label}</div>
+										</button>
+									);
+								}
+								return null;
+							})}
 						</div>
 					))}
 			</div>
