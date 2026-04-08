@@ -2,6 +2,7 @@
 dist
 bin
 cmd/clutch/dist
+frontend/bindings/
 frontend/dist
 frontend/node_modules
 build/linux/appimage/build
