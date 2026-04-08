@@ -25,14 +25,30 @@ task build        # or: wails3 build
 cmd/clutch/main.go       # Entry point, wires services
 internal/
 ├── socket/socket.go     # Unix socket for IPC (generic)
-└── apps/
-    ├── app.go           # AppController (Show/Hide/Toggle)
-    ├── service.go      # DesktopApps (GetAll, Launch)
-    ├── desktop.go      # App model
-    └── icon.go         # IconIndex
+├── apps/
+│   ├── app.go           # AppController (Show/Hide/Toggle)
+│   ├── service.go       # DesktopApps (GetAll, Launch)
+│   ├── desktop.go       # App model
+│   └── icon.go          # IconIndex
+├── clipboard/           # Clipboard monitoring service
+└── currency/            # Currency conversion service
 frontend/
-├── src/routes/index.tsx  # Main UI
-├── bindings/             # Generated TypeScript bindings
+├── src/
+│   ├── components/      # UI components
+│   │   ├── search/      # SearchInput
+│   │   ├── list/        # UnifiedList, AppItem, RouteItem, SectionHeader, EmptyState
+│   │   └── results/     # MathResult, CurrencyResult
+│   ├── hooks/           # Custom React hooks
+│   │   ├── useClipboard.ts       # Copy to clipboard (reusable)
+│   │   ├── useAppLauncher.ts      # Launch desktop apps
+│   │   ├── useUnifiedList.ts      # Build filtered apps + routes list
+│   │   ├── useKeyboardNavigation.ts # Keyboard event handling
+│   │   └── useSearchMode.ts       # Detect search mode (apps/math/currency)
+│   ├── lib/             # Utilities (currency, math, time, utils)
+│   ├── types/           # TypeScript types (list.ts)
+│   ├── routes/          # Route components (index.tsx, clipboard.tsx)
+│   └── main.tsx         # React entry with QueryClientProvider
+├── bindings/            # Generated TypeScript bindings
 └── package.json
 ```
 
@@ -41,6 +57,8 @@ frontend/
 - **Two services**: `DesktopApps` (app discovery) + `AppController` (window control)
 - **Socket IPC**: Uses Unix socket at `/run/user/<uid>/clutch.sock` (or `/tmp/clutch.sock`)
 - **TanStack Query**: `refetchOnWindowFocus: true` auto-refreshes app list on show
+- **Custom Hooks**: Business logic extracted to hooks for reusability and testability
+- **Component Composition**: Main page composes hooks + small UI components
 
 ## Important Files
 
@@ -48,6 +66,9 @@ frontend/
 - `build/linux/Taskfile.yml` - Linux-specific tasks
 - `build/config.yml` - Wails configuration
 - `frontend/src/main.tsx` - React entry with QueryClientProvider
+- `frontend/src/hooks/` - Custom hooks for business logic
+- `frontend/src/components/` - Reusable UI components
+- `frontend/src/types/list.ts` - List item types and route config
 
 ## Common Tasks
 

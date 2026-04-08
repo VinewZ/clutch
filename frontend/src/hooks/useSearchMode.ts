@@ -1,7 +1,7 @@
-import { useMemo } from "react";
 import type { App } from "bindings/github.com/vinewz/clutch/internal/apps";
-import { isMathExpression } from "../lib/math";
+import { useMemo } from "react";
 import { parseCurrencyInput } from "../lib/currency";
+import { isMathExpression } from "../lib/math";
 
 export type SearchMode = "apps" | "math" | "currency";
 
@@ -12,10 +12,7 @@ export interface SearchModeResult {
 	currencyInput: { amount: number; from: string; to: string } | null;
 }
 
-export function useSearchMode(
-	input: string,
-	apps: App[],
-): SearchModeResult {
+export function useSearchMode(input: string, apps: App[]): SearchModeResult {
 	return useMemo(() => {
 		const trimmed = input.trim();
 

@@ -1,34 +1,18 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Events } from "@wailsio/runtime";
-import {
-	ClipboardService,
-	type ClipboardEntry,
-} from "bindings/github.com/vinewz/clutch/internal/clipboard";
+import { ClipboardService } from "bindings/github.com/vinewz/clutch/internal/clipboard";
 import { useEffect } from "react";
+import { useClipboard } from "@/hooks/useClipboard";
+import { formatRelativeTime } from "@/lib/time";
 
 export const Route = createFileRoute("/clipboard")({
-  component: ClipboardPage,
+	component: ClipboardPage,
 });
-
-function formatRelativeTime(dateStr: string): string {
-  const date = new Date(dateStr);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffSec = Math.floor(diffMs / 1000);
-  const diffMin = Math.floor(diffSec / 60);
-  const diffHour = Math.floor(diffMin / 60);
-  const diffDay = Math.floor(diffHour / 24);
-
-  if (diffSec < 60) return "just now";
-  if (diffMin < 60) return `${diffMin}m ago`;
-  if (diffHour < 24) return `${diffHour}h ago`;
-  if (diffDay < 7) return `${diffDay}d ago`;
-  return date.toLocaleDateString();
-}
 
 function ClipboardPage() {
 	const queryClient = useQueryClient();
+	const { copy } = useClipboard();
 
 	const { data: available, isLoading: availableLoading } = useQuery({
 		queryKey: ["clipboard-available"],
@@ -51,130 +35,118 @@ function ClipboardPage() {
 		return cleanup;
 	}, [queryClient]);
 
-  if (availableLoading || entriesLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center p-8">
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
+	if (availableLoading || entriesLoading) {
+		return (
+			<div className="h-screen flex items-center justify-center">
+				<div className="text-center p-8">
+					<p className="text-muted-foreground">Loading...</p>
+				</div>
+			</div>
+		);
+	}
 
-  if (available === false) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="text-center p-8">
-          <p className="text-destructive text-lg font-medium">
-            wl-clipboard not installed
-          </p>
-          <p className="text-sm text-muted-foreground mt-2">
-            Run: sudo apt install wl-clipboard
-          </p>
-        </div>
-      </div>
-    );
-  }
+	if (available === false) {
+		return (
+			<div className="h-screen flex items-center justify-center">
+				<div className="text-center p-8">
+					<p className="text-destructive text-lg font-medium">
+						wl-clipboard not installed
+					</p>
+					<p className="text-sm text-muted-foreground mt-2">
+						Run: sudo apt install wl-clipboard
+					</p>
+				</div>
+			</div>
+		);
+	}
 
-  const handleCopy = async (content: string) => {
-    try {
-      await navigator.clipboard.writeText(content);
-    } catch {
-      const textArea = document.createElement("textarea");
-      textArea.value = content;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-999999px";
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-    }
-  };
+	const handleCopy = async (content: string) => {
+		await copy(content);
+	};
 
-  const handleClear = async () => {
-    await ClipboardService.ClearHistory();
-    refetch();
-  };
+	const handleClear = async () => {
+		await ClipboardService.ClearHistory();
+		refetch();
+	};
 
-  const handleDelete = async (id: string) => {
-    await ClipboardService.DeleteEntry(id);
-    refetch();
-  };
+	const handleDelete = async (id: string) => {
+		await ClipboardService.DeleteEntry(id);
+		refetch();
+	};
 
-  return (
-    <div className="h-screen flex flex-col">
-      <Link to="/">Home</Link>
-      <div className="sticky top-0 z-10 p-4 border-b border-border bg-background/95 backdrop-blur flex justify-between items-center">
-        <h2 className="text-lg font-semibold">Clipboard History</h2>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">
-            {entries.length} items
-          </span>
-          {entries.length > 0 && (
-            <button
-              type="button"
-              onClick={handleClear}
-              className="text-sm text-muted-foreground hover:text-destructive"
-            >
-              Clear All
-            </button>
-          )}
-        </div>
-      </div>
+	return (
+		<div className="h-screen flex flex-col">
+			<Link to="/">Home</Link>
+			<div className="sticky top-0 z-10 p-4 border-b border-border bg-background/95 backdrop-blur flex justify-between items-center">
+				<h2 className="text-lg font-semibold">Clipboard History</h2>
+				<div className="flex items-center gap-2">
+					<span className="text-xs text-muted-foreground">
+						{entries.length} items
+					</span>
+					{entries.length > 0 && (
+						<button
+							type="button"
+							onClick={handleClear}
+							className="text-sm text-muted-foreground hover:text-destructive"
+						>
+							Clear All
+						</button>
+					)}
+				</div>
+			</div>
 
-      <div className="flex-1 overflow-auto">
-        {entries.length === 0 ? (
-          <div className="p-8 text-center text-muted-foreground">
-            No clipboard history. Copy something to get started!
-          </div>
-        ) : (
-          entries.map((entry) => (
-            <div
-              key={entry.id}
-              className="flex border-b border-border relative group"
-            >
-              <div className="w-1/2 p-4 border-r border-border">
-                <div className="font-mono text-sm truncate pr-16">
-                  {entry.content.slice(0, 100)}
-                  {entry.content.length > 100 && "..."}
-                </div>
-              </div>
+			<div className="flex-1 overflow-auto">
+				{entries.length === 0 ? (
+					<div className="p-8 text-center text-muted-foreground">
+						No clipboard history. Copy something to get started!
+					</div>
+				) : (
+					entries.map((entry) => (
+						<div
+							key={entry.id}
+							className="flex border-b border-border relative group"
+						>
+							<div className="w-1/2 p-4 border-r border-border">
+								<div className="font-mono text-sm truncate pr-16">
+									{entry.content.slice(0, 100)}
+									{entry.content.length > 100 && "..."}
+								</div>
+							</div>
 
-              <div className="w-1/2 p-4">
-                <div className="font-mono text-sm whitespace-pre-wrap break-all max-h-32 overflow-auto">
-                  {entry.content}
-                </div>
-              </div>
+							<div className="w-1/2 p-4">
+								<div className="font-mono text-sm whitespace-pre-wrap break-all max-h-32 overflow-auto">
+									{entry.content}
+								</div>
+							</div>
 
-              <div className="absolute bottom-1 right-1 text-xs text-muted-foreground flex gap-2 bg-background/95 px-1">
-                <span>
-                  {formatRelativeTime(entry.timestamp)} • {entry.size} bytes
-                </span>
-              </div>
+							<div className="absolute bottom-1 right-1 text-xs text-muted-foreground flex gap-2 bg-background/95 px-1">
+								<span>
+									{formatRelativeTime(entry.timestamp)} • {entry.size} bytes
+								</span>
+							</div>
 
-              <div className="absolute top-1/2 -translate-y-1/2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button
-                  type="button"
-                  onClick={() => handleCopy(entry.content)}
-                  className="p-1 rounded hover:bg-accent text-xs"
-                  title="Copy"
-                >
-                  Copy
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleDelete(entry.id)}
-                  className="p-1 rounded hover:bg-accent text-xs text-destructive"
-                  title="Delete"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </div>
-  );
+							<div className="absolute top-1/2 -translate-y-1/2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+								<button
+									type="button"
+									onClick={() => handleCopy(entry.content)}
+									className="p-1 rounded hover:bg-accent text-xs"
+									title="Copy"
+								>
+									Copy
+								</button>
+								<button
+									type="button"
+									onClick={() => handleDelete(entry.id)}
+									className="p-1 rounded hover:bg-accent text-xs text-destructive"
+									title="Delete"
+								>
+									Delete
+								</button>
+							</div>
+						</div>
+					))
+				)}
+			</div>
+		</div>
+	);
 }
-

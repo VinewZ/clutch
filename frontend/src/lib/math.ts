@@ -13,7 +13,7 @@ export function isMathExpression(input: string): boolean {
 	// Must be parseable
 	try {
 		const result = evaluateMath(trimmed);
-		return result !== null && !isNaN(result);
+		return result !== null && !Number.isNaN(result);
 	} catch {
 		return false;
 	}
@@ -32,7 +32,7 @@ export function evaluateMath(expression: string): number | null {
 		// Use Function constructor for evaluation (safer than eval)
 		const result = new Function(`return ${sanitized}`)();
 
-		if (typeof result !== "number" || !isFinite(result)) {
+		if (typeof result !== "number" || !Number.isFinite(result)) {
 			return null;
 		}
 
@@ -42,14 +42,16 @@ export function evaluateMath(expression: string): number | null {
 	}
 }
 
-export function formatMathResult(expression: string, result: number): MathResult {
-	const formatted =
-		Number.isInteger(result)
-			? result.toString()
-			: result.toLocaleString(undefined, {
-					minimumFractionDigits: 0,
-					maximumFractionDigits: 10,
-				});
+export function formatMathResult(
+	expression: string,
+	result: number,
+): MathResult {
+	const formatted = Number.isInteger(result)
+		? result.toString()
+		: result.toLocaleString(undefined, {
+				minimumFractionDigits: 0,
+				maximumFractionDigits: 10,
+			});
 
 	return {
 		expression: expression.trim(),
