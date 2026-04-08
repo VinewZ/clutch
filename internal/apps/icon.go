@@ -1,14 +1,15 @@
-package desktopapps
+package apps
 
 import (
 	"bufio"
-	"github.com/charmbracelet/log"
 	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/charmbracelet/log"
 )
 
 const (
@@ -30,7 +31,7 @@ type Theme struct {
 
 type IconIndex struct {
 	themes       map[string]Theme
-	pixmaps      map[string]string 
+	pixmaps      map[string]string
 	cache        map[string]string
 	loaded       bool
 	mu           sync.Mutex
@@ -83,7 +84,6 @@ func (idx *IconIndex) loadThemesAsync() {
 				continue
 			}
 
-			// Don't overwrite existing theme (prefer first loaded, e.g., system over flatpak)
 			if _, exists := idx.themes[theme.Name]; !exists {
 				idx.themes[theme.Name] = theme
 				loadedThemes++
@@ -103,8 +103,6 @@ func (idx *IconIndex) loadThemesAsync() {
 		pixmapPaths = append(pixmapPaths, dirPath)
 	}
 
-	// Scan non-standard icon directories (like 0x0)
-	// For some reason, thats what Pinokio uses
 	nonstandardPaths := []string{
 		"/usr/share/icons/hicolor/0x0/apps",
 	}
@@ -140,7 +138,6 @@ func (idx *IconIndex) loadThemesAsync() {
 	hicolorSizes := []string{"512x512", "256x256", "128x128", "96x96", "64x64", "48x48", "32x32", "16x16"}
 	hicolorContexts := []string{"apps", "devices", "mimetypes", "places", "categories", "actions", "status", "panel", "emblems", "emotes", "legacy", "ui"}
 
-	// Scan user's local hicolor (largest sizes first to prefer larger icons)
 	localHicolorBase := filepath.Join(home, ".local/share/icons/hicolor")
 	for _, size := range hicolorSizes {
 		for _, context := range hicolorContexts {
@@ -149,7 +146,6 @@ func (idx *IconIndex) loadThemesAsync() {
 		}
 	}
 
-	// Scan system hicolor apps and other contexts (largest sizes first)
 	systemHicolorSizes := []string{"512x512", "256x256", "128x128", "96x96", "64x64", "48x48", "32x32", "16x16"}
 	systemContexts := []string{"apps", "devices", "mimetypes", "places", "categories", "actions", "status", "panel", "emblems", "emotes", "legacy", "ui"}
 	for _, size := range systemHicolorSizes {
@@ -159,7 +155,6 @@ func (idx *IconIndex) loadThemesAsync() {
 		}
 	}
 
-	// Scan AdwaitaLegacy directories (for legacy icons like network-wired)
 	adwaitaLegacySizes := []string{"48x48", "32x32", "24x24", "22x22", "16x16"}
 	adwaitaLegacyContexts := []string{"apps", "devices", "mimetypes", "places", "categories", "actions", "status", "legacy", "ui"}
 	for _, size := range adwaitaLegacySizes {
@@ -169,7 +164,6 @@ func (idx *IconIndex) loadThemesAsync() {
 		}
 	}
 
-	// Scan scalable directories (SVG icons)
 	scalablePaths := []string{
 		filepath.Join(home, ".local/share/icons/hicolor/scalable"),
 		filepath.Join(home, ".local/share/icons/Fluent/scalable"),
@@ -181,7 +175,6 @@ func (idx *IconIndex) loadThemesAsync() {
 		idx.scanIconDir(path)
 	}
 
-	// Symbolic directories (monochrome icons)
 	symbolicPaths := []string{
 		filepath.Join(home, ".local/share/icons/hicolor/symbolic"),
 		filepath.Join(home, ".local/share/icons/Fluent/symbolic"),
@@ -191,7 +184,6 @@ func (idx *IconIndex) loadThemesAsync() {
 		idx.scanIconDir(path)
 	}
 
-	// Additional icon directories
 	additionalPaths := []string{
 		"/usr/share/pixmaps",
 		"/usr/share/uim/pixmaps",
@@ -318,7 +310,6 @@ func (idx *IconIndex) Resolve(iconName string, targetSize int) string {
 
 	iconNameLower := strings.ToLower(iconName)
 
-	// Check cache with mutex
 	idx.mu.Lock()
 	if cached, ok := idx.cache[iconNameLower]; ok {
 		idx.mu.Unlock()
@@ -326,21 +317,16 @@ func (idx *IconIndex) Resolve(iconName string, targetSize int) string {
 	}
 	idx.mu.Unlock()
 
-	// Resolve through theme inheritance
 	resolved := idx.resolveWithInheritance(iconNameLower, targetSize)
 
-	// If not found in themes, check pixmaps
 	if resolved == "" {
 		if pixmapPath, ok := idx.pixmaps[iconNameLower]; ok {
-			// Skip .xpm files - can't be rendered in HTML img tags
-			// Xterm and UXterm fk u
 			if !strings.HasSuffix(pixmapPath, ".xpm") {
 				resolved = pixmapPath
 			}
 		}
 	}
 
-	// Cache result with mutex
 	idx.mu.Lock()
 	if resolved != "" {
 		idx.cache[iconNameLower] = resolved
@@ -372,12 +358,10 @@ func (idx *IconIndex) walkInheritance(iconName string, targetSize int, themeName
 		return ""
 	}
 
-	// Try to find icon in this theme
 	if path := idx.findBestIcon(iconName, targetSize, theme); path != "" {
 		return path
 	}
 
-	// Walk inherited themes
 	for _, inheritName := range theme.Inherits {
 		if path := idx.walkInheritance(iconName, targetSize, inheritName, visited); path != "" {
 			return path
@@ -388,7 +372,6 @@ func (idx *IconIndex) walkInheritance(iconName string, targetSize int, themeName
 }
 
 func (idx *IconIndex) findBestIcon(iconName string, targetSize int, theme Theme) string {
-	// Priority 1: Check scalable directories first (Vector/Scaled icons are best - resolution independent)
 	scalableChecked := 0
 	for _, dir := range theme.Dirs {
 		isVector := dir.Type == "Vector" || dir.Type == "Scaled" || dir.Type == "Scalable" || dir.Type == ""
@@ -400,7 +383,6 @@ func (idx *IconIndex) findBestIcon(iconName string, targetSize int, theme Theme)
 		}
 	}
 
-	// Priority 2: Find Fixed/Threshold at exact target size
 	for _, dir := range theme.Dirs {
 		isVector := dir.Type == "Vector" || dir.Type == "Scaled" || dir.Type == "Scalable" || dir.Type == ""
 		if !isVector && dir.Size == targetSize {
@@ -410,7 +392,6 @@ func (idx *IconIndex) findBestIcon(iconName string, targetSize int, theme Theme)
 		}
 	}
 
-	// Priority 3: Find closest Fixed/Threshold size (prefer larger over smaller)
 	var closestMatch string
 	var closestDiff int = -1
 
@@ -422,7 +403,6 @@ func (idx *IconIndex) findBestIcon(iconName string, targetSize int, theme Theme)
 				if sizeDiff < 0 {
 					sizeDiff = -sizeDiff
 				}
-				// Prefer larger icons over smaller ones (less blurry when scaled down)
 				if closestMatch == "" || dir.Size > targetSize && closestDiff > sizeDiff {
 					closestMatch = path
 					closestDiff = sizeDiff

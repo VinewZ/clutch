@@ -2,32 +2,49 @@ package main
 
 import (
 	"embed"
-	"github.com/charmbracelet/log"
+	"flag"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 
-	"github.com/vinewz/clutch/services/desktopApps"
+	"github.com/charmbracelet/log"
+	"github.com/vinewz/clutch/internal/apps"
+	"github.com/vinewz/clutch/internal/socket"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-//go:embed all:frontend/dist
+//go:embed all:dist
 var assets embed.FS
 
 func init() {
-	// Register a custom event whose associated data type is string.
-	// This is not required, but the binding generator will pick up registered events
-	// and provide a strongly typed JS/TS API for them.
 	application.RegisterEvent[string]("time")
 }
 
 func main() {
+	serverFlag := flag.Bool("server", false, "Start in server mode (hidden, listen for toggle)")
+	toggleFlag := flag.Bool("toggle", false, "Send toggle command to running server")
+	flag.Parse()
+
+	if *toggleFlag {
+		client := socket.NewClient()
+		if err := client.Send(socket.CmdToggle); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	da := &apps.DesktopApps{}
+	ac := &apps.AppController{}
+
 	app := application.New(application.Options{
-		Name:        "clutch-v2",
-		Description: "A demo of using raw HTML & CSS",
+		Name:        "clutch",
+		Description: "A desktop app launcher",
 		Services: []application.Service{
-			application.NewService(&desktopapps.DesktopApps{}),
+			application.NewService(da),
+			application.NewService(ac),
 		},
 		Assets: application.AssetOptions{
 			Handler:    application.AssetFileServerFS(assets),
@@ -35,7 +52,7 @@ func main() {
 		},
 	})
 
-	app.Window.NewWithOptions(application.WebviewWindowOptions{
+	win := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:         "",
 		URL:           "/",
 		Width:         775,
@@ -45,12 +62,40 @@ func main() {
 		DisableResize: true,
 	})
 
+	ac.SetWindow(win)
+
+	if *serverFlag {
+		da.EnsureInitialized()
+		da.GetAll()
+
+		srv := socket.NewServer(func(cmd socket.Command) error {
+			switch cmd {
+			case socket.CmdToggle:
+				ac.Toggle()
+			case socket.CmdShow:
+				ac.Show()
+			case socket.CmdHide:
+				ac.Hide()
+			}
+			return nil
+		})
+
+		if err := srv.Start(); err != nil {
+			log.Error("Failed to start socket server", "error", err)
+		} else {
+			ac.Hide()
+		}
+
+		defer srv.Stop()
+	}
+
 	err := app.Run()
 
 	if err != nil {
 		log.Error("Application failed to run", "error", err)
 	}
 }
+
 func middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasPrefix(r.URL.Path, "/files/") {

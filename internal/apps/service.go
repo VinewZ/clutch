@@ -1,8 +1,7 @@
-package desktopapps
+package apps
 
 import (
 	"fmt"
-	"github.com/charmbracelet/log"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -10,6 +9,8 @@ import (
 	"strings"
 	"syscall"
 	"time"
+
+	"github.com/charmbracelet/log"
 )
 
 type DesktopApps struct {
@@ -41,12 +42,16 @@ func (da *DesktopApps) ensureInitialized() {
 	da.iconIndex.LoadThemes()
 }
 
+func (da *DesktopApps) EnsureInitialized() {
+	da.ensureInitialized()
+}
+
 func (da *DesktopApps) GetAll() []App {
 	da.ensureInitialized()
 
 	start := time.Now()
 
-	var apps []App
+	var appList []App
 
 	for _, dir := range da.desktopFileDirs {
 		filepath.WalkDir(dir, func(p string, d fs.DirEntry, err error) error {
@@ -57,18 +62,18 @@ func (da *DesktopApps) GetAll() []App {
 			if !d.IsDir() && strings.HasSuffix(p, ".desktop") {
 				app, err := da.parseDesktopFile(p)
 				if err == nil && app.Name != "" {
-					apps = append(apps, app)
+					appList = append(appList, app)
 				}
 			}
 			return nil
 		})
 	}
 
-	da.apps = apps
+	da.apps = appList
 
-	log.Info("Desktop apps scan completed", "duration", time.Since(start), "count", len(apps))
+	log.Info("Desktop apps scan completed", "duration", time.Since(start), "count", len(appList))
 
-	return apps
+	return appList
 }
 
 func (da *DesktopApps) resolveIcon(icon string) string {

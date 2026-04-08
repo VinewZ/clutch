@@ -1,4 +1,4 @@
-package desktopapps
+package apps
 
 import (
 	"bufio"

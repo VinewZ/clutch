@@ -1,8 +1,8 @@
 [Desktop Entry]
 Type=Application
-Name=clutch-v2
-Exec=clutch-v2
-Icon=clutch-v2
+Name=clutch
+Exec=clutch
+Icon=clutch
 Categories=Development;
 Terminal=false
 Keywords=wails

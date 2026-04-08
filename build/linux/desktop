@@ -1,13 +1,10 @@
 [Desktop Entry]
 Version=1.0
 Name=My Product
-Comment=A clutch-v2 application
-# The Exec line includes %u to pass the URL to the application
-Exec=/usr/local/bin/clutch-v2 %u
+Comment=A clutch application
+Exec=/usr/local/bin/clutch %u
 Terminal=false
 Type=Application
-Icon=clutch-v2
+Icon=clutch
 Categories=Utility;
-StartupWMClass=clutch-v2
-
- 
+StartupWMClass=clutch

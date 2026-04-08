@@ -3,26 +3,26 @@
 #
 # The lines below are called `modelines`. See `:help modeline`
 
-name: "clutch-v2"
+name: "clutch"
 arch: ${GOARCH}
 platform: "linux"
 version: "0.1.0"
 section: "default"
 priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
-description: "A clutch-v2 application"
+description: "A clutch application"
 vendor: "My Company"
 homepage: "https://wails.io"
 license: "MIT"
 release: "1"
 
 contents:
-  - src: "./bin/clutch-v2"
-    dst: "/usr/local/bin/clutch-v2"
+  - src: "./bin/clutch"
+    dst: "/usr/local/bin/clutch"
   - src: "./build/appicon.png"
-    dst: "/usr/share/icons/hicolor/128x128/apps/clutch-v2.png"
-  - src: "./build/linux/clutch-v2.desktop"
-    dst: "/usr/share/applications/clutch-v2.desktop"
+    dst: "/usr/share/icons/hicolor/128x128/apps/clutch.png"
+  - src: "./build/linux/clutch.desktop"
+    dst: "/usr/share/applications/clutch.desktop"
 
 # Default dependencies for Debian 12/Ubuntu 22.04+ with WebKit 4.1
 depends:
