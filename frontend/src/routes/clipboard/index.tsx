@@ -3,10 +3,11 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Events } from "@wailsio/runtime";
 import { ClipboardService } from "bindings/github.com/vinewz/clutch/internal/clipboard";
 import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
 import { useClipboard } from "@/hooks/useClipboard";
 import { formatRelativeTime } from "@/lib/time";
 
-export const Route = createFileRoute("/clipboard")({
+export const Route = createFileRoute("/clipboard/")({
 	component: ClipboardPage,
 });
 
@@ -84,22 +85,21 @@ function ClipboardPage() {
 						{entries.length} items
 					</span>
 					{entries.length > 0 && (
-						<button
-							type="button"
+						<Button
+							variant="ghost"
+							size="sm"
 							onClick={handleClear}
 							className="text-sm text-muted-foreground hover:text-destructive"
 						>
 							Clear All
-						</button>
+						</Button>
 					)}
 				</div>
 			</div>
 
 			<div className="flex-1 overflow-auto">
 				{entries.length === 0 ? (
-					<div className="p-8 text-center text-muted-foreground">
-						No clipboard history. Copy something to get started!
-					</div>
+					<div>No clipboard history. Copy something to get started!</div>
 				) : (
 					entries.map((entry) => (
 						<div
@@ -126,22 +126,24 @@ function ClipboardPage() {
 							</div>
 
 							<div className="absolute top-1/2 -translate-y-1/2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-								<button
-									type="button"
+								<Button
+									variant="ghost"
+									size="icon"
 									onClick={() => handleCopy(entry.content)}
-									className="p-1 rounded hover:bg-accent text-xs"
-									title="Copy"
+									className="p-1 text-xs"
+									aria-label="Copy"
 								>
 									Copy
-								</button>
-								<button
-									type="button"
+								</Button>
+								<Button
+									variant="ghost"
+									size="icon"
 									onClick={() => handleDelete(entry.id)}
-									className="p-1 rounded hover:bg-accent text-xs text-destructive"
-									title="Delete"
+									className="p-1 text-xs text-destructive"
+									aria-label="Delete"
 								>
 									Delete
-								</button>
+								</Button>
 							</div>
 						</div>
 					))

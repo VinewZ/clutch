@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
+import { ThemeProvider } from "./components/ui/theme-provider";
 import { routeTree } from "./routeTree.gen";
 
 const queryClient = new QueryClient({
@@ -30,9 +31,11 @@ if (!rootElement?.innerHTML) {
 	if (rootElement) {
 		const root = ReactDOM.createRoot(rootElement);
 		root.render(
-			<QueryClientProvider client={queryClient}>
-				<RouterProvider router={router} />
-			</QueryClientProvider>,
+			<ThemeProvider defaultTheme="dark" storageKey="theme">
+				<QueryClientProvider client={queryClient}>
+					<RouterProvider router={router} />
+				</QueryClientProvider>
+			</ThemeProvider>,
 		);
 	}
 }

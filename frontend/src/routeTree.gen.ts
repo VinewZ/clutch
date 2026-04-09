@@ -9,55 +9,58 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ClipboardRouteImport } from './routes/clipboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as ClipboardIndexRouteImport } from './routes/clipboard/index'
 
-const ClipboardRoute = ClipboardRouteImport.update({
-  id: '/clipboard',
-  path: '/clipboard',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClipboardIndexRoute = ClipboardIndexRouteImport.update({
+  id: '/clipboard/',
+  path: '/clipboard/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/clipboard': typeof ClipboardRoute
+  '/clipboard/': typeof ClipboardIndexRoute
+  '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/clipboard': typeof ClipboardRoute
+  '/clipboard': typeof ClipboardIndexRoute
+  '/settings': typeof SettingsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/clipboard': typeof ClipboardRoute
+  '/clipboard/': typeof ClipboardIndexRoute
+  '/settings/': typeof SettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/clipboard'
+  fullPaths: '/' | '/clipboard/' | '/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/clipboard'
-  id: '__root__' | '/' | '/clipboard'
+  to: '/' | '/clipboard' | '/settings'
+  id: '__root__' | '/' | '/clipboard/' | '/settings/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  ClipboardRoute: typeof ClipboardRoute
+  ClipboardIndexRoute: typeof ClipboardIndexRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/clipboard': {
-      id: '/clipboard'
-      path: '/clipboard'
-      fullPath: '/clipboard'
-      preLoaderRoute: typeof ClipboardRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
@@ -65,12 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/settings/': {
+      id: '/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clipboard/': {
+      id: '/clipboard/'
+      path: '/clipboard'
+      fullPath: '/clipboard/'
+      preLoaderRoute: typeof ClipboardIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  ClipboardRoute: ClipboardRoute,
+  ClipboardIndexRoute: ClipboardIndexRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

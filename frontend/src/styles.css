@@ -12,6 +12,7 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
 }
 
+
 :root {
   --sea-ink: #173a40;
   --sea-ink-soft: #416166;
@@ -193,14 +194,12 @@
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
     @apply bg-background text-foreground;
   }
+
   html {
     @apply font-sans;
   }
-}
-
-html, body {
-  background: rgba(255, 255, 255, 0.74);
 }

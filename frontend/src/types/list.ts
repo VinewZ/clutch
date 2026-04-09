@@ -13,5 +13,6 @@ export interface RouteConfig {
 }
 
 export const APP_ROUTES: RouteConfig[] = [
-	{ path: "/clipboard", label: "Clipboard" },
+	{ path: "/clipboard", label: "Clipboard History" },
+	{ path: "/settings", label: "Clutch settings" },
 ];

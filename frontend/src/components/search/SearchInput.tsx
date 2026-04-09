@@ -16,7 +16,7 @@ export const SearchInput = forwardRef<HTMLInputElement, SearchInputProps>(
 				placeholder={placeholder}
 				value={value}
 				onChange={(e) => onChange(e.target.value)}
-				className="w-full"
+				className="w-full py-6 text-lg"
 				autoFocus
 			/>
 		);
