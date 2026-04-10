@@ -1,10 +1,12 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { Events } from "@wailsio/runtime";
 import { ClipboardService } from "bindings/github.com/vinewz/clutch/internal/clipboard";
-import { useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Input } from "#/components/ui/input";
+import { cn } from "#/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useClipboard } from "@/hooks/useClipboard";
+import { useClipboardKeyboard } from "@/hooks/keyboard-navigation/use-clipboard-keyboard";
 import { formatRelativeTime } from "@/lib/time";
 
 export const Route = createFileRoute("/clipboard/")({
@@ -13,7 +15,9 @@ export const Route = createFileRoute("/clipboard/")({
 
 function ClipboardPage() {
 	const queryClient = useQueryClient();
-	const { copy } = useClipboard();
+	const inputRef = useRef<HTMLInputElement>(null);
+	const [filter, setFilter] = useState("");
+	const [selectedIndex, setSelectedIndex] = useState(0);
 
 	const { data: available, isLoading: availableLoading } = useQuery({
 		queryKey: ["clipboard-available"],
@@ -35,6 +39,34 @@ function ClipboardPage() {
 		});
 		return cleanup;
 	}, [queryClient]);
+
+	const filteredEntries = entries.filter((entry) =>
+		entry.content.toLowerCase().includes(filter.toLowerCase()),
+	);
+
+	// biome-ignore lint: false positive, needed to reset selection to first entry on filter change
+	useEffect(() => {
+		setSelectedIndex(0);
+	}, [filter]);
+
+	useEffect(() => {
+		const element = document.querySelector(`[data-index="${selectedIndex}"]`);
+		element?.scrollIntoView({ block: "nearest" });
+	}, [selectedIndex]);
+
+	useClipboardKeyboard({
+		inputRef,
+		filter,
+		setFilter,
+		selectedIndex,
+		setSelectedIndex,
+		filteredEntries,
+	});
+
+	const handleClear = async () => {
+		await ClipboardService.ClearHistory();
+		refetch();
+	};
 
 	if (availableLoading || entriesLoading) {
 		return (
@@ -61,30 +93,24 @@ function ClipboardPage() {
 		);
 	}
 
-	const handleCopy = async (content: string) => {
-		await copy(content);
-	};
-
-	const handleClear = async () => {
-		await ClipboardService.ClearHistory();
-		refetch();
-	};
-
-	const handleDelete = async (id: string) => {
-		await ClipboardService.DeleteEntry(id);
-		refetch();
-	};
-
 	return (
 		<div className="h-screen flex flex-col">
-			<Link to="/">Home</Link>
+			<Input
+				ref={inputRef}
+				type="search"
+				placeholder="Filter clipboard entries..."
+				value={filter}
+				onChange={(e) => setFilter(e.target.value)}
+				className="w-full py-6 text-lg"
+				autoFocus
+			/>
 			<div className="sticky top-0 z-10 p-4 border-b border-border bg-background/95 backdrop-blur flex justify-between items-center">
 				<h2 className="text-lg font-semibold">Clipboard History</h2>
 				<div className="flex items-center gap-2">
 					<span className="text-xs text-muted-foreground">
 						{entries.length} items
 					</span>
-					{entries.length > 0 && (
+					{filteredEntries.length > 0 && (
 						<Button
 							variant="ghost"
 							size="sm"
@@ -98,13 +124,21 @@ function ClipboardPage() {
 			</div>
 
 			<div className="flex-1 overflow-auto">
-				{entries.length === 0 ? (
-					<div>No clipboard history. Copy something to get started!</div>
+				{filteredEntries.length === 0 ? (
+					<div className="p-4 text-muted-foreground">
+						{entries.length === 0
+							? "No clipboard history. Copy something to get started!"
+							: "No entries match your filter."}
+					</div>
 				) : (
-					entries.map((entry) => (
+					filteredEntries.map((entry, index) => (
 						<div
 							key={entry.id}
-							className="flex border-b border-border relative group"
+							data-index={index}
+							className={cn(
+								"flex border-b border-border relative group ",
+								index === selectedIndex && "bg-muted",
+							)}
 						>
 							<div className="w-1/2 p-4 border-r border-border">
 								<div className="font-mono text-sm truncate pr-16">
@@ -123,27 +157,6 @@ function ClipboardPage() {
 								<span>
 									{formatRelativeTime(entry.timestamp)} • {entry.size} bytes
 								</span>
-							</div>
-
-							<div className="absolute top-1/2 -translate-y-1/2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-								<Button
-									variant="ghost"
-									size="icon"
-									onClick={() => handleCopy(entry.content)}
-									className="p-1 text-xs"
-									aria-label="Copy"
-								>
-									Copy
-								</Button>
-								<Button
-									variant="ghost"
-									size="icon"
-									onClick={() => handleDelete(entry.id)}
-									className="p-1 text-xs text-destructive"
-									aria-label="Delete"
-								>
-									Delete
-								</Button>
 							</div>
 						</div>
 					))

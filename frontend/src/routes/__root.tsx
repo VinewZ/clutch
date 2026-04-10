@@ -1,4 +1,6 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
+import { HotkeysDevtoolsPanel } from "@tanstack/react-hotkeys-devtools";
+import { ReactQueryDevtoolsPanel } from "@tanstack/react-query-devtools";
 import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
@@ -20,6 +22,14 @@ function RootComponent() {
 					{
 						name: "TanStack Router",
 						render: <TanStackRouterDevtoolsPanel />,
+					},
+					{
+						name: "TanStack Query",
+						render: <ReactQueryDevtoolsPanel />,
+					},
+					{
+						name: "TanStack Hotkeys",
+						render: <HotkeysDevtoolsPanel theme="dark" devtoolsOpen={false} />,
 					},
 				]}
 			/>
