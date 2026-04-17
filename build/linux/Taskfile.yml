@@ -49,7 +49,7 @@ tasks:
             ref: .DEV
       - task: generate:dotdesktop
     cmds:
-      - test -n "{{.DEV}}" || (rm -rf cmd/clutch/dist && cp -r frontend/dist cmd/clutch/dist)
+      - test -n "{{.DEV}}" || (rm -rf cmd/clutch/dist && cp -r frontend/dist cmd/clutch/frontend-dist)
       - go build {{.BUILD_FLAGS}} -o {{.OUTPUT}} ./cmd/clutch
     vars:
       BUILD_FLAGS: '{{if eq .DEV "true"}}{{if .EXTRA_TAGS}}-tags {{.EXTRA_TAGS}} {{end}}-buildvcs=false -gcflags=all="-l"{{else}}-tags production{{if .EXTRA_TAGS}},{{.EXTRA_TAGS}}{{end}} -trimpath -buildvcs=false -ldflags="-w -s"{{end}}'

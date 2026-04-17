@@ -15,17 +15,32 @@ import (
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-//go:embed all:dist
-var assets embed.FS
+//go:embed all:frontend-dist
+var frontendAssets embed.FS
+
+//go:embed all:api-dist
+var apiAssets embed.FS
+
+//go:embed all:compat-layer-dist
+var compatLayerAssets embed.FS
+
+//go:embed all:runtime-dist
+var extensionRuntime embed.FS
 
 func init() {
 	application.RegisterEvent[string]("time")
 }
 
 func main() {
-	serverFlag := flag.Bool("server", false, "Start in server mode (hidden, listen for toggle)")
+	serverFlag := flag.Bool("server", false, "Start in server mode (hidden, listens for toggle)")
+	devFlag := flag.Bool("dev", false, "Start in server mode (visible, listens for toggle)")
 	toggleFlag := flag.Bool("toggle", false, "Send toggle command to running server")
 	flag.Parse()
+
+	if !*serverFlag && !*toggleFlag && !*devFlag {
+		flag.Usage()
+		os.Exit(1)
+	}
 
 	if *toggleFlag {
 		client := socket.NewClient()
@@ -47,7 +62,7 @@ func main() {
 			application.NewService(ac),
 		},
 		Assets: application.AssetOptions{
-			Handler:    application.AssetFileServerFS(assets),
+			Handler:    application.AssetFileServerFS(frontendAssets),
 			Middleware: middleware,
 		},
 	})
@@ -64,7 +79,7 @@ func main() {
 
 	ac.SetWindow(win)
 
-	if *serverFlag {
+	if *serverFlag || *devFlag {
 		da.EnsureInitialized()
 		da.GetAll()
 
@@ -83,7 +98,9 @@ func main() {
 		if err := srv.Start(); err != nil {
 			log.Error("Failed to start socket server", "error", err)
 		} else {
-			ac.Hide()
+			if !*devFlag {
+				ac.Hide()
+			}
 		}
 
 		defer srv.Stop()

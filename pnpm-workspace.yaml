@@ -1,0 +1,5 @@
+packages:
+  - "./packages/api/"
+  - "./packages/compat-layer/"
+  - "./packages/runtime/"
+  - "./frontend/"

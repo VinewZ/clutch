@@ -1,7 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-	type App,
 	AppController,
 	DesktopApps,
 } from "bindings/github.com/vinewz/clutch/internal/apps";

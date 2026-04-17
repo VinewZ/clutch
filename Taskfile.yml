@@ -10,22 +10,56 @@ vars:
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
 
 tasks:
-  build:
+  build:api:
+    summary: Builds the api package
+    dir: ./packages/api
+    cmds:
+      - pnpm run build
+      - cp ./dist ../../cmd/clutch/api-dist -r
+
+  build:compat-layer:
+    summary: Builds the compat-layer package
+    dir: ./packages/compat-layer
+    cmds:
+      - pnpm run build
+      - cp ./dist ../../cmd/clutch/compat-layer-dist -r
+
+  build:ext-runtime:
+    summary: Builds the runtime package
+    dir: ./packages/ext-runtime
+    cmds:
+      - pnpm run build
+      - cp ./dist ../../cmd/clutch/ext-runtime-dist -r
+
+  build:packages:
+    summary: Builds all the packages
+    deps:
+      - build:api
+      - build:compat-layer
+      - build:ext-runtime
+  
+  build:wails:
     summary: Builds the application
     cmds:
       - task: "{{OS}}:build"
 
-  package:
-    summary: Packages a production build of the application
+  dev:
+    summary: Runs the application in development mode
+    deps:
+      - build:api
+      - build:compat-layer
+      - build:ext-runtime
     cmds:
-      - task: "{{OS}}:package"
+      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
 
   run:
     summary: Runs the application
     cmds:
-      - task: "{{OS}}:run"
+      - '{{.BIN_DIR}}/{{.APP_NAME}} --dev'
 
-  dev:
-    summary: Runs the application in development mode
-    cmds:
-      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+  # package:
+  #   summary: Packages a production build of the application
+  #   cmds:
+  #     - task: "{{OS}}:package"
+  #
+
