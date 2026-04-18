@@ -1,8 +1,43 @@
-node_modules
-.task
-bin
-frontend/dist
-frontend/node_modules
-frontend/bindings
-build/linux/appimage/build
+# Build outputs
+.task/
+bin/
+build/bin/
+build/linux/appimage/build/
 build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build artifacts
+**/dist/
+frontend/bindings/
+cmd/clutch/bundled/
+
+# LLM Memory
+ai-md/
+
+# Test extensions
+packages/ext-runtime/raycast-extensions/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE/Editor
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Logs
+*.log

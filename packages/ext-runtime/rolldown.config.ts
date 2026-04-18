@@ -1,7 +1,6 @@
 import { defineConfig } from "rolldown";
 
 export default defineConfig([
-	// ESM build
 	{
 		input: "src/index.ts",
 		output: {
@@ -11,7 +10,6 @@ export default defineConfig([
 		},
 		platform: "node",
 	},
-	// CJS build
 	{
 		input: "src/index.ts",
 		output: {
@@ -20,5 +18,16 @@ export default defineConfig([
 			sourcemap: true,
 		},
 		platform: "node",
+		external: [],
+	},
+	{
+		input: "src/cli.ts",
+		output: {
+			format: "cjs",
+			file: "dist/cli.cjs",
+			banner: "#!/usr/bin/env node",
+		},
+		platform: "node",
+		external: [],
 	},
 ]);

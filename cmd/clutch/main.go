@@ -11,21 +11,24 @@ import (
 
 	"github.com/charmbracelet/log"
 	"github.com/vinewz/clutch/internal/apps"
+	"github.com/vinewz/clutch/internal/extension"
+	"github.com/vinewz/clutch/internal/runtime"
 	"github.com/vinewz/clutch/internal/socket"
+	"github.com/vinewz/clutch/internal/store"
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
 
-//go:embed all:frontend-dist
+//go:embed all:bundled/frontend-dist
 var frontendAssets embed.FS
 
-//go:embed all:api-dist
+//go:embed all:bundled/api-dist
 var apiAssets embed.FS
 
-//go:embed all:compat-layer-dist
-var compatLayerAssets embed.FS
+//go:embed all:bundled/ext-runtime-dist
+var extRuntimeAssets embed.FS
 
-//go:embed all:runtime-dist
-var extensionRuntime embed.FS
+//go:embed all:bundled/compat-layer-dist
+var compatLayerAssets embed.FS
 
 func init() {
 	application.RegisterEvent[string]("time")
@@ -53,6 +56,8 @@ func main() {
 
 	da := &apps.DesktopApps{}
 	ac := &apps.AppController{}
+	extService := extension.NewExtensionService(socket.SocketPath())
+	storeService := store.NewStoreService()
 
 	app := application.New(application.Options{
 		Name:        "clutch",
@@ -60,6 +65,8 @@ func main() {
 		Services: []application.Service{
 			application.NewService(da),
 			application.NewService(ac),
+			application.NewService(extService),
+			application.NewService(storeService),
 		},
 		Assets: application.AssetOptions{
 			Handler:    application.AssetFileServerFS(frontendAssets),
@@ -80,24 +87,44 @@ func main() {
 	ac.SetWindow(win)
 
 	if *serverFlag || *devFlag {
+		log.Debug("Ensuring runtime extraction...")
+		if err := runtime.EnsureRuntime(); err != nil {
+			log.Error("Failed to extract runtime", "error", err)
+		} else {
+			log.Debug("Runtime extracted", "path", runtime.GetRuntimePath())
+		}
+
 		da.EnsureInitialized()
 		da.GetAll()
 
-		srv := socket.NewServer(func(cmd socket.Command) error {
-			switch cmd {
-			case socket.CmdToggle:
-				ac.Toggle()
-			case socket.CmdShow:
-				ac.Show()
-			case socket.CmdHide:
-				ac.Hide()
-			}
-			return nil
-		})
+		srv := socket.NewServer(nil)
+		log.Debug("Socket server created", "path", socket.SocketPath())
+
+		runtimeHandler := socket.NewRuntimeMessageHandler()
+		renderHandler := socket.NewRenderMessageHandler()
+		internalHandler := socket.NewInternalMessageHandler(extService.GetLifecycle())
+
+		srv.SetHandlers(
+			func(cmd string) error {
+				switch socket.Command(cmd) {
+				case socket.CmdToggle:
+					ac.Toggle()
+				case socket.CmdShow:
+					ac.Show()
+				case socket.CmdHide:
+					ac.Hide()
+				}
+				return nil
+			},
+			runtimeHandler.Handle,
+			renderHandler.Handle,
+			internalHandler.Handle,
+		)
 
 		if err := srv.Start(); err != nil {
 			log.Error("Failed to start socket server", "error", err)
 		} else {
+			log.Info("Socket server started", "path", socket.SocketPath())
 			if !*devFlag {
 				ac.Hide()
 			}

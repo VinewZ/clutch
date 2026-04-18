@@ -10,56 +10,33 @@ vars:
   VITE_PORT: '{{.WAILS_VITE_PORT | default 9245}}'
 
 tasks:
-  build:api:
-    summary: Builds the api package
-    dir: ./packages/api
-    cmds:
-      - pnpm run build
-      - cp ./dist ../../cmd/clutch/api-dist -r
-
-  build:compat-layer:
-    summary: Builds the compat-layer package
-    dir: ./packages/compat-layer
-    cmds:
-      - pnpm run build
-      - cp ./dist ../../cmd/clutch/compat-layer-dist -r
-
-  build:ext-runtime:
-    summary: Builds the runtime package
-    dir: ./packages/ext-runtime
-    cmds:
-      - pnpm run build
-      - cp ./dist ../../cmd/clutch/ext-runtime-dist -r
-
-  build:packages:
-    summary: Builds all the packages
-    deps:
-      - build:api
-      - build:compat-layer
-      - build:ext-runtime
-  
-  build:wails:
+  build:
     summary: Builds the application
     cmds:
       - task: "{{OS}}:build"
 
-  dev:
-    summary: Runs the application in development mode
-    deps:
-      - build:api
-      - build:compat-layer
-      - build:ext-runtime
+  package:
+    summary: Packages a production build of the application
     cmds:
-      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+      - task: "{{OS}}:package"
 
   run:
     summary: Runs the application
     cmds:
-      - '{{.BIN_DIR}}/{{.APP_NAME}} --dev'
+      - task: "{{OS}}:run"
 
-  # package:
-  #   summary: Packages a production build of the application
-  #   cmds:
-  #     - task: "{{OS}}:package"
-  #
+  dev:
+    summary: Runs the application in development mode
+    deps:
+      - task: build:packages
+      - task: common:build:frontend
+    cmds:
+      - wails3 dev -config ./build/config.yml -port {{.VITE_PORT}}
+
+  build:packages:
+    cmds:
+      - mkdir -p ./cmd/clutch/bundled
+      - cd ./packages/api && pnpm run build && cp dist ../../cmd/clutch/bundled/api-dist -r
+      - cd ./packages/compat-layer && pnpm run build && cp dist ../../cmd/clutch/bundled/compat-layer-dist -r
+      - cd ./packages/ext-runtime && pnpm run build && cp dist ../../cmd/clutch/bundled/ext-runtime-dist -r
 
