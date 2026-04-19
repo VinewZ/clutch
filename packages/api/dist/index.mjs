@@ -1359,74 +1359,171 @@ var require_react_jsx_runtime_development = /* @__PURE__ */ __commonJSMin(((expo
 	})();
 }));
 //#endregion
-//#region src/utils.ts
+//#region src/factories.ts
 var import_jsx_runtime = (/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	if (process.env.NODE_ENV === "production") module.exports = require_react_jsx_runtime_production();
 	else module.exports = require_react_jsx_runtime_development();
 })))();
-const createWrapperComponent = (name) => {
-	const ComponentFactory = (props) => {
-		return (0, import_jsx_runtime.jsx)(name, props);
-	};
-	ComponentFactory.displayName = name;
-	return ComponentFactory;
-};
-const createSlottedComponent = (baseName, accessoryPropNames) => {
-	const AccessorySlotFactory = createWrapperComponent("_AccessorySlot");
-	const PrimitiveFactory = createWrapperComponent(baseName);
-	const SlottedComponentFactory = (props) => {
+function createComponent(type) {
+	const Component = (props) => (0, import_jsx_runtime.jsx)(type, props);
+	Component.displayName = type;
+	return Component;
+}
+function createSlottedComponent(type, slotProps) {
+	const Slot = createComponent("Slot");
+	const Component = (props) => {
 		const { children, ...rest } = props;
-		const accessoryElements = [];
-		for (const name of accessoryPropNames) if (rest[name]) {
-			accessoryElements.push(AccessorySlotFactory({ children: rest[name] }));
-			delete rest[name];
-		}
-		return PrimitiveFactory({
+		const slots = slotProps.filter((prop) => rest[prop]).map((prop) => Slot({ children: rest[prop] }));
+		for (const prop of slotProps) delete rest[prop];
+		return (0, import_jsx_runtime.jsx)(type, {
 			...rest,
-			children: [children, ...accessoryElements].filter(Boolean)
+			children: [children, ...slots].filter(Boolean)
 		});
 	};
-	SlottedComponentFactory.displayName = baseName;
-	return SlottedComponentFactory;
-};
+	Component.displayName = type;
+	return Component;
+}
 //#endregion
 //#region src/components/list.ts
 const List = createSlottedComponent("List", ["searchBarAccessory"]);
-const ListItem = createSlottedComponent("List.Item", ["detail", "actions"]);
-const ListSection = createWrapperComponent("List.Section");
-const ListEmptyView = createWrapperComponent("List.EmptyView");
-const ListDropdown = createWrapperComponent("List.Dropdown");
-const ListDropdownItem = createWrapperComponent("List.Dropdown.Item");
-const ListDropdownSection = createWrapperComponent("List.Dropdown.Section");
-const ListItemDetail = createWrapperComponent("List.Item.Detail");
-const ListItemDetailMetadata = createWrapperComponent("List.Item.Detail.Metadata");
-const ListItemDetailMetadataLabel = createWrapperComponent("List.Item.Detail.Metadata.Label");
-const ListItemDetailMetadataLink = createWrapperComponent("List.Item.Detail.Metadata.Link");
-const ListItemDetailMetadataTagList = createWrapperComponent("List.Item.Detail.Metadata.TagList");
-const ListItemDetailMetadataTagListItem = createWrapperComponent("List.Item.Detail.Metadata.TagList.Item");
-const ListItemDetailMetadataSeparator = createWrapperComponent("List.Item.Detail.Metadata.Separator");
-Object.assign(List, {
-	Item: ListItem,
-	Section: ListSection,
-	Dropdown: ListDropdown,
-	EmptyView: ListEmptyView
-});
-Object.assign(ListDropdown, {
-	Item: ListDropdownItem,
-	Section: ListDropdownSection
-});
-Object.assign(ListItem, { Detail: ListItemDetail });
-Object.assign(ListItemDetail, { Metadata: ListItemDetailMetadata });
-Object.assign(ListItemDetailMetadata, {
-	Label: ListItemDetailMetadataLabel,
-	Link: ListItemDetailMetadataLink,
-	TagList: ListItemDetailMetadataTagList,
-	Separator: ListItemDetailMetadataSeparator
-});
-Object.assign(ListItemDetailMetadataTagList, { Item: ListItemDetailMetadataTagListItem });
+const Item$1 = createSlottedComponent("List.Item", ["detail", "actions"]);
+const Section$1 = createComponent("List.Section");
+const EmptyView$1 = createComponent("List.EmptyView");
+const Dropdown$2 = createComponent("List.Dropdown");
+const DropdownItem$2 = createComponent("List.Dropdown.Item");
+const DropdownSection$2 = createComponent("List.Dropdown.Section");
+const ItemDetail = createSlottedComponent("List.Item.Detail", ["metadata"]);
+const ItemDetailMetadata = createComponent("List.Item.Detail.Metadata");
+const ItemDetailMetadataLabel = createComponent("List.Item.Detail.Metadata.Label");
+const ItemDetailMetadataLink = createComponent("List.Item.Detail.Metadata.Link");
+const ItemDetailMetadataTagList = createComponent("List.Item.Detail.Metadata.TagList");
+const ItemDetailMetadataTagListItem = createComponent("List.Item.Detail.Metadata.TagList.Item");
+const ItemDetailMetadataSeparator = createComponent("List.Item.Detail.Metadata.Separator");
+List.Item = Item$1;
+List.Section = Section$1;
+List.Dropdown = Dropdown$2;
+List.EmptyView = EmptyView$1;
+Dropdown$2.Item = DropdownItem$2;
+Dropdown$2.Section = DropdownSection$2;
+Item$1.Detail = ItemDetail;
+ItemDetail.Metadata = ItemDetailMetadata;
+ItemDetailMetadata.Label = ItemDetailMetadataLabel;
+ItemDetailMetadata.Link = ItemDetailMetadataLink;
+ItemDetailMetadata.TagList = ItemDetailMetadataTagList;
+ItemDetailMetadata.Separator = ItemDetailMetadataSeparator;
+ItemDetailMetadataTagList.Item = ItemDetailMetadataTagListItem;
+//#endregion
+//#region src/components/grid.ts
+const Grid = createSlottedComponent("Grid", ["searchBarAccessory"]);
+const Item = createSlottedComponent("Grid.Item", ["actions"]);
+const Section = createComponent("Grid.Section");
+const EmptyView = createComponent("Grid.EmptyView");
+const Dropdown$1 = createComponent("Grid.Dropdown");
+const DropdownItem$1 = createComponent("Grid.Dropdown.Item");
+const DropdownSection$1 = createComponent("Grid.Dropdown.Section");
+Grid.Item = Item;
+Grid.Section = Section;
+Grid.Dropdown = Dropdown$1;
+Grid.EmptyView = EmptyView;
+Dropdown$1.Item = DropdownItem$1;
+Dropdown$1.Section = DropdownSection$1;
+//#endregion
+//#region src/components/form.ts
+const Form = createSlottedComponent("Form", ["searchBarAccessory"]);
+const TextField = createComponent("Form.TextField");
+const PasswordField = createComponent("Form.PasswordField");
+const TextArea = createComponent("Form.TextArea");
+const Checkbox = createComponent("Form.Checkbox");
+const DatePicker = createComponent("Form.DatePicker");
+const TagPicker = createComponent("Form.TagPicker");
+const Dropdown = createComponent("Form.Dropdown");
+const DropdownItem = createComponent("Form.Dropdown.Item");
+const DropdownSection = createComponent("Form.Dropdown.Section");
+const FilePicker = createComponent("Form.FilePicker");
+const Separator = createComponent("Form.Separator");
+const LinkAccessory = createComponent("Form.LinkAccessory");
+Form.TextField = TextField;
+Form.PasswordField = PasswordField;
+Form.TextArea = TextArea;
+Form.Checkbox = Checkbox;
+Form.DatePicker = DatePicker;
+Form.TagPicker = TagPicker;
+Form.Dropdown = Dropdown;
+Form.FilePicker = FilePicker;
+Form.Separator = Separator;
+Form.LinkAccessory = LinkAccessory;
+Dropdown.Item = DropdownItem;
+Dropdown.Section = DropdownSection;
+//#endregion
+//#region src/components/detail.ts
+const Detail = createSlottedComponent("Detail", ["metadata"]);
+const Metadata = createComponent("Detail.Metadata");
+const MetadataLabel = createComponent("Detail.Metadata.Label");
+const MetadataLink = createComponent("Detail.Metadata.Link");
+const MetadataTagList = createComponent("Detail.Metadata.TagList");
+const MetadataTagListItem = createComponent("Detail.Metadata.TagList.Item");
+const MetadataSeparator = createComponent("Detail.Metadata.Separator");
+Detail.Metadata = Metadata;
+Metadata.Label = MetadataLabel;
+Metadata.Link = MetadataLink;
+Metadata.TagList = MetadataTagList;
+Metadata.Separator = MetadataSeparator;
+MetadataTagList.Item = MetadataTagListItem;
+//#endregion
+//#region src/components/action.ts
+const Action = createComponent("Action");
+const CopyToClipboard = createComponent("Action.CopyToClipboard");
+const Open = createComponent("Action.Open");
+const OpenInBrowser = createComponent("Action.OpenInBrowser");
+const OpenWith = createComponent("Action.OpenWith");
+const Paste = createComponent("Action.Paste");
+const Push = createComponent("Action.Push");
+const ShowInFinder = createComponent("Action.ShowInFinder");
+const SubmitForm = createComponent("Action.SubmitForm");
+const Trash = createComponent("Action.Trash");
+const CreateSnippet = createComponent("Action.CreateSnippet");
+const CreateQuicklink = createComponent("Action.CreateQuicklink");
+const ToggleQuickLook = createComponent("Action.ToggleQuickLook");
+const PickDate = createComponent("Action.PickDate");
+Action.CopyToClipboard = CopyToClipboard;
+Action.Open = Open;
+Action.OpenInBrowser = OpenInBrowser;
+Action.OpenWith = OpenWith;
+Action.Paste = Paste;
+Action.Push = Push;
+Action.ShowInFinder = ShowInFinder;
+Action.SubmitForm = SubmitForm;
+Action.Trash = Trash;
+Action.CreateSnippet = CreateSnippet;
+Action.CreateQuicklink = CreateQuicklink;
+Action.ToggleQuickLook = ToggleQuickLook;
+Action.PickDate = PickDate;
+Action.Style = {
+	Regular: "regular",
+	Destructive: "destructive"
+};
+PickDate.Type = {
+	Date: "date",
+	DateTime: "datetime"
+};
+PickDate.isFullDay = (date) => {
+	return date.getHours() === 0 && date.getMinutes() === 0 && date.getSeconds() === 0 && date.getMilliseconds() === 0;
+};
+const ActionPanel = createComponent("ActionPanel");
+const ActionPanelSection = createComponent("ActionPanel.Section");
+const ActionPanelSubmenu = createComponent("ActionPanel.Submenu");
+ActionPanel.Section = ActionPanelSection;
+ActionPanel.Submenu = ActionPanelSubmenu;
 //#endregion
 //#region src/index.ts
-const clutch = { api: { List } };
+const clutch = { api: {
+	List,
+	Grid,
+	Form,
+	Detail,
+	Action,
+	ActionPanel
+} };
 //#endregion
 export { clutch };
 
