@@ -17,6 +17,7 @@ type ExtensionService struct {
 	activeExt  *Extension
 	lastRender json.RawMessage
 	onRender   func(json.RawMessage)
+	onError    func(error)
 	socketPath string
 }
 
@@ -104,20 +105,35 @@ func (s *ExtensionService) SendEvent(handlerID string, event json.RawMessage) er
 	return nil
 }
 
-func (s *ExtensionService) SetOnRender(fn func(json.RawMessage)) {
+func (s *ExtensionService) SetOnRender(fn func(map[string]any)) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	s.onRender = fn
+	s.onRender = func(data json.RawMessage) {
+		var parsed map[string]any
+		if err := json.Unmarshal(data, &parsed); err != nil {
+			log.Error("Failed to parse render data", "error", err)
+			return
+		}
+		fn(parsed)
+	}
 }
 
-func (s *ExtensionService) HandleRenderResult(result json.RawMessage) {
+func (s *ExtensionService) SetOnError(fn func(string)) {
 	s.mu.Lock()
-	s.lastRender = result
-	fn := s.onRender
+	defer s.mu.Unlock()
+	s.onError = func(err error) {
+		fn(err.Error())
+	}
+}
+
+func (s *ExtensionService) HandleRenderResponse(data json.RawMessage) {
+	s.mu.Lock()
+	s.lastRender = data
+	callback := s.onRender
 	s.mu.Unlock()
 
-	if fn != nil {
-		fn(result)
+	if callback != nil {
+		callback(data)
 	}
 }
 

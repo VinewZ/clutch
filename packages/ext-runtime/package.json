@@ -2,47 +2,35 @@
 	"name": "@clutch/ext-runtime",
 	"version": "1.0.0",
 	"description": "",
-	"exports": {
-		".": {
-			"import": {
-				"types": "./dist/index.d.ts",
-				"default": "./dist/index.mjs"
-			},
-			"require": {
-				"types": "./dist/index.d.cts",
-				"default": "./dist/index.cjs"
-			}
-		}
-	},
-	"main": "./dist/index.cjs",
-	"module": "./dist/index.mjs",
-	"types": "./dist/index.d.ts",
+	"main": "./dist/cli.cjs",
 	"files": [
 		"dist"
 	],
-  "scripts": {
-    "build": "tsc && rolldown -c",
-    "dev": "tsc && rolldown -c -w",
-    "check": "biome check .",
-    "check:write": "biome check --write .",
-    "lint": "biome lint .",
-    "format": "biome format --write .",
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run",
-    "test:watch": "vitest"
-  },
+	"scripts": {
+		"build": "tsc && rolldown -c",
+		"dev": "tsc && rolldown -c -w",
+		"check": "biome check .",
+		"check:write": "biome check --write .",
+		"lint": "biome lint .",
+		"format": "biome format --write .",
+		"typecheck": "tsc --noEmit",
+		"test": "vitest run",
+		"test:watch": "vitest"
+	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"packageManager": "pnpm@10.15.0",
 	"dependencies": {
-		"@clutch/compat-layer": "workspace:*",
-		"react": "^19.2.5",
-		"react-reconciler": "^0.33.0"
+		"@clutch/api": "workspace:*"
 	},
 	"devDependencies": {
+		"@types/node": "^22.19.17",
 		"@types/react": "^19.2.14",
 		"@types/react-reconciler": "^0.33.0",
+		"react": "^19.2.5",
+		"react-reconciler": "^0.33.0",
+		"react-test-renderer": "^19.2.5",
 		"vitest": "^3.2.4"
 	}
 }

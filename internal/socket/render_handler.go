@@ -8,7 +8,8 @@ import (
 )
 
 type RenderMessageHandler struct {
-	renderFunc func(extensionId string, state json.RawMessage) (json.RawMessage, error)
+	renderFunc       func(extensionId string, state json.RawMessage) (json.RawMessage, error)
+	onRenderResponse func(json.RawMessage)
 }
 
 func NewRenderMessageHandler() *RenderMessageHandler {
@@ -17,6 +18,10 @@ func NewRenderMessageHandler() *RenderMessageHandler {
 
 func (h *RenderMessageHandler) SetRenderFunc(fn func(extensionId string, state json.RawMessage) (json.RawMessage, error)) {
 	h.renderFunc = fn
+}
+
+func (h *RenderMessageHandler) SetOnRenderResponse(fn func(json.RawMessage)) {
+	h.onRenderResponse = fn
 }
 
 func (h *RenderMessageHandler) Handle(data json.RawMessage) (*SocketResponse, error) {
@@ -82,6 +87,11 @@ func (h *RenderMessageHandler) handleRenderRequest(data json.RawMessage) (*Socke
 
 func (h *RenderMessageHandler) handleRenderResponse(data json.RawMessage) (*SocketResponse, error) {
 	log.Info("Received renderResponse", "data", string(data))
+
+	if h.onRenderResponse != nil {
+		h.onRenderResponse(data)
+	}
+
 	return &SocketResponse{
 		Success: true,
 		Data:    data,

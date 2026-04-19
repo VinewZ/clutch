@@ -1,25 +1,9 @@
 import { defineConfig } from "rolldown";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
 
 export default defineConfig([
-	{
-		input: "src/index.ts",
-		output: {
-			format: "esm",
-			file: "dist/index.mjs",
-			sourcemap: true,
-		},
-		platform: "node",
-	},
-	{
-		input: "src/index.ts",
-		output: {
-			format: "cjs",
-			file: "dist/index.cjs",
-			sourcemap: true,
-		},
-		platform: "node",
-		external: [],
-	},
 	{
 		input: "src/cli.ts",
 		output: {
@@ -29,5 +13,10 @@ export default defineConfig([
 		},
 		platform: "node",
 		external: [],
+		resolve: {
+			alias: {
+				react: require.resolve("react"),
+			},
+		},
 	},
 ]);

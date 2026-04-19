@@ -1,25 +1,39 @@
 //#region \0rolldown/runtime.js
-var __create = Object.create;
-var __defProp = Object.defineProperty;
-var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
-var __getOwnPropNames = Object.getOwnPropertyNames;
-var __getProtoOf = Object.getPrototypeOf;
-var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
-var __copyProps = (to, from, except, desc) => {
-	if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
-		key = keys[i];
-		if (!__hasOwnProp.call(to, key) && key !== except) __defProp(to, key, {
-			get: ((k) => from[k]).bind(null, key),
-			enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable
-		});
+//#endregion
+//#region ../../node_modules/.pnpm/react@19.2.5/node_modules/react/cjs/react-jsx-runtime.production.js
+/**
+* @license React
+* react-jsx-runtime.production.js
+*
+* Copyright (c) Meta Platforms, Inc. and affiliates.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+var require_react_jsx_runtime_production = /* @__PURE__ */ __commonJSMin(((exports) => {
+	var REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
+	function jsxProd(type, config, maybeKey) {
+		var key = null;
+		void 0 !== maybeKey && (key = "" + maybeKey);
+		void 0 !== config.key && (key = "" + config.key);
+		if ("key" in config) {
+			maybeKey = {};
+			for (var propName in config) "key" !== propName && (maybeKey[propName] = config[propName]);
+		} else maybeKey = config;
+		config = maybeKey.ref;
+		return {
+			$$typeof: REACT_ELEMENT_TYPE,
+			type,
+			key,
+			ref: void 0 !== config ? config : null,
+			props: maybeKey
+		};
 	}
-	return to;
-};
-var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", {
-	value: mod,
-	enumerable: true
-}) : target, mod));
+	exports.Fragment = REACT_FRAGMENT_TYPE;
+	exports.jsx = jsxProd;
+	exports.jsxs = jsxProd;
+}));
 //#endregion
 //#region ../../node_modules/.pnpm/react@19.2.5/node_modules/react/cjs/react.production.js
 /**
@@ -1146,40 +1160,6 @@ var require_react = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	else module.exports = require_react_development();
 }));
 //#endregion
-//#region ../../node_modules/.pnpm/react@19.2.5/node_modules/react/cjs/react-jsx-runtime.production.js
-/**
-* @license React
-* react-jsx-runtime.production.js
-*
-* Copyright (c) Meta Platforms, Inc. and affiliates.
-*
-* This source code is licensed under the MIT license found in the
-* LICENSE file in the root directory of this source tree.
-*/
-var require_react_jsx_runtime_production = /* @__PURE__ */ __commonJSMin(((exports) => {
-	var REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment");
-	function jsxProd(type, config, maybeKey) {
-		var key = null;
-		void 0 !== maybeKey && (key = "" + maybeKey);
-		void 0 !== config.key && (key = "" + config.key);
-		if ("key" in config) {
-			maybeKey = {};
-			for (var propName in config) "key" !== propName && (maybeKey[propName] = config[propName]);
-		} else maybeKey = config;
-		config = maybeKey.ref;
-		return {
-			$$typeof: REACT_ELEMENT_TYPE,
-			type,
-			key,
-			ref: void 0 !== config ? config : null,
-			props: maybeKey
-		};
-	}
-	exports.Fragment = REACT_FRAGMENT_TYPE;
-	exports.jsx = jsxProd;
-	exports.jsxs = jsxProd;
-}));
-//#endregion
 //#region ../../node_modules/.pnpm/react@19.2.5/node_modules/react/cjs/react-jsx-runtime.development.js
 /**
 * @license React
@@ -1379,15 +1359,11 @@ var require_react_jsx_runtime_development = /* @__PURE__ */ __commonJSMin(((expo
 	})();
 }));
 //#endregion
-//#region ../../node_modules/.pnpm/react@19.2.5/node_modules/react/jsx-runtime.js
-var require_jsx_runtime = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+//#region src/utils.ts
+var import_jsx_runtime = (/* @__PURE__ */ __commonJSMin(((exports, module) => {
 	if (process.env.NODE_ENV === "production") module.exports = require_react_jsx_runtime_production();
 	else module.exports = require_react_jsx_runtime_development();
-}));
-//#endregion
-//#region src/utils.ts
-var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
-var import_jsx_runtime = require_jsx_runtime();
+})))();
 const createWrapperComponent = (name) => {
 	const ComponentFactory = (props) => {
 		return (0, import_jsx_runtime.jsx)(name, props);
@@ -1450,10 +1426,7 @@ Object.assign(ListItemDetailMetadata, {
 Object.assign(ListItemDetailMetadataTagList, { Item: ListItemDetailMetadataTagListItem });
 //#endregion
 //#region src/index.ts
-const clutch = {
-	components: { List },
-	react: import_react.default
-};
+const clutch = { api: { List } };
 //#endregion
 export { clutch };
 

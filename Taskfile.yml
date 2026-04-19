@@ -37,6 +37,6 @@ tasks:
     cmds:
       - mkdir -p ./cmd/clutch/bundled
       - cd ./packages/api && pnpm run build && cp dist ../../cmd/clutch/bundled/api-dist -r
-      - cd ./packages/compat-layer && pnpm run build && cp dist ../../cmd/clutch/bundled/compat-layer-dist -r
       - cd ./packages/ext-runtime && pnpm run build && cp dist ../../cmd/clutch/bundled/ext-runtime-dist -r
+      - cp ./packages/ext-runtime/dist/cli.cjs ./internal/runtime/cli.cjs
 

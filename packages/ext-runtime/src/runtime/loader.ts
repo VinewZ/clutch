@@ -1,8 +1,9 @@
 import { pathToFileURL } from "node:url";
-import type { ReactNode } from "react";
+import React from "react";
+import type { ReactElement, FunctionComponent } from "react";
 
 export interface ExtensionModule {
-	default: ReactNode | (() => ReactNode);
+	default: React.ReactNode | (() => React.ReactNode) | React.ComponentType;
 	[key: string]: unknown;
 }
 
@@ -11,7 +12,7 @@ export interface LoadedExtension {
 	path: string;
 	command: string;
 	module: ExtensionModule;
-	component: ReactNode;
+	component: ReactElement;
 }
 
 export async function loadExtension(
@@ -19,27 +20,35 @@ export async function loadExtension(
 	command: string,
 ): Promise<LoadedExtension> {
 	const entryPath = `${extensionPath}/${command}.js`;
-	console.error("[LOADER] Loading extension from:", entryPath);
-	console.error("[LOADER] Extension path:", extensionPath);
-	console.error("[LOADER] Command:", command);
 
 	try {
-		const moduleUrl = pathToFileURL(entryPath).href;
-		console.error("[LOADER] Importing module from URL:", moduleUrl);
-
 		const module = (await import(
 			pathToFileURL(entryPath).href
 		)) as ExtensionModule;
-		console.error("[LOADER] Module imported successfully");
-		console.error("[LOADER] Module exports:", Object.keys(module));
-		console.error("[LOADER] Module default type:", typeof module.default);
 
-		const component =
-			typeof module.default === "function" ? module.default() : module.default;
-		console.error("[LOADER] Component resolved, type:", typeof component);
+		let component: ReactElement;
+		let defaultExport: unknown = module.default;
+
+		// Handle CommonJS modules with nested default
+		if (
+			defaultExport &&
+			typeof defaultExport === "object" &&
+			"default" in defaultExport &&
+			!React.isValidElement(defaultExport)
+		) {
+			defaultExport = (defaultExport as Record<string, unknown>).default;
+		}
+
+		if (React.isValidElement(defaultExport)) {
+			component = defaultExport as ReactElement;
+		} else if (typeof defaultExport === "function") {
+			component = React.createElement(defaultExport as FunctionComponent);
+		} else {
+			const Wrapper = () => defaultExport as React.ReactNode;
+			component = React.createElement(Wrapper);
+		}
 
 		const extensionId = `${extensionPath.split("/").pop()}-${command}`;
-		console.error("[LOADER] Generated extension ID:", extensionId);
 
 		return {
 			id: extensionId,
@@ -49,18 +58,8 @@ export async function loadExtension(
 			component,
 		};
 	} catch (error) {
-		console.error("[LOADER] Failed to load extension:", error);
 		throw new Error(
 			`Failed to load extension at ${entryPath}: ${error instanceof Error ? error.message : "Unknown error"}`,
 		);
 	}
-}
-
-export function validateExtension(module: unknown): module is ExtensionModule {
-	if (typeof module !== "object" || module === null) {
-		return false;
-	}
-
-	const m = module as Record<string, unknown>;
-	return "default" in m;
 }

@@ -1,10 +1,13 @@
 import Module from "node:module";
-import { COMPAT } from "@clutch/compat-layer";
+import React from "react";
+import { clutch } from "@clutch/api";
 
-export const REWRITE_MAP: ReadonlyMap<string, unknown> = new Map([
-	["@raycast/api", COMPAT.API],
-	["react", COMPAT.react],
-]);
+export const REWRITE_MAP = new Map<string, unknown>([
+	["@raycast/api", clutch.api],
+	["react", React],
+	["react/jsx-runtime", React],
+	["react/jsx-dev-runtime", React],
+]) as ReadonlyMap<string, unknown>;
 
 type ParentModule = {
 	filename: string;
@@ -85,6 +88,8 @@ internal._load = function (
 	parent: ParentModule,
 	isMain: boolean,
 ): unknown {
+	const base = normalizeRequest(request);
+
 	if (typeof request === "string" && request.startsWith(CACHE_KEY_PREFIX)) {
 		const cached = cachedModules.get(request);
 		if (cached !== undefined) {
@@ -92,16 +97,12 @@ internal._load = function (
 		}
 	}
 
-	const base = normalizeRequest(request);
 	if (base === null) {
 		return originalLoad.call(this, request as string, parent, isMain);
 	}
 
 	for (const [from, replacement] of REWRITE_MAP) {
-		if (base === from) {
-			return replacement;
-		}
-		if (base.startsWith(`${from}/`)) {
+		if (base === from || base.startsWith(`${from}/`)) {
 			return replacement;
 		}
 	}

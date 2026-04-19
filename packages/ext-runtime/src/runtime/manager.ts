@@ -9,13 +9,9 @@ export interface RuntimeManagerConfig {
 }
 
 export interface RuntimeManager {
-	startExtension(
-		extensionPath: string,
-		command: string,
-		initialState?: unknown,
-	): Promise<JSONNode>;
+	startExtension(extensionPath: string, command: string): Promise<JSONNode>;
 	stopExtension(extensionId: string): Promise<void>;
-	render(extensionId: string, state: unknown): Promise<JSONNode>;
+	render(extensionId: string): Promise<JSONNode>;
 	getActiveExtension(): string | null;
 }
 
@@ -30,7 +26,6 @@ export function createRuntimeManager(
 		async startExtension(
 			extensionPath: string,
 			command: string,
-			initialState?: unknown,
 		): Promise<JSONNode> {
 			const loaded = await loadExtension(extensionPath, command);
 
@@ -46,7 +41,7 @@ export function createRuntimeManager(
 			renderers.set(loaded.id, renderer);
 			activeExtensionId = loaded.id;
 
-			const json = renderer.render(loaded.component, initialState);
+			const json = renderer.render(loaded.component);
 			if (!json) {
 				throw new Error("Initial render returned null");
 			}
@@ -68,7 +63,7 @@ export function createRuntimeManager(
 			}
 		},
 
-		async render(extensionId: string, state: unknown): Promise<JSONNode> {
+		async render(extensionId: string): Promise<JSONNode> {
 			const renderer = renderers.get(extensionId);
 			const extension = extensions.get(extensionId);
 
@@ -76,7 +71,7 @@ export function createRuntimeManager(
 				throw new Error(`Extension not found: ${extensionId}`);
 			}
 
-			const json = renderer.render(extension.component, state);
+			const json = renderer.render(extension.component);
 			if (!json) {
 				throw new Error("Render returned null");
 			}

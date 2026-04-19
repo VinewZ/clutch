@@ -113,6 +113,13 @@ async function main() {
 	try {
 		loadedExtension = await loadExtension(args.extensionPath, args.command);
 		console.error("[CLI] Extension loaded successfully:", loadedExtension.id);
+		console.error("[CLI] Component:", loadedExtension.component);
+		console.error(
+			"[CLI] Component keys:",
+			loadedExtension.component
+				? Object.keys(loadedExtension.component)
+				: "null",
+		);
 		setExtensionContext(loadedExtension.id);
 	} catch (err) {
 		const errMsg = err instanceof Error ? err.message : "Unknown error";

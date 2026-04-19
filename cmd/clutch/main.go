@@ -32,6 +32,8 @@ var compatLayerAssets embed.FS
 
 func init() {
 	application.RegisterEvent[string]("time")
+	application.RegisterEvent[map[string]any]("extension:render")
+	application.RegisterEvent[map[string]any]("extension:error")
 }
 
 func main() {
@@ -76,7 +78,7 @@ func main() {
 
 	win := app.Window.NewWithOptions(application.WebviewWindowOptions{
 		Title:         "",
-		URL:           "/",
+		URL:           "/extension/translate/translate",
 		Width:         775,
 		Height:        475,
 		AlwaysOnTop:   true,
@@ -97,11 +99,22 @@ func main() {
 		da.EnsureInitialized()
 		da.GetAll()
 
+		extService.SetOnRender(func(data map[string]any) {
+			app.Event.Emit("extension:render", data)
+		})
+
+		extService.SetOnError(func(err string) {
+			app.Event.Emit("extension:error", map[string]any{
+				"message": err,
+			})
+		})
+
 		srv := socket.NewServer(nil)
 		log.Debug("Socket server created", "path", socket.SocketPath())
 
 		runtimeHandler := socket.NewRuntimeMessageHandler()
 		renderHandler := socket.NewRenderMessageHandler()
+		renderHandler.SetOnRenderResponse(extService.HandleRenderResponse)
 		internalHandler := socket.NewInternalMessageHandler(extService.GetLifecycle())
 
 		srv.SetHandlers(
