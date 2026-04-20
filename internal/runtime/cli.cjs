@@ -1760,6 +1760,17 @@ function getPreferenceValues() {
 function resetPreferences() {
 	preferences = {};
 }
+const Color = {
+	Blue: "clutch-blue",
+	Green: "clutch-green",
+	Magenta: "clutch-magenta",
+	Orange: "clutch-orange",
+	Purple: "clutch-purple",
+	Red: "clutch-red",
+	Yellow: "clutch-yellow",
+	PrimaryText: "clutch-primary-text",
+	SecondaryText: "clutch-secondary-text"
+};
 const clutch = { api: {
 	List,
 	Grid,
@@ -1778,7 +1789,8 @@ const clutch = { api: {
 	Toast: {
 		...Toast,
 		Style
-	}
+	},
+	Color
 } };
 //#endregion
 //#region src/jsx-runtime.ts

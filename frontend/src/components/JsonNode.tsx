@@ -1,4 +1,7 @@
 import React, { type ReactElement } from "react";
+import { resolveColor } from "@/lib/clutch-colors";
+
+const COLOR_PROPS = new Set(["tintColor", "color", "backgroundColor"]);
 
 export interface JsonNodeData {
 	type: string;
@@ -53,6 +56,8 @@ function renderNode(
 			transformedProps[key] = (e: unknown) => {
 				onEvent?.((value as { $handler: string }).$handler, e);
 			};
+		} else if (COLOR_PROPS.has(key) && typeof value === "string") {
+			transformedProps[key] = resolveColor(value);
 		} else {
 			transformedProps[key] = value;
 		}

@@ -32,7 +32,16 @@
   --link-bg-hover: rgba(255, 255, 255, 0.9);
   --hero-a: rgba(79, 184, 178, 0.36);
   --hero-b: rgba(47, 106, 74, 0.2);
-  --background: oklch(1 0 0);
+	--clutch-blue: #0066ff;
+	--clutch-green: #28a745;
+	--clutch-magenta: #e84393;
+	--clutch-orange: #fd9644;
+	--clutch-purple: #8b5cf6;
+	--clutch-red: #ef4444;
+	--clutch-yellow: #f59e0b;
+	--clutch-primary-text: var(--foreground);
+	--clutch-secondary-text: var(--muted-foreground);
+	--background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.141 0.005 285.823);
@@ -67,7 +76,16 @@
 }
 
 :root[data-theme="dark"] {
-  --sea-ink: #d7ece8;
+	--clutch-blue: #4dabf7;
+	--clutch-green: #51cf66;
+	--clutch-magenta: #f368e0;
+	--clutch-orange: #ffa94d;
+	--clutch-purple: #9775fa;
+	--clutch-red: #ff6b6b;
+	--clutch-yellow: #ffe066;
+	--clutch-primary-text: var(--foreground);
+	--clutch-secondary-text: var(--muted-foreground);
+	--sea-ink: #d7ece8;
   --sea-ink-soft: #afcdc8;
   --lagoon: #60d7cf;
   --lagoon-deep: #8de5db;
@@ -89,8 +107,17 @@
 }
 
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    --sea-ink: #d7ece8;
+ :root:not([data-theme="light"]) {
+	--clutch-blue: #4dabf7;
+	--clutch-green: #51cf66;
+	--clutch-magenta: #f368e0;
+	--clutch-orange: #ffa94d;
+	--clutch-purple: #9775fa;
+	--clutch-red: #ff6b6b;
+	--clutch-yellow: #ffe066;
+	--clutch-primary-text: var(--foreground);
+	--clutch-secondary-text: var(--muted-foreground);
+	--sea-ink: #d7ece8;
     --sea-ink-soft: #afcdc8;
     --lagoon: #60d7cf;
     --lagoon-deep: #8de5db;
@@ -113,7 +140,16 @@
 }
 
 .dark {
-  --background: oklch(0.141 0.005 285.823);
+	--clutch-blue: #4dabf7;
+	--clutch-green: #51cf66;
+	--clutch-magenta: #f368e0;
+	--clutch-orange: #ffa94d;
+	--clutch-purple: #9775fa;
+	--clutch-red: #ff6b6b;
+	--clutch-yellow: #ffe066;
+	--clutch-primary-text: var(--foreground);
+	--clutch-secondary-text: var(--muted-foreground);
+	--background: oklch(0.141 0.005 285.823);
   --foreground: oklch(0.985 0 0);
   --card: oklch(0.21 0.006 285.885);
   --card-foreground: oklch(0.985 0 0);
