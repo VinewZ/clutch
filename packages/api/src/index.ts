@@ -42,7 +42,7 @@ export const clutch = {
 		Cache,
 		showToast,
 		ToastProvider,
-		Toast: { ...Toast, Style: ToastStyle },
+		Toast: Object.assign(Toast, { Style: ToastStyle }),
 		Color,
 		Icon,
 	},
