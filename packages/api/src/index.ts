@@ -9,6 +9,7 @@ import {
 	initializePreferences,
 	resetPreferences,
 } from "./preferences";
+import { Cache } from "./cache";
 
 export const clutch = {
 	api: {
@@ -23,5 +24,6 @@ export const clutch = {
 		getPreferenceValues,
 		initializePreferences,
 		resetPreferences,
+		Cache,
 	},
 };

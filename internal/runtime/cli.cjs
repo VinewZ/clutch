@@ -1589,6 +1589,86 @@ function getPreferenceValues() {
 function resetPreferences() {
 	preferences = {};
 }
+var Cache = class {
+	store = /* @__PURE__ */ new Map();
+	subscribers = /* @__PURE__ */ new Set();
+	namespace;
+	capacity;
+	currentSize = 0;
+	constructor(options) {
+		this.capacity = options?.capacity ?? 10 * 1024 * 1024;
+		this.namespace = options?.namespace;
+	}
+	getKey(key) {
+		return this.namespace ? `${this.namespace}:${key}` : key;
+	}
+	notifySubscribers(key, data) {
+		for (const subscriber of this.subscribers) try {
+			subscriber(key, data);
+		} catch {}
+	}
+	evictLRU(neededSize) {
+		if (this.currentSize + neededSize <= this.capacity) return;
+		const entries = Array.from(this.store.entries());
+		entries.sort((a, b) => a[1].lastAccessed - b[1].lastAccessed);
+		for (const [key, entry] of entries) {
+			if (this.currentSize + neededSize <= this.capacity) break;
+			this.store.delete(key);
+			this.currentSize -= entry.size;
+		}
+	}
+	get(key) {
+		const fullKey = this.getKey(key);
+		const entry = this.store.get(fullKey);
+		if (entry) {
+			entry.lastAccessed = Date.now();
+			return entry.data;
+		}
+	}
+	set(key, data) {
+		const fullKey = this.getKey(key);
+		const size = data.length;
+		const existing = this.store.get(fullKey);
+		if (existing) this.currentSize -= existing.size;
+		this.evictLRU(size);
+		this.store.set(fullKey, {
+			data,
+			size,
+			lastAccessed: Date.now()
+		});
+		this.currentSize += size;
+		this.notifySubscribers(key, data);
+	}
+	has(key) {
+		return this.store.has(this.getKey(key));
+	}
+	remove(key) {
+		const fullKey = this.getKey(key);
+		const entry = this.store.get(fullKey);
+		if (entry) {
+			this.store.delete(fullKey);
+			this.currentSize -= entry.size;
+			this.notifySubscribers(key, void 0);
+			return true;
+		}
+		return false;
+	}
+	clear(options) {
+		const shouldNotify = options?.notifySubscribers ?? true;
+		this.store.clear();
+		this.currentSize = 0;
+		if (shouldNotify) this.notifySubscribers(void 0, void 0);
+	}
+	subscribe(subscriber) {
+		this.subscribers.add(subscriber);
+		return () => {
+			this.subscribers.delete(subscriber);
+		};
+	}
+	get isEmpty() {
+		return this.store.size === 0;
+	}
+};
 const clutch = { api: {
 	List,
 	Grid,
@@ -1600,7 +1680,8 @@ const clutch = { api: {
 	useNavigation,
 	getPreferenceValues,
 	initializePreferences,
-	resetPreferences
+	resetPreferences,
+	Cache
 } };
 //#endregion
 //#region src/runtime/loader.ts
