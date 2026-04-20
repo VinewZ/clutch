@@ -134,20 +134,25 @@ importers:
         version: 3.2.4(@types/node@22.19.17)(jiti@2.6.1)(jsdom@28.1.0(@noble/hashes@1.8.0))(lightningcss@1.32.0)(msw@2.13.4(@types/node@22.19.17)(typescript@5.9.3))(tsx@4.21.0)
 
   packages/api:
-    dependencies:
-      react:
-        specifier: ^19.2.5
-        version: 19.2.5
     devDependencies:
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
+      react:
+        specifier: ^19.2.5
+        version: 19.2.5
 
   packages/ext-runtime:
     dependencies:
       '@clutch/api':
         specifier: workspace:*
         version: link:../api
+      react:
+        specifier: ^19.2.5
+        version: 19.2.5
+      react-reconciler:
+        specifier: ^0.33.0
+        version: 0.33.0(react@19.2.5)
     devDependencies:
       '@types/node':
         specifier: ^22.19.17
@@ -158,12 +163,6 @@ importers:
       '@types/react-reconciler':
         specifier: ^0.33.0
         version: 0.33.0(@types/react@19.2.14)
-      react:
-        specifier: ^19.2.5
-        version: 19.2.5
-      react-reconciler:
-        specifier: ^0.33.0
-        version: 0.33.0(react@19.2.5)
       react-test-renderer:
         specifier: ^19.2.5
         version: 19.2.5(react@19.2.5)

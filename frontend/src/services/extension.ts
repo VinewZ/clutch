@@ -39,3 +39,7 @@ export function onError(callback: (error: Error) => void): () => void {
 	});
 	return unsubscribe;
 }
+
+export async function navigationPop(): Promise<void> {
+	await ExtensionService.NavigationPop();
+}

@@ -12,8 +12,9 @@ const (
 )
 
 type BaseMessage struct {
-	Category MessageCategory `json:"category"`
-	Type     string          `json:"type"`
+	Category    MessageCategory `json:"category"`
+	Type        string          `json:"type"`
+	ExtensionID string          `json:"extensionId,omitempty"`
 }
 
 // CLI Messages
@@ -38,6 +39,12 @@ type RuntimeActionMessage struct {
 	Action      json.RawMessage `json:"action"`
 }
 
+type NavigationPopMessage struct {
+	Category    MessageCategory `json:"category"`
+	Type        string          `json:"type"`
+	ExtensionID string          `json:"extensionId"`
+}
+
 // RENDER Messages
 type RenderRequestMessage struct {
 	Category    MessageCategory `json:"category"`
@@ -55,11 +62,12 @@ type RenderResponseMessage struct {
 
 // INTERNAL Messages
 type RuntimeStartMessage struct {
-	Category         MessageCategory `json:"category"`
-	Type             string          `json:"type"`
-	ExtensionID      string          `json:"extensionId"`
-	ExtensionPath    string          `json:"extensionPath"`
-	ExtensionCommand string          `json:"extensionCommand"`
+	Category         MessageCategory        `json:"category"`
+	Type             string                 `json:"type"`
+	ExtensionID      string                 `json:"extensionId"`
+	ExtensionPath    string                 `json:"extensionPath"`
+	ExtensionCommand string                 `json:"extensionCommand"`
+	Preferences      map[string]interface{} `json:"preferences,omitempty"`
 }
 
 type RuntimeStopMessage struct {

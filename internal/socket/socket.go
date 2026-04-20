@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/charmbracelet/log"
@@ -45,12 +46,15 @@ type Server struct {
 	runtimeHandler  RuntimeHandler
 	renderHandler   RenderHandler
 	internalHandler InternalHandler
+	mu              sync.RWMutex
+	runtimeConns    map[string]net.Conn
 }
 
 func NewServer(handler Handler) *Server {
 	return &Server{
-		path:    SocketPath(),
-		handler: handler,
+		path:         SocketPath(),
+		handler:      handler,
+		runtimeConns: make(map[string]net.Conn),
 	}
 }
 
@@ -98,8 +102,6 @@ func (s *Server) Start() error {
 }
 
 func (s *Server) handleConn(conn net.Conn) {
-	defer conn.Close()
-
 	log.Debug("New socket connection accepted", "remote", conn.RemoteAddr().String())
 
 	reader := bufio.NewReader(conn)
@@ -109,6 +111,7 @@ func (s *Server) handleConn(conn net.Conn) {
 	if err != nil {
 		log.Error("Failed to read from socket", "error", err)
 		s.sendError(writer, "READ_FAILED", "read failed: "+err.Error())
+		conn.Close()
 		return
 	}
 	log.Debug("Received raw message", "data", data[:len(data)-1])
@@ -117,18 +120,21 @@ func (s *Server) handleConn(conn net.Conn) {
 	if err := json.Unmarshal([]byte(data), &base); err != nil {
 		log.Error("Failed to parse JSON", "error", err, "data", data)
 		s.sendError(writer, "INVALID_JSON", "invalid JSON: "+err.Error())
+		conn.Close()
 		return
 	}
-	log.Debug("Parsed message", "category", base.Category, "type", base.Type)
+	log.Debug("Parsed message", "category", base.Category, "type", base.Type, "extensionId", base.ExtensionID)
+
+	if base.Category == CategoryRuntime && base.ExtensionID != "" {
+		s.handleRuntimeConnection(conn, reader, writer, base.ExtensionID, data)
+		return
+	}
 
 	var response *SocketResponse
 	switch base.Category {
 	case CategoryCLI:
 		log.Debug("Routing to CLI handler")
 		response = s.handleCLI([]byte(data))
-	case CategoryRuntime:
-		log.Debug("Routing to RUNTIME handler")
-		response = s.handleRuntime([]byte(data))
 	case CategoryRender:
 		log.Debug("Routing to RENDER handler")
 		response = s.handleRender([]byte(data))
@@ -148,6 +154,56 @@ func (s *Server) handleConn(conn net.Conn) {
 
 	s.sendResponse(writer, response)
 	log.Debug("Response sent", "success", response.Success)
+	conn.Close()
+}
+
+func (s *Server) handleRuntimeConnection(conn net.Conn, reader *bufio.Reader, writer *bufio.Writer, extensionID, firstData string) {
+	s.mu.Lock()
+	s.runtimeConns[extensionID] = conn
+	s.mu.Unlock()
+
+	log.Debug("Runtime connection registered", "extensionId", extensionID)
+
+	defer func() {
+		s.mu.Lock()
+		delete(s.runtimeConns, extensionID)
+		s.mu.Unlock()
+		conn.Close()
+		log.Debug("Runtime connection closed", "extensionId", extensionID)
+	}()
+
+	for {
+		var data string
+		if firstData != "" {
+			data = firstData
+			firstData = ""
+		} else {
+			line, err := reader.ReadString('\n')
+			if err != nil {
+				log.Debug("Runtime connection read error", "extensionId", extensionID, "error", err)
+				return
+			}
+			data = line
+		}
+
+		log.Debug("Received runtime message", "extensionId", extensionID, "data", data[:len(data)-1])
+
+		var base BaseMessage
+		if err := json.Unmarshal([]byte(data), &base); err != nil {
+			log.Error("Failed to parse runtime JSON", "error", err)
+			s.sendResponse(writer, &SocketResponse{
+				Success: false,
+				Error: &ErrorInfo{
+					Code:    "INVALID_JSON",
+					Message: err.Error(),
+				},
+			})
+			continue
+		}
+
+		response := s.handleRuntime([]byte(data))
+		s.sendResponse(writer, response)
+	}
 }
 
 func (s *Server) sendResponse(writer *bufio.Writer, response *SocketResponse) {
@@ -313,8 +369,41 @@ func (s *Server) handleInternal(data []byte) *SocketResponse {
 }
 
 func (s *Server) Stop() error {
+	s.mu.Lock()
+	for extID, conn := range s.runtimeConns {
+		conn.Close()
+		delete(s.runtimeConns, extID)
+	}
+	s.mu.Unlock()
 	os.Remove(s.path)
 	return nil
+}
+
+func (s *Server) SendToRuntime(extensionID string, msg any) error {
+	s.mu.RLock()
+	conn, exists := s.runtimeConns[extensionID]
+	s.mu.RUnlock()
+
+	if !exists {
+		return fmt.Errorf("runtime not connected: %s", extensionID)
+	}
+
+	jsonBytes, err := json.Marshal(msg)
+	if err != nil {
+		return fmt.Errorf("marshal message: %w", err)
+	}
+
+	writer := bufio.NewWriter(conn)
+	if _, err := writer.WriteString(string(jsonBytes) + "\n"); err != nil {
+		return fmt.Errorf("write message: %w", err)
+	}
+	return writer.Flush()
+}
+
+func (s *Server) RemoveRuntimeConn(extensionID string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	delete(s.runtimeConns, extensionID)
 }
 
 type Client struct {

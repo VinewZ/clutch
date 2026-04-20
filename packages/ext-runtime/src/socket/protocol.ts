@@ -27,6 +27,12 @@ export interface RuntimeActionMessage extends BaseMessage {
 	action: Action;
 }
 
+export interface NavigationPopMessage extends BaseMessage {
+	category: "RUNTIME";
+	type: "navigationPop";
+	extensionId: string;
+}
+
 // RENDER Messages
 export interface RenderRequestMessage extends BaseMessage {
 	category: "RENDER";

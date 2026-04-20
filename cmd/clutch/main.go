@@ -112,6 +112,8 @@ func main() {
 		srv := socket.NewServer(nil)
 		log.Debug("Socket server created", "path", socket.SocketPath())
 
+		extService.SetSocketServer(srv)
+
 		runtimeHandler := socket.NewRuntimeMessageHandler()
 		renderHandler := socket.NewRenderMessageHandler()
 		renderHandler.SetOnRenderResponse(extService.HandleRenderResponse)

@@ -1,0 +1,1 @@
+{"version":3,"file":"event-serializer.d.ts","sourceRoot":"","sources":["../../src/reconciler/event-serializer.ts"],"names":[],"mappings":"AAAA,OAAO,KAAK,EAAE,eAAe,EAAE,MAAM,oBAAoB,CAAC;AA+F1D,wBAAgB,cAAc,CAAC,KAAK,EAAE,OAAO,GAAG,eAAe,CAiB9D;AAED,wBAAgB,mBAAmB,CAAC,KAAK,EAAE,OAAO,GAAG,OAAO,CAe3D"}

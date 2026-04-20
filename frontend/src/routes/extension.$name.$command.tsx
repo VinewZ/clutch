@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { JsonNodeData } from "@/components/JsonNode";
 import { JsonRenderer } from "@/components/JsonRenderer";
 import {
+	navigationPop,
 	onError,
 	onRender,
 	sendEvent,
@@ -80,6 +81,22 @@ function ExtensionPage() {
 		} catch (err) {
 			console.error("[EXTENSION PAGE] Failed to send event:", err);
 		}
+	}, []);
+
+	useEffect(() => {
+		const handleKeyDown = async (e: KeyboardEvent) => {
+			if (e.key === "Escape") {
+				console.error("[EXTENSION PAGE] ESC pressed, calling navigationPop");
+				try {
+					await navigationPop();
+				} catch (err) {
+					console.error("[EXTENSION PAGE] Failed to call navigationPop:", err);
+				}
+			}
+		};
+
+		window.addEventListener("keydown", handleKeyDown);
+		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, []);
 
 	if (loading) {

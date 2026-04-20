@@ -41,15 +41,26 @@ type Registry struct {
 	Extensions map[string]InstalledExt `json:"extensions"`
 }
 
+type PreferenceSchema struct {
+	Name        string      `json:"name"`
+	Type        string      `json:"type"`
+	Default     interface{} `json:"default,omitempty"`
+	Required    bool        `json:"required,omitempty"`
+	Description string      `json:"description,omitempty"`
+	Title       string      `json:"title,omitempty"`
+}
+
 type InstalledExt struct {
-	ID          string    `json:"id"`
-	Name        string    `json:"name"`
-	Title       string    `json:"title"`
-	Author      string    `json:"author"`
-	InstalledAt time.Time `json:"installed_at"`
-	Path        string    `json:"path"`
-	Commands    []Command `json:"commands"`
-	Icons       Icons     `json:"icons"`
+	ID               string                 `json:"id"`
+	Name             string                 `json:"name"`
+	Title            string                 `json:"title"`
+	Author           string                 `json:"author"`
+	InstalledAt      time.Time              `json:"installed_at"`
+	Path             string                 `json:"path"`
+	Commands         []Command              `json:"commands"`
+	Icons            Icons                  `json:"icons"`
+	PreferenceSchema []PreferenceSchema     `json:"preferenceSchema,omitempty"`
+	PreferenceValues map[string]interface{} `json:"preferenceValues,omitempty"`
 }
 
 type apiResponse struct {

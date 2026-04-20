@@ -1,21 +1,18 @@
 import type { ReactNode } from "react";
 import ReactReconciler from "react-reconciler";
 import hostConfig from "./host-config";
-import type {
-	JSONNode,
-	JsonRendererContainer,
-	JsonRendererOptions,
-} from "./types";
+import type { JSONNode, Container, JsonRendererOptions } from "./types";
+import { resetState } from "../state";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const reconciler = ReactReconciler(hostConfig as any);
 
-function createContainer(): JsonRendererContainer {
-	return {
-		root: null,
-		listeners: new Set(),
-		version: 0,
-	};
+const onError = (error: Error) => {
+	console.error("[RECONCILER] Error:", error.message);
+};
+
+function createContainer(): Container {
+	return { id: "root", children: [] };
 }
 
 export interface JsonRendererAPI {
@@ -24,37 +21,37 @@ export interface JsonRendererAPI {
 }
 
 export function createReconciler(
-	options?: JsonRendererOptions,
+	_options?: JsonRendererOptions,
 ): JsonRendererAPI {
 	const container = createContainer();
 
-	if (options?.onUpdate) {
-		container.listeners.add(options.onUpdate);
-	}
-
-	const root = reconciler.createContainer(
+	const rootHandle = reconciler.createContainer(
 		container,
 		0,
 		null,
 		false,
 		null,
 		"",
-		() => {},
-		() => {},
-		() => {},
+		onError,
+		onError,
+		onError,
 		() => {},
 	);
 
 	return {
 		render(element: ReactNode): JSONNode | null {
-			reconciler.updateContainerSync(element, root, null, null);
-			reconciler.flushSyncWork();
-			return container.root;
+			reconciler.updateContainerSync(element, rootHandle, null, null);
+			if (typeof reconciler.flushSyncWork === "function") {
+				reconciler.flushSyncWork();
+			}
+			return container.children[0] ?? null;
 		},
 
 		unmount(): void {
-			reconciler.updateContainerSync(null, root, null, null);
-			reconciler.flushSyncWork();
+			reconciler.updateContainerSync(null, rootHandle, null, null);
+			if (typeof reconciler.flushSyncWork === "function") {
+				reconciler.flushSyncWork();
+			}
 		},
 	};
 }
@@ -67,9 +64,5 @@ export function render(
 	return renderer.render(element);
 }
 
-export { setExtensionContext, clearExtensionContext } from "./host-config";
-export type {
-	JSONNode,
-	JsonRendererContainer,
-	JsonRendererOptions,
-} from "./types";
+export { resetState };
+export type { JSONNode, Container, JsonRendererOptions } from "./types";

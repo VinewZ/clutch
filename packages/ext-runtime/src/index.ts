@@ -130,8 +130,7 @@ export {
 
 export {
 	createReconciler,
-	setExtensionContext,
-	clearExtensionContext,
+	resetState,
 	type JsonRendererAPI,
 } from "./reconciler";
 

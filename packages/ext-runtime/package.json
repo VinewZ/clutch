@@ -21,16 +21,16 @@
 	"author": "",
 	"license": "ISC",
 	"packageManager": "pnpm@10.15.0",
-	"dependencies": {
-		"@clutch/api": "workspace:*"
-	},
-	"devDependencies": {
-		"@types/node": "^22.19.17",
-		"@types/react": "^19.2.14",
-		"@types/react-reconciler": "^0.33.0",
-		"react": "^19.2.5",
-		"react-reconciler": "^0.33.0",
-		"react-test-renderer": "^19.2.5",
-		"vitest": "^3.2.4"
-	}
+"dependencies": {
+    "@clutch/api": "workspace:*",
+    "react": "^19.2.5",
+    "react-reconciler": "^0.33.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.19.17",
+    "@types/react": "^19.2.14",
+    "@types/react-reconciler": "^0.33.0",
+    "react-test-renderer": "^19.2.5",
+    "vitest": "^3.2.4"
+  }
 }

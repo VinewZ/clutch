@@ -1,21 +1,23 @@
 import "./index";
 import {
-	clearExtensionContext,
 	clearExtensionHandlers,
 	createReconciler,
 	createSocketClient,
 	executeHandler,
 	loadExtension,
-	setExtensionContext,
 	type BaseMessage,
 	type JSONNode,
+	type LoadedExtension,
 } from "./index";
+import React from "react";
+import { clutch } from "@clutch/api";
 
 interface CliArgs {
 	socket: string;
 	extensionId: string;
 	extensionPath: string;
 	command: string;
+	preferences: Record<string, unknown>;
 }
 
 function parseArgs(): CliArgs {
@@ -30,11 +32,26 @@ function parseArgs(): CliArgs {
 		}
 	}
 
+	// Parse preferences JSON if provided
+	let preferences: Record<string, unknown> = {};
+	if (result.preferences) {
+		try {
+			preferences = JSON.parse(result.preferences) as Record<string, unknown>;
+			console.error("[CLI] Parsed preferences:", JSON.stringify(preferences));
+		} catch (err) {
+			console.error(
+				"[CLI] Failed to parse preferences JSON:",
+				err instanceof Error ? err.message : "Unknown error",
+			);
+		}
+	}
+
 	return {
 		socket: result.socket ?? "",
 		extensionId: result["extension-id"] ?? "",
 		extensionPath: result["extension-path"] ?? "",
 		command: result.command ?? "",
+		preferences,
 	};
 }
 
@@ -70,7 +87,6 @@ async function main() {
 		console.error(`[CLI] Received ${signal}, shutting down...`);
 
 		clearExtensionHandlers(args.extensionId);
-		clearExtensionContext();
 
 		client.close();
 		process.exit(0);
@@ -101,7 +117,7 @@ async function main() {
 		}
 	};
 
-	let loadedExtension: Awaited<ReturnType<typeof loadExtension>> | null = null;
+	let loadedExtension: LoadedExtension | null = null;
 	let reconciler: ReturnType<typeof createReconciler> | null = null;
 
 	console.error(
@@ -110,17 +126,16 @@ async function main() {
 		"command:",
 		args.command,
 	);
+
+	// Initialize preferences before loading extension
+	if (Object.keys(args.preferences).length > 0) {
+		console.error("[CLI] Initializing preferences from CLI args");
+		clutch.api.initializePreferences(args.preferences);
+	}
+
 	try {
 		loadedExtension = await loadExtension(args.extensionPath, args.command);
 		console.error("[CLI] Extension loaded successfully:", loadedExtension.id);
-		console.error("[CLI] Component:", loadedExtension.component);
-		console.error(
-			"[CLI] Component keys:",
-			loadedExtension.component
-				? Object.keys(loadedExtension.component)
-				: "null",
-		);
-		setExtensionContext(loadedExtension.id);
 	} catch (err) {
 		const errMsg = err instanceof Error ? err.message : "Unknown error";
 		console.error("[CLI] Failed to load extension:", errMsg);
@@ -160,7 +175,30 @@ async function main() {
 		});
 
 		console.error("[CLI] Rendering initial component...");
-		const initialJson = reconciler.render(loadedExtension.component);
+		const NavigationProvider = clutch.api.NavigationProvider;
+		console.error("[CLI] NavigationProvider:", NavigationProvider);
+		console.error(
+			"[CLI] loadedExtension.component:",
+			loadedExtension!.component,
+		);
+		console.error(
+			"[CLI] loadedExtension.component type:",
+			loadedExtension!.component?.type,
+		);
+
+		const wrappedComponent = React.createElement(
+			NavigationProvider,
+			null,
+			loadedExtension!.component,
+		);
+		console.error("[CLI] wrappedComponent:", wrappedComponent);
+		console.error("[CLI] wrappedComponent type:", wrappedComponent.type);
+		console.error(
+			"[CLI] wrappedComponent $$typeof:",
+			(wrappedComponent as any).$$typeof,
+		);
+
+		const initialJson = reconciler.render(wrappedComponent);
 		console.error(
 			"[CLI] Initial render result:",
 			initialJson ? JSON.stringify(initialJson).slice(0, 200) : "null",
@@ -218,6 +256,15 @@ async function main() {
 					extensionId: loadedExtension!.id,
 					action: { type: "error", payload: { message: errMsg } },
 				} as BaseMessage);
+			}
+		}
+
+		if (msg.category === "RUNTIME" && msg.type === "navigationPop") {
+			console.error("[CLI] Handling navigationPop");
+			const navigationPop = (globalThis as unknown as Record<string, unknown>)
+				.__clutchNavigationPop;
+			if (typeof navigationPop === "function") {
+				navigationPop();
 			}
 		}
 

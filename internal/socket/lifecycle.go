@@ -37,6 +37,10 @@ func NewLifecycleManager(socketPath string) *LifecycleManager {
 }
 
 func (lm *LifecycleManager) StartRuntime(extensionId, extensionPath, command string) error {
+	return lm.StartRuntimeWithPreferences(extensionId, extensionPath, command, nil)
+}
+
+func (lm *LifecycleManager) StartRuntimeWithPreferences(extensionId, extensionPath, command string, preferences map[string]interface{}) error {
 	lm.mu.Lock()
 	defer lm.mu.Unlock()
 
@@ -56,13 +60,26 @@ func (lm *LifecycleManager) StartRuntime(extensionId, extensionPath, command str
 
 	ctx, cancel := context.WithCancel(context.Background())
 
-	cmd := exec.CommandContext(ctx,
-		"node", runtimePath,
+	args := []string{
+		runtimePath,
 		"--socket", lm.socketPath,
 		"--extension-id", extensionId,
 		"--extension-path", extensionPath,
 		"--command", command,
-	)
+	}
+
+	if len(preferences) > 0 {
+		prefsJSON, err := json.Marshal(preferences)
+		if err != nil {
+			cancel()
+			log.Error("Failed to marshal preferences", "error", err)
+			return fmt.Errorf("marshal preferences: %w", err)
+		}
+		args = append(args, "--preferences", string(prefsJSON))
+		log.Debug("Passing preferences to runtime", "preferences", string(prefsJSON))
+	}
+
+	cmd := exec.CommandContext(ctx, "node", args...)
 
 	log.Debug("Executing command", "cmd", cmd.String())
 
@@ -254,7 +271,7 @@ func (h *InternalMessageHandler) handleRuntimeStart(data json.RawMessage) (*Sock
 		return nil, fmt.Errorf("parse runtime start: %w", err)
 	}
 
-	if err := h.lifecycle.StartRuntime(msg.ExtensionID, msg.ExtensionPath, msg.ExtensionCommand); err != nil {
+	if err := h.lifecycle.StartRuntimeWithPreferences(msg.ExtensionID, msg.ExtensionPath, msg.ExtensionCommand, msg.Preferences); err != nil {
 		return &SocketResponse{
 			Success: false,
 			Error: &ErrorInfo{
