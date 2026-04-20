@@ -1,7 +1,35 @@
 import React, { type ReactElement } from "react";
 import { resolveColor } from "@/lib/clutch-colors";
+import { resolveIcon } from "@/lib/resolve-icon";
 
 const COLOR_PROPS = new Set(["tintColor", "color", "backgroundColor"]);
+const ICON_PROPS = new Set(["icon"]);
+
+function resolveIconValue(value: unknown): unknown {
+	if (value == null) return value;
+
+	if (typeof value === "string") {
+		const resolved = resolveIcon(value);
+		if (typeof resolved === "function") return resolved;
+		return value;
+	}
+
+	if (typeof value === "object" && value !== null) {
+		const obj = value as Record<string, unknown>;
+		if (typeof obj.source === "string") {
+			const resolved = resolveIcon(obj.source);
+			if (typeof resolved === "function") {
+				const result: Record<string, unknown> = { source: resolved };
+				if (obj.tintColor)
+					result.tintColor = resolveColor(obj.tintColor as string);
+				if (obj.tooltip) result.tooltip = obj.tooltip;
+				return result;
+			}
+		}
+	}
+
+	return value;
+}
 
 export interface JsonNodeData {
 	type: string;
@@ -58,6 +86,8 @@ function renderNode(
 			};
 		} else if (COLOR_PROPS.has(key) && typeof value === "string") {
 			transformedProps[key] = resolveColor(value);
+		} else if (ICON_PROPS.has(key)) {
+			transformedProps[key] = resolveIconValue(value);
 		} else {
 			transformedProps[key] = value;
 		}

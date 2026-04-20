@@ -21,8 +21,9 @@ import {
 	resetPreferences,
 } from "./preferences";
 import { Color } from "./utils/color";
+import { Icon } from "./utils/icon";
 
-export { showToast, ToastProvider, Toast, ToastStyle, Color };
+export { showToast, ToastProvider, Toast, ToastStyle, Color, Icon };
 export type { ToastOptions, ToastStyleType };
 
 export const clutch = {
@@ -43,5 +44,6 @@ export const clutch = {
 		ToastProvider,
 		Toast: { ...Toast, Style: ToastStyle },
 		Color,
+		Icon,
 	},
 };
