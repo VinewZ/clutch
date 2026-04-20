@@ -1684,6 +1684,11 @@ const clutch = { api: {
 	Cache
 } };
 //#endregion
+//#region src/jsx-runtime.ts
+const jsx = import_react.createElement;
+const jsxs = import_react.createElement;
+const Fragment = import_react.Fragment;
+//#endregion
 //#region src/runtime/loader.ts
 async function loadExtension(extensionPath, command) {
 	const entryPath = `${extensionPath}/${command}.js`;
@@ -18129,11 +18134,18 @@ function createSocketClient(config) {
 }
 //#endregion
 //#region src/index.ts
+const jsxRuntime = {
+	jsx,
+	jsxs,
+	Fragment
+};
+console.error("[DEBUG] jsxRuntime defined:", jsxRuntime);
+console.error("[DEBUG] jsxRuntime.jsx type:", typeof jsx);
 const REWRITE_MAP = new Map([
 	["@raycast/api", clutch.api],
 	["react", import_react.default],
-	["react/jsx-runtime", import_react.default],
-	["react/jsx-dev-runtime", import_react.default]
+	["react/jsx-runtime", jsxRuntime],
+	["react/jsx-dev-runtime", jsxRuntime]
 ]);
 const internal = node_module.default;
 const originalLoad = internal._load;
@@ -18153,17 +18165,34 @@ internal._resolveFilename = function(request, parent, isMain, options) {
 	if (typeof request !== "string" && !(request instanceof URL)) return request;
 	const base = normalizeRequest(request);
 	if (base === null) return request;
-	for (const [from] of REWRITE_MAP) if (base === from || base.startsWith(`${from}/`)) return `${CACHE_KEY_PREFIX}${from}`;
+	for (const [from] of REWRITE_MAP) if (base === from) {
+		console.error("[HOOK] _resolveFilename exact:", base, "=>", `${CACHE_KEY_PREFIX}${from}`);
+		return `${CACHE_KEY_PREFIX}${from}`;
+	}
+	for (const [from] of REWRITE_MAP) if (base.startsWith(`${from}/`)) {
+		console.error("[HOOK] _resolveFilename prefix:", base, "=>", `${CACHE_KEY_PREFIX}${from}`);
+		return `${CACHE_KEY_PREFIX}${from}`;
+	}
 	return originalResolveFilename.call(this, base, parent, isMain, options);
 };
 internal._load = function(request, parent, isMain) {
 	const base = normalizeRequest(request);
 	if (typeof request === "string" && request.startsWith(CACHE_KEY_PREFIX)) {
 		const cached = cachedModules.get(request);
-		if (cached !== void 0) return cached;
+		if (cached !== void 0) {
+			console.error("[HOOK] _load cache hit:", request, "=>", typeof cached, Object.keys(cached));
+			return cached;
+		}
 	}
 	if (base === null) return originalLoad.call(this, request, parent, isMain);
-	for (const [from, replacement] of REWRITE_MAP) if (base === from || base.startsWith(`${from}/`)) return replacement;
+	for (const [from, replacement] of REWRITE_MAP) if (base === from) {
+		console.error("[HOOK] _load exact:", base, "=>", typeof replacement, replacement ? Object.keys(replacement) : "null");
+		return replacement;
+	}
+	for (const [from, replacement] of REWRITE_MAP) if (base.startsWith(`${from}/`)) {
+		console.error("[HOOK] _load prefix:", base, "=>", typeof replacement, replacement ? Object.keys(replacement) : "null");
+		return replacement;
+	}
 	return originalLoad.call(this, base, parent, isMain);
 };
 //#endregion

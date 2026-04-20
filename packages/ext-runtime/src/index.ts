@@ -1,12 +1,18 @@
 import Module from "node:module";
 import React from "react";
 import { clutch } from "@clutch/api";
+import { jsx, jsxs, Fragment } from "./jsx-runtime";
+
+const jsxRuntime = { jsx, jsxs, Fragment };
+
+console.error("[DEBUG] jsxRuntime defined:", jsxRuntime);
+console.error("[DEBUG] jsxRuntime.jsx type:", typeof jsx);
 
 export const REWRITE_MAP = new Map<string, unknown>([
 	["@raycast/api", clutch.api],
 	["react", React],
-	["react/jsx-runtime", React],
-	["react/jsx-dev-runtime", React],
+	["react/jsx-runtime", jsxRuntime],
+	["react/jsx-dev-runtime", jsxRuntime],
 ]) as ReadonlyMap<string, unknown>;
 
 type ParentModule = {
@@ -75,7 +81,25 @@ internal._resolveFilename = function (
 	}
 
 	for (const [from] of REWRITE_MAP) {
-		if (base === from || base.startsWith(`${from}/`)) {
+		if (base === from) {
+			console.error(
+				"[HOOK] _resolveFilename exact:",
+				base,
+				"=>",
+				`${CACHE_KEY_PREFIX}${from}`,
+			);
+			return `${CACHE_KEY_PREFIX}${from}`;
+		}
+	}
+
+	for (const [from] of REWRITE_MAP) {
+		if (base.startsWith(`${from}/`)) {
+			console.error(
+				"[HOOK] _resolveFilename prefix:",
+				base,
+				"=>",
+				`${CACHE_KEY_PREFIX}${from}`,
+			);
 			return `${CACHE_KEY_PREFIX}${from}`;
 		}
 	}
@@ -93,6 +117,13 @@ internal._load = function (
 	if (typeof request === "string" && request.startsWith(CACHE_KEY_PREFIX)) {
 		const cached = cachedModules.get(request);
 		if (cached !== undefined) {
+			console.error(
+				"[HOOK] _load cache hit:",
+				request,
+				"=>",
+				typeof cached,
+				Object.keys(cached as object),
+			);
 			return cached;
 		}
 	}
@@ -102,7 +133,27 @@ internal._load = function (
 	}
 
 	for (const [from, replacement] of REWRITE_MAP) {
-		if (base === from || base.startsWith(`${from}/`)) {
+		if (base === from) {
+			console.error(
+				"[HOOK] _load exact:",
+				base,
+				"=>",
+				typeof replacement,
+				replacement ? Object.keys(replacement as object) : "null",
+			);
+			return replacement;
+		}
+	}
+
+	for (const [from, replacement] of REWRITE_MAP) {
+		if (base.startsWith(`${from}/`)) {
+			console.error(
+				"[HOOK] _load prefix:",
+				base,
+				"=>",
+				typeof replacement,
+				replacement ? Object.keys(replacement as object) : "null",
+			);
 			return replacement;
 		}
 	}
