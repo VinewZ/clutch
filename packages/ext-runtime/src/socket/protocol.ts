@@ -33,6 +33,33 @@ export interface NavigationPopMessage extends BaseMessage {
 	extensionId: string;
 }
 
+export interface ToastShowMessage extends BaseMessage {
+	category: "RUNTIME";
+	type: "toastShow";
+	extensionId: string;
+	toastId: string;
+	style?: string;
+	title: string;
+	message?: string;
+}
+
+export interface ToastUpdateMessage extends BaseMessage {
+	category: "RUNTIME";
+	type: "toastUpdate";
+	extensionId: string;
+	toastId: string;
+	style?: string;
+	title?: string;
+	message?: string;
+}
+
+export interface ToastHideMessage extends BaseMessage {
+	category: "RUNTIME";
+	type: "toastHide";
+	extensionId: string;
+	toastId: string;
+}
+
 // RENDER Messages
 export interface RenderRequestMessage extends BaseMessage {
 	category: "RENDER";

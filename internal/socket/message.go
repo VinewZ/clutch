@@ -45,6 +45,37 @@ type NavigationPopMessage struct {
 	ExtensionID string          `json:"extensionId"`
 }
 
+type ToastOptions struct {
+	Style   string `json:"style,omitempty"`
+	Title   string `json:"title"`
+	Message string `json:"message,omitempty"`
+}
+
+type ToastShowMessage struct {
+	Category    MessageCategory `json:"category"`
+	Type        string          `json:"type"`
+	ExtensionID string          `json:"extensionId"`
+	ToastID     string          `json:"toastId"`
+	Style       string          `json:"style,omitempty"`
+	Title       string          `json:"title"`
+	Message     string          `json:"message,omitempty"`
+}
+
+type ToastUpdateMessage struct {
+	Category    MessageCategory        `json:"category"`
+	Type        string                 `json:"type"`
+	ExtensionID string                 `json:"extensionId"`
+	ToastID     string                 `json:"toastId"`
+	Updates     map[string]interface{} `json:"updates"`
+}
+
+type ToastHideMessage struct {
+	Category    MessageCategory `json:"category"`
+	Type        string          `json:"type"`
+	ExtensionID string          `json:"extensionId"`
+	ToastID     string          `json:"toastId"`
+}
+
 // RENDER Messages
 type RenderRequestMessage struct {
 	Category    MessageCategory `json:"category"`

@@ -18,6 +18,7 @@ type ExtensionService struct {
 	lastRender   json.RawMessage
 	onRender     func(json.RawMessage)
 	onError      func(error)
+	onToast      func(map[string]any)
 	socketPath   string
 	socketServer *socket.Server
 }
@@ -153,6 +154,29 @@ func (s *ExtensionService) SetOnError(fn func(string)) {
 	s.onError = func(err error) {
 		fn(err.Error())
 	}
+}
+
+func (s *ExtensionService) SetOnToast(fn func(map[string]any)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.onToast = fn
+}
+
+func (s *ExtensionService) HandleToastMessage(data json.RawMessage) {
+	s.mu.RLock()
+	callback := s.onToast
+	s.mu.RUnlock()
+
+	if callback == nil {
+		return
+	}
+
+	var parsed map[string]any
+	if err := json.Unmarshal(data, &parsed); err != nil {
+		log.Error("Failed to parse toast message", "error", err)
+		return
+	}
+	callback(parsed)
 }
 
 func (s *ExtensionService) HandleRenderResponse(data json.RawMessage) {

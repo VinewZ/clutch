@@ -34,6 +34,7 @@ func init() {
 	application.RegisterEvent[string]("time")
 	application.RegisterEvent[map[string]any]("extension:render")
 	application.RegisterEvent[map[string]any]("extension:error")
+	application.RegisterEvent[map[string]any]("extension:toast")
 }
 
 func main() {
@@ -109,12 +110,17 @@ func main() {
 			})
 		})
 
+		extService.SetOnToast(func(data map[string]any) {
+			app.Event.Emit("extension:toast", data)
+		})
+
 		srv := socket.NewServer(nil)
 		log.Debug("Socket server created", "path", socket.SocketPath())
 
 		extService.SetSocketServer(srv)
 
 		runtimeHandler := socket.NewRuntimeMessageHandler()
+		runtimeHandler.SetOnToastMessage(extService.HandleToastMessage)
 		renderHandler := socket.NewRenderMessageHandler()
 		renderHandler.SetOnRenderResponse(extService.HandleRenderResponse)
 		internalHandler := socket.NewInternalMessageHandler(extService.GetLifecycle())

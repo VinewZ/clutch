@@ -2,10 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useState } from "react";
 import type { JsonNodeData } from "@/components/JsonNode";
 import { JsonRenderer } from "@/components/JsonRenderer";
+import { ToastContainer, useToastState } from "@/components/Toast";
 import {
 	navigationPop,
 	onError,
 	onRender,
+	onToast,
 	sendEvent,
 	startExtension,
 	stopExtension,
@@ -20,6 +22,7 @@ function ExtensionPage() {
 	const [json, setJson] = useState<JsonNodeData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
+	const { toast, handleToastData, dismissToast } = useToastState();
 
 	useEffect(() => {
 		let mounted = true;
@@ -63,16 +66,21 @@ function ExtensionPage() {
 			}
 		});
 
+		const unsubToast = onToast((data) => {
+			handleToastData(data);
+		});
+
 		return () => {
 			console.error("[EXTENSION PAGE] Unmounting, stopping extension");
 			mounted = false;
 			unsubRender();
 			unsubError();
+			unsubToast();
 			stopExtension().catch((err) => {
 				console.error("[EXTENSION PAGE] Error stopping extension:", err);
 			});
 		};
-	}, [name, command]);
+	}, [name, command, handleToastData]);
 
 	const handleEvent = useCallback(async (handlerId: string, event: unknown) => {
 		console.error("[EXTENSION PAGE] Sending event:", { handlerId, event });
@@ -118,5 +126,10 @@ function ExtensionPage() {
 	}
 
 	console.error("[EXTENSION PAGE] Rendering JSON");
-	return <JsonRenderer json={json} onEvent={handleEvent} />;
+	return (
+		<>
+			<JsonRenderer json={json} onEvent={handleEvent} />
+			<ToastContainer toast={toast} onDismiss={dismissToast} />
+		</>
+	);
 }

@@ -86,6 +86,11 @@ async function main() {
 
 		console.error(`[CLI] Received ${signal}, shutting down...`);
 
+		delete (globalThis as unknown as Record<string, unknown>)
+			.__clutchSocketSend;
+		delete (globalThis as unknown as Record<string, unknown>)
+			.__clutchExtensionId;
+
 		clearExtensionHandlers(args.extensionId);
 
 		client.close();
@@ -104,6 +109,23 @@ async function main() {
 		console.error("[CLI] Failed to connect to socket:", errMsg);
 		process.exit(1);
 	}
+
+	(globalThis as unknown as Record<string, unknown>).__clutchSocketSend = (
+		msg: Record<string, unknown>,
+	) => {
+		if (client.isConnected()) {
+			client
+				.send<BaseMessage, void>(msg as unknown as BaseMessage)
+				.catch((err: unknown) => {
+					console.error(
+						"[CLI] Failed to send toast message:",
+						err instanceof Error ? err.message : err,
+					);
+				});
+		}
+	};
+	(globalThis as unknown as Record<string, unknown>).__clutchExtensionId =
+		args.extensionId;
 
 	const sendError = async (code: string, message: string) => {
 		console.error(`[CLI] [${code}] ${message}`);
@@ -176,7 +198,9 @@ async function main() {
 
 		console.error("[CLI] Rendering initial component...");
 		const NavigationProvider = clutch.api.NavigationProvider;
+		const ToastProvider = clutch.api.ToastProvider;
 		console.error("[CLI] NavigationProvider:", NavigationProvider);
+		console.error("[CLI] ToastProvider:", ToastProvider);
 		console.error(
 			"[CLI] loadedExtension.component:",
 			loadedExtension!.component,
@@ -187,9 +211,9 @@ async function main() {
 		);
 
 		const wrappedComponent = React.createElement(
-			NavigationProvider,
+			ToastProvider,
 			null,
-			loadedExtension!.component,
+			React.createElement(NavigationProvider, null, loadedExtension!.component),
 		);
 		console.error("[CLI] wrappedComponent:", wrappedComponent);
 		console.error("[CLI] wrappedComponent type:", wrappedComponent.type);

@@ -4,8 +4,17 @@ import type { Extension } from "bindings/github.com/vinewz/clutch/internal/exten
 
 const EXTENSION_RENDER = "extension:render";
 const EXTENSION_ERROR = "extension:error";
+const EXTENSION_TOAST = "extension:toast";
 
 export type { Extension };
+
+export interface ToastData {
+	type: "toastShow" | "toastUpdate" | "toastHide";
+	toastId: string;
+	style?: string;
+	title?: string;
+	message?: string;
+}
 
 export async function startExtension(
 	name: string,
@@ -36,6 +45,13 @@ export function onRender(callback: (json: unknown) => void): () => void {
 export function onError(callback: (error: Error) => void): () => void {
 	const unsubscribe = Events.On(EXTENSION_ERROR, (err: unknown) => {
 		callback(err as Error);
+	});
+	return unsubscribe;
+}
+
+export function onToast(callback: (data: ToastData) => void): () => void {
+	const unsubscribe = Events.On(EXTENSION_TOAST, (data: unknown) => {
+		callback(data as ToastData);
 	});
 	return unsubscribe;
 }

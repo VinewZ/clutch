@@ -7,6 +7,7 @@ import (
 
 type RuntimeMessageHandler struct {
 	eventDispatcher func(extensionId, handlerId string, event json.RawMessage) (json.RawMessage, error)
+	onToastMessage  func(data json.RawMessage)
 }
 
 func NewRuntimeMessageHandler() *RuntimeMessageHandler {
@@ -15,6 +16,10 @@ func NewRuntimeMessageHandler() *RuntimeMessageHandler {
 
 func (h *RuntimeMessageHandler) SetEventDispatcher(fn func(extensionId, handlerId string, event json.RawMessage) (json.RawMessage, error)) {
 	h.eventDispatcher = fn
+}
+
+func (h *RuntimeMessageHandler) SetOnToastMessage(fn func(data json.RawMessage)) {
+	h.onToastMessage = fn
 }
 
 func (h *RuntimeMessageHandler) Handle(data json.RawMessage) (*SocketResponse, error) {
@@ -28,6 +33,12 @@ func (h *RuntimeMessageHandler) Handle(data json.RawMessage) (*SocketResponse, e
 		return h.handleEvent(data)
 	case "action":
 		return h.handleAction(data)
+	case "toastShow":
+		return h.handleToastMessage(data)
+	case "toastUpdate":
+		return h.handleToastMessage(data)
+	case "toastHide":
+		return h.handleToastMessage(data)
 	default:
 		return &SocketResponse{
 			Success: false,
@@ -80,6 +91,17 @@ func (h *RuntimeMessageHandler) handleAction(data json.RawMessage) (*SocketRespo
 	var msg RuntimeActionMessage
 	if err := json.Unmarshal(data, &msg); err != nil {
 		return nil, fmt.Errorf("parse action message: %w", err)
+	}
+
+	return &SocketResponse{
+		Success: true,
+		Data:    data,
+	}, nil
+}
+
+func (h *RuntimeMessageHandler) handleToastMessage(data json.RawMessage) (*SocketResponse, error) {
+	if h.onToastMessage != nil {
+		h.onToastMessage(data)
 	}
 
 	return &SocketResponse{
