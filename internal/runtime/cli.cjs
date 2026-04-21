@@ -1400,6 +1400,12 @@ var Cache = class {
 	constructor(options) {
 		this.capacity = options?.capacity ?? 10 * 1024 * 1024;
 		this.namespace = options?.namespace;
+		this.get = this.get.bind(this);
+		this.set = this.set.bind(this);
+		this.has = this.has.bind(this);
+		this.remove = this.remove.bind(this);
+		this.clear = this.clear.bind(this);
+		this.subscribe = this.subscribe.bind(this);
 	}
 	getKey(key) {
 		return this.namespace ? `${this.namespace}:${key}` : key;
