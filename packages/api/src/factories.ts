@@ -1,15 +1,25 @@
 import type { ElementType, ReactNode } from "react";
 import { jsx } from "react/jsx-runtime";
 
+type ComponentProps = { children?: ReactNode; key?: string; name?: string };
+
 type ComponentWithSubcomponents = {
-	(props: { children?: ReactNode }): ReturnType<typeof jsx>;
+	(props: ComponentProps): ReturnType<typeof jsx>;
 	displayName: string;
 	[key: string]: unknown;
 };
 
 export function createComponent(type: string): ComponentWithSubcomponents {
-	const Component = (props: { children?: ReactNode }) =>
-		jsx(type as ElementType, props);
+	const Component = (props: ComponentProps) => jsx(type as ElementType, props);
+	Component.displayName = type;
+	return Component as ComponentWithSubcomponents;
+}
+
+export function createBuiltinActionComponent(
+	type: string,
+): ComponentWithSubcomponents {
+	const Component = (props: ComponentProps) =>
+		jsx(type as ElementType, { ...props, $action: type });
 	Component.displayName = type;
 	return Component as ComponentWithSubcomponents;
 }
@@ -23,7 +33,13 @@ export function createSlottedComponent<P extends string>(
 		const { children, ...rest } = props;
 		const slots = slotProps
 			.filter((prop) => rest[prop])
-			.map((prop) => Slot({ children: rest[prop] as ReactNode }));
+			.map((prop, i) =>
+				Slot({
+					children: rest[prop] as ReactNode,
+					key: `slot-${String(prop)}-${i}`,
+					name: String(prop),
+				}),
+			);
 		for (const prop of slotProps) delete rest[prop];
 		return jsx(type as ElementType, {
 			...rest,

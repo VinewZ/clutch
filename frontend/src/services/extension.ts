@@ -1,6 +1,7 @@
 import { Events } from "@wailsio/runtime";
 import { ExtensionService } from "bindings/github.com/vinewz/clutch/internal/extension";
 import type { Extension } from "bindings/github.com/vinewz/clutch/internal/extension/models";
+import type { JsonNodeData } from "@/components/JsonNode";
 
 const EXTENSION_RENDER = "extension:render";
 const EXTENSION_ERROR = "extension:error";
@@ -14,6 +15,11 @@ export interface ToastData {
 	style?: string;
 	title?: string;
 	message?: string;
+}
+
+function unwrapWailsEvent(event: unknown): unknown {
+	const e = event as { data?: unknown };
+	return e.data ?? event;
 }
 
 export async function startExtension(
@@ -32,30 +38,53 @@ export async function sendEvent(
 	handlerId: string,
 	event: unknown,
 ): Promise<void> {
-	await ExtensionService.SendEvent(handlerId, JSON.stringify(event));
+	const eventBytes = new TextEncoder().encode(JSON.stringify(event));
+	await ExtensionService.SendEvent(handlerId, eventBytes);
+}
+
+export async function sendAction(
+	actionType: string,
+	props: Record<string, unknown>,
+	handlerId?: string,
+): Promise<void> {
+	const propsBytes = new TextEncoder().encode(JSON.stringify(props));
+	await ExtensionService.SendAction(actionType, propsBytes, handlerId ?? "");
 }
 
 export function onRender(callback: (json: unknown) => void): () => void {
-	const unsubscribe = Events.On(EXTENSION_RENDER, (data: unknown) => {
-		callback(data);
+	const unsubscribe = Events.On(EXTENSION_RENDER, (event: unknown) => {
+		callback(unwrapWailsEvent(event));
 	});
 	return unsubscribe;
 }
 
 export function onError(callback: (error: Error) => void): () => void {
-	const unsubscribe = Events.On(EXTENSION_ERROR, (err: unknown) => {
-		callback(err as Error);
+	const unsubscribe = Events.On(EXTENSION_ERROR, (event: unknown) => {
+		callback(unwrapWailsEvent(event) as Error);
 	});
 	return unsubscribe;
 }
 
 export function onToast(callback: (data: ToastData) => void): () => void {
-	const unsubscribe = Events.On(EXTENSION_TOAST, (data: unknown) => {
-		callback(data as ToastData);
+	const unsubscribe = Events.On(EXTENSION_TOAST, (event: unknown) => {
+		callback(unwrapWailsEvent(event) as ToastData);
 	});
 	return unsubscribe;
 }
 
 export async function navigationPop(): Promise<void> {
 	await ExtensionService.NavigationPop();
+}
+
+export async function getLastRender(): Promise<JsonNodeData | null> {
+	const raw = await ExtensionService.GetLastRender();
+	if (!raw) return null;
+	try {
+		const parsed = JSON.parse(new TextDecoder().decode(raw)) as {
+			json?: JsonNodeData;
+		};
+		return parsed.json ?? null;
+	} catch {
+		return null;
+	}
 }

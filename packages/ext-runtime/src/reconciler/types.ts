@@ -1,7 +1,14 @@
 export interface JSONNode {
 	type: string;
 	props: Record<string, unknown>;
-	children: (JSONNode | string)[];
+	children: (JSONNode | TextJSONNode)[];
+	id: string;
+}
+
+export interface TextJSONNode {
+	type: "TEXT";
+	props: { text: string };
+	children: never[];
 	id: string;
 }
 
@@ -12,4 +19,5 @@ export interface Container {
 
 export interface JsonRendererOptions {
 	onUpdate?: (json: JSONNode | null) => void;
+	extensionId?: string;
 }

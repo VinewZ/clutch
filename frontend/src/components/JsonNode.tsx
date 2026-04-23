@@ -1,6 +1,22 @@
 import React, { type ReactElement } from "react";
+import { lookupComponent } from "@/components/raycast/registry";
 import { resolveColor } from "@/lib/clutch-colors";
+import { filterHtmlProps } from "@/lib/filter-html-props";
 import { resolveIcon } from "@/lib/resolve-icon";
+
+export interface JsonNodeData {
+	type: string;
+	props: Record<string, unknown>;
+	children: (JsonNodeData | TextJsonNodeData)[];
+	id: string;
+}
+
+export interface TextJsonNodeData {
+	type: "TEXT";
+	props: { text: string };
+	children: never[];
+	id: string;
+}
 
 const COLOR_PROPS = new Set(["tintColor", "color", "backgroundColor"]);
 const ICON_PROPS = new Set(["icon"]);
@@ -31,55 +47,25 @@ function resolveIconValue(value: unknown): unknown {
 	return value;
 }
 
-export interface JsonNodeData {
-	type: string;
-	props: Record<string, unknown>;
-	children: (JsonNodeData | string)[];
-	id: string;
-}
-
-interface JsonNodeProps {
-	node: JsonNodeData | string;
-	onEvent?: (handlerId: string, event: unknown) => void;
-}
-
-const elementMap: Record<string, string> = {
-	div: "div",
-	span: "span",
-	button: "button",
-	input: "input",
-	form: "form",
-	h1: "h1",
-	h2: "h2",
-	h3: "h3",
-	p: "p",
-	a: "a",
-	img: "img",
-	ul: "ul",
-	ol: "ol",
-	li: "li",
-	label: "label",
-	section: "section",
-	article: "article",
-	header: "header",
-	footer: "footer",
-	nav: "nav",
-	main: "main",
-	aside: "aside",
-};
-
-function renderNode(
-	node: JsonNodeData | string,
+export function renderJsonNode(
+	node: JsonNodeData | TextJsonNodeData,
 	onEvent?: (handlerId: string, event: unknown) => void,
 ): ReactElement {
-	if (typeof node === "string") {
-		return <>{node}</>;
+	if (node.type === "TEXT") {
+		return <>{(node as TextJsonNodeData).props.text}</>;
 	}
 
-	const { type, props, children } = node;
+	const { type, props = {}, children = [] } = node as JsonNodeData;
+
+	const Component = lookupComponent(type);
+	if (Component) {
+		return <Component node={node as JsonNodeData} onEvent={onEvent} />;
+	}
 
 	const transformedProps: Record<string, unknown> = {};
-	for (const [key, value] of Object.entries(props)) {
+	const filteredProps = filterHtmlProps(props);
+
+	for (const [key, value] of Object.entries(filteredProps)) {
 		if (typeof value === "object" && value !== null && "$handler" in value) {
 			transformedProps[key] = (e: unknown) => {
 				onEvent?.((value as { $handler: string }).$handler, e);
@@ -93,13 +79,27 @@ function renderNode(
 		}
 	}
 
-	const tagName = elementMap[type] || "div";
+	const childElements = children.map((child) => renderJsonNode(child, onEvent));
 
-	const childElements = children.map((child) => renderNode(child, onEvent));
+	return React.createElement(
+		"div",
+		{ ...transformedProps, "data-unknown-type": type },
+		childElements,
+	);
+}
 
-	return React.createElement(tagName, transformedProps, childElements);
+export function renderJsonChildren(
+	children: (JsonNodeData | TextJsonNodeData)[],
+	onEvent?: (handlerId: string, event: unknown) => void,
+): ReactElement[] {
+	return children.map((child) => renderJsonNode(child, onEvent));
+}
+
+interface JsonNodeProps {
+	node: JsonNodeData | TextJsonNodeData;
+	onEvent?: (handlerId: string, event: unknown) => void;
 }
 
 export function JsonNode({ node, onEvent }: JsonNodeProps): ReactElement {
-	return renderNode(node, onEvent);
+	return renderJsonNode(node, onEvent);
 }

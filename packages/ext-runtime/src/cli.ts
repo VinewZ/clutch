@@ -133,6 +133,9 @@ async function main() {
 			await client.send<BaseMessage, void>({
 				category: "INTERNAL",
 				type: "error",
+				extensionId: args.extensionId,
+				code,
+				message,
 			} as BaseMessage);
 		} catch {
 			// Ignore send errors during error reporting
@@ -169,16 +172,9 @@ async function main() {
 	console.error("[CLI] Creating reconciler...");
 	try {
 		reconciler = createReconciler({
+			extensionId: args.extensionId,
 			onUpdate: (json: JSONNode | null) => {
-				console.error(
-					"[CLI] Reconciler onUpdate called, json:",
-					json ? "present" : "null",
-				);
 				if (json && client.isConnected()) {
-					console.error(
-						"[CLI] Sending renderResponse:",
-						JSON.stringify(json).slice(0, 200),
-					);
 					client
 						.send<BaseMessage, void>({
 							category: "RENDER",
@@ -199,45 +195,17 @@ async function main() {
 		console.error("[CLI] Rendering initial component...");
 		const NavigationProvider = clutch.api.NavigationProvider;
 		const ToastProvider = clutch.api.ToastProvider;
-		console.error("[CLI] NavigationProvider:", NavigationProvider);
-		console.error("[CLI] ToastProvider:", ToastProvider);
-		console.error(
-			"[CLI] loadedExtension.component:",
-			loadedExtension!.component,
-		);
-		console.error(
-			"[CLI] loadedExtension.component type:",
-			loadedExtension!.component?.type,
-		);
 
 		const wrappedComponent = React.createElement(
 			ToastProvider,
 			null,
 			React.createElement(NavigationProvider, null, loadedExtension!.component),
 		);
-		console.error("[CLI] wrappedComponent:", wrappedComponent);
-		console.error("[CLI] wrappedComponent type:", wrappedComponent.type);
-		console.error(
-			"[CLI] wrappedComponent $$typeof:",
-			(wrappedComponent as any).$$typeof,
-		);
 
-		const initialJson = reconciler.render(wrappedComponent);
+		reconciler.render(wrappedComponent);
 		console.error(
-			"[CLI] Initial render result:",
-			initialJson ? JSON.stringify(initialJson).slice(0, 200) : "null",
+			"[CLI] Initial render scheduled (JSON will be sent via onUpdate)",
 		);
-
-		if (initialJson && client.isConnected()) {
-			console.error("[CLI] Sending initial renderResponse...");
-			await client.send<BaseMessage, void>({
-				category: "RENDER",
-				type: "renderResponse",
-				extensionId: loadedExtension.id,
-				json: initialJson,
-			} as BaseMessage);
-			console.error("[CLI] Initial renderResponse sent successfully");
-		}
 	} catch (err) {
 		const errMsg = err instanceof Error ? err.message : "Unknown error";
 		console.error("[CLI] Failed to render extension:", errMsg);
@@ -265,12 +233,18 @@ async function main() {
 					eventMsg.handlerId,
 					eventMsg.event as Parameters<typeof executeHandler>[1],
 				);
-				await client.send<BaseMessage, void>({
-					category: "RUNTIME",
-					type: "action",
-					extensionId: loadedExtension!.id,
-					action,
-				} as BaseMessage);
+				if (
+					action &&
+					typeof action === "object" &&
+					"type" in (action as object)
+				) {
+					await client.send<BaseMessage, void>({
+						category: "RUNTIME",
+						type: "action",
+						extensionId: loadedExtension!.id,
+						action: action as import("./index").Action,
+					} as BaseMessage);
+				}
 			} catch (err) {
 				const errMsg = err instanceof Error ? err.message : "Unknown error";
 				console.error("[CLI] Handler error:", errMsg);

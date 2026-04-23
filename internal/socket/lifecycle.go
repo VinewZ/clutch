@@ -235,12 +235,17 @@ func (lm *LifecycleManager) GetRuntime(extensionId string) *ExtensionRuntime {
 
 type InternalMessageHandler struct {
 	lifecycle *LifecycleManager
+	onError   func(extensionId, code, message string)
 }
 
 func NewInternalMessageHandler(lifecycle *LifecycleManager) *InternalMessageHandler {
 	return &InternalMessageHandler{
 		lifecycle: lifecycle,
 	}
+}
+
+func (h *InternalMessageHandler) SetOnError(fn func(extensionId, code, message string)) {
+	h.onError = fn
 }
 
 func (h *InternalMessageHandler) Handle(data json.RawMessage) (*SocketResponse, error) {
@@ -254,6 +259,8 @@ func (h *InternalMessageHandler) Handle(data json.RawMessage) (*SocketResponse, 
 		return h.handleRuntimeStart(data)
 	case "runtimeStop":
 		return h.handleRuntimeStop(data)
+	case "error":
+		return h.handleError(data)
 	default:
 		return &SocketResponse{
 			Success: false,
@@ -305,6 +312,21 @@ func (h *InternalMessageHandler) handleRuntimeStop(data json.RawMessage) (*Socke
 				Message: err.Error(),
 			},
 		}, nil
+	}
+
+	return &SocketResponse{
+		Success: true,
+	}, nil
+}
+
+func (h *InternalMessageHandler) handleError(data json.RawMessage) (*SocketResponse, error) {
+	var msg InternalErrorMessage
+	if err := json.Unmarshal(data, &msg); err != nil {
+		return nil, fmt.Errorf("parse error message: %w", err)
+	}
+
+	if h.onError != nil {
+		h.onError(msg.ExtensionID, msg.Code, msg.Message)
 	}
 
 	return &SocketResponse{

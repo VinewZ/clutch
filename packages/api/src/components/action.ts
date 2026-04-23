@@ -1,19 +1,19 @@
-import { createComponent } from "../factories";
+import { createComponent, createBuiltinActionComponent } from "../factories";
 
 const Action = createComponent("Action");
-const CopyToClipboard = createComponent("Action.CopyToClipboard");
-const Open = createComponent("Action.Open");
-const OpenInBrowser = createComponent("Action.OpenInBrowser");
-const OpenWith = createComponent("Action.OpenWith");
-const Paste = createComponent("Action.Paste");
-const Push = createComponent("Action.Push");
-const ShowInFinder = createComponent("Action.ShowInFinder");
+const CopyToClipboard = createBuiltinActionComponent("Action.CopyToClipboard");
+const Open = createBuiltinActionComponent("Action.Open");
+const OpenInBrowser = createBuiltinActionComponent("Action.OpenInBrowser");
+const OpenWith = createBuiltinActionComponent("Action.OpenWith");
+const Paste = createBuiltinActionComponent("Action.Paste");
+const Push = createBuiltinActionComponent("Action.Push");
+const ShowInFinder = createBuiltinActionComponent("Action.ShowInFinder");
 const SubmitForm = createComponent("Action.SubmitForm");
-const Trash = createComponent("Action.Trash");
-const CreateSnippet = createComponent("Action.CreateSnippet");
-const CreateQuicklink = createComponent("Action.CreateQuicklink");
-const ToggleQuickLook = createComponent("Action.ToggleQuickLook");
-const PickDate = createComponent("Action.PickDate");
+const Trash = createBuiltinActionComponent("Action.Trash");
+const CreateSnippet = createBuiltinActionComponent("Action.CreateSnippet");
+const CreateQuicklink = createBuiltinActionComponent("Action.CreateQuicklink");
+const ToggleQuickLook = createBuiltinActionComponent("Action.ToggleQuickLook");
+const PickDate = createBuiltinActionComponent("Action.PickDate");
 
 Action.CopyToClipboard = CopyToClipboard;
 Action.Open = Open;

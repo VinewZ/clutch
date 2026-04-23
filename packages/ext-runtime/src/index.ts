@@ -181,7 +181,6 @@ export {
 
 export {
 	createReconciler,
-	resetState,
 	type JsonRendererAPI,
 } from "./reconciler";
 

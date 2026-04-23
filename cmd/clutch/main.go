@@ -2,6 +2,7 @@ package main
 
 import (
 	"embed"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"net/http"
@@ -121,9 +122,21 @@ func main() {
 
 		runtimeHandler := socket.NewRuntimeMessageHandler()
 		runtimeHandler.SetOnToastMessage(extService.HandleToastMessage)
+		runtimeHandler.SetEventDispatcher(func(extensionId, handlerId string, event json.RawMessage) (json.RawMessage, error) {
+			log.Debug("Event from runtime", "extensionId", extensionId, "handlerId", handlerId)
+			return nil, nil
+		})
 		renderHandler := socket.NewRenderMessageHandler()
 		renderHandler.SetOnRenderResponse(extService.HandleRenderResponse)
 		internalHandler := socket.NewInternalMessageHandler(extService.GetLifecycle())
+		internalHandler.SetOnError(func(extensionId, code, message string) {
+			log.Error("Extension error", "extensionId", extensionId, "code", code, "message", message)
+			app.Event.Emit("extension:error", map[string]any{
+				"extensionId": extensionId,
+				"code":        code,
+				"message":     message,
+			})
+		})
 
 		srv.SetHandlers(
 			func(cmd string) error {

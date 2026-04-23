@@ -6,28 +6,31 @@ import (
 	"sync"
 
 	"github.com/charmbracelet/log"
+	"github.com/vinewz/clutch/internal/actions"
 	"github.com/vinewz/clutch/internal/socket"
 	"github.com/vinewz/clutch/internal/store"
 )
 
 type ExtensionService struct {
-	mu           sync.RWMutex
-	lifecycle    *socket.LifecycleManager
-	registry     *store.RegistryManager
-	activeExt    *Extension
-	lastRender   json.RawMessage
-	onRender     func(json.RawMessage)
-	onError      func(error)
-	onToast      func(map[string]any)
-	socketPath   string
-	socketServer *socket.Server
+	mu               sync.RWMutex
+	lifecycle        *socket.LifecycleManager
+	registry         *store.RegistryManager
+	activeExt        *Extension
+	lastRender       json.RawMessage
+	onRender         func(json.RawMessage)
+	onError          func(error)
+	onToast          func(map[string]any)
+	socketPath       string
+	socketServer     *socket.Server
+	actionDispatcher *actions.Dispatcher
 }
 
 func NewExtensionService(socketPath string) *ExtensionService {
 	return &ExtensionService{
-		lifecycle:  socket.NewLifecycleManager(socketPath),
-		registry:   store.NewRegistryManager(),
-		socketPath: socketPath,
+		lifecycle:        socket.NewLifecycleManager(socketPath),
+		registry:         store.NewRegistryManager(),
+		socketPath:       socketPath,
+		actionDispatcher: actions.NewDispatcher(),
 	}
 }
 
@@ -130,6 +133,68 @@ func (s *ExtensionService) SendEvent(handlerID string, event json.RawMessage) er
 
 	if s.activeExt == nil {
 		return fmt.Errorf("no active extension")
+	}
+
+	if s.socketServer == nil {
+		return fmt.Errorf("socket server not configured")
+	}
+
+	msg := socket.RuntimeEventMessage{
+		Category:    socket.CategoryRuntime,
+		Type:        "event",
+		ExtensionID: s.activeExt.ID,
+		HandlerID:   handlerID,
+		Event:       event,
+	}
+
+	return s.socketServer.SendToRuntime(s.activeExt.ID, msg)
+}
+
+func (s *ExtensionService) SendAction(actionType string, propsJSON json.RawMessage, handlerID string) error {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if s.activeExt == nil {
+		return fmt.Errorf("no active extension")
+	}
+
+	var props map[string]interface{}
+	if err := json.Unmarshal(propsJSON, &props); err != nil {
+		return fmt.Errorf("parse action props: %w", err)
+	}
+
+	result := s.actionDispatcher.Dispatch(actionType, props)
+
+	if result.Error != nil {
+		log.Error("Built-in action failed", "action", actionType, "error", result.Error)
+		if s.onToast != nil {
+			s.onToast(map[string]any{
+				"type":    "toastShow",
+				"title":   "Action Failed",
+				"message": result.Error.Error(),
+				"style":   "failure",
+			})
+		}
+	} else if result.Message != "" {
+		if s.onToast != nil {
+			s.onToast(map[string]any{
+				"type":    "toastShow",
+				"title":   result.Title,
+				"message": result.Message,
+				"style":   "success",
+			})
+		}
+	}
+
+	if handlerID != "" && s.socketServer != nil {
+		msg := socket.RuntimeEventMessage{
+			Category:    socket.CategoryRuntime,
+			Type:        "event",
+			ExtensionID: s.activeExt.ID,
+			HandlerID:   handlerID,
+			Event:       json.RawMessage(`{}`),
+		}
+		return s.socketServer.SendToRuntime(s.activeExt.ID, msg)
 	}
 
 	return nil

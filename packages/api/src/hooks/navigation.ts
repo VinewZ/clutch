@@ -5,6 +5,7 @@ import {
 	useCallback,
 	useContext,
 	useEffect,
+	useRef,
 	useState,
 } from "react";
 
@@ -17,19 +18,13 @@ const NavigationContext = createContext<NavigationContextValue | null>(null);
 
 export function NavigationProvider({ children }: { children: ReactNode }) {
 	const [stack, setStack] = useState<ReactNode[]>(() => [children]);
-	const [popCallbacks, setPopCallbacks] = useState<Map<number, () => void>>(
-		new Map(),
-	);
+	const popCallbacksRef = useRef<Map<number, () => void>>(new Map());
 
 	const push = useCallback((component: ReactNode, onPop?: () => void) => {
 		setStack((prev) => {
 			const newStack = [...prev, component];
 			if (onPop) {
-				setPopCallbacks((callbacks) => {
-					const next = new Map(callbacks);
-					next.set(newStack.length - 1, onPop);
-					return next;
-				});
+				popCallbacksRef.current.set(newStack.length - 1, onPop);
 			}
 			return newStack;
 		});
@@ -40,19 +35,15 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 			if (prev.length <= 1) return prev;
 
 			const topIndex = prev.length - 1;
-			const callback = popCallbacks.get(topIndex);
+			const callback = popCallbacksRef.current.get(topIndex);
 			if (callback) {
 				callback();
-				setPopCallbacks((callbacks) => {
-					const next = new Map(callbacks);
-					next.delete(topIndex);
-					return next;
-				});
+				popCallbacksRef.current.delete(topIndex);
 			}
 
 			return prev.slice(0, -1);
 		});
-	}, [popCallbacks]);
+	}, []);
 
 	useEffect(() => {
 		if (typeof globalThis !== "undefined") {
@@ -70,9 +61,13 @@ export function NavigationProvider({ children }: { children: ReactNode }) {
 	const currentView = stack[stack.length - 1];
 
 	return createElement(
-		NavigationContext.Provider,
-		{ value: { push, pop } },
-		currentView,
+		"NavigationContainer",
+		{ navigationDepth: stack.length },
+		createElement(
+			NavigationContext.Provider,
+			{ value: { push, pop } },
+			currentView,
+		),
 	);
 }
 

@@ -107,6 +107,14 @@ type RuntimeStopMessage struct {
 	ExtensionID string          `json:"extensionId"`
 }
 
+type InternalErrorMessage struct {
+	Category    MessageCategory `json:"category"`
+	Type        string          `json:"type"`
+	ExtensionID string          `json:"extensionId"`
+	Code        string          `json:"code,omitempty"`
+	Message     string          `json:"message,omitempty"`
+}
+
 // Response types
 type SocketResponse struct {
 	Success bool            `json:"success"`

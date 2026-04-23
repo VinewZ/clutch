@@ -1,4 +1,5 @@
 Object.defineProperty(exports, Symbol.toStringTag, { value: "Module" });
+let node_child_process = require("node:child_process");
 let react_jsx_runtime = require("react/jsx-runtime");
 let react = require("react");
 //#region src/cache.ts
@@ -89,9 +90,35 @@ var Cache = class {
 	}
 };
 //#endregion
+//#region src/clipboard.ts
+async function getSelectedText() {
+	return new Promise((resolve, reject) => {
+		(0, node_child_process.execFile)("wl-paste", ["--primary", "--no-newline"], { timeout: 2e3 }, (error, stdout, stderr) => {
+			if (error) {
+				reject(/* @__PURE__ */ new Error("Could not get selected text: " + (stderr?.trim() || error.message)));
+				return;
+			}
+			const text = stdout.trim();
+			if (!text) {
+				reject(/* @__PURE__ */ new Error("No selected text available"));
+				return;
+			}
+			resolve(text);
+		});
+	});
+}
+//#endregion
 //#region src/factories.ts
 function createComponent(type) {
 	const Component = (props) => (0, react_jsx_runtime.jsx)(type, props);
+	Component.displayName = type;
+	return Component;
+}
+function createBuiltinActionComponent(type) {
+	const Component = (props) => (0, react_jsx_runtime.jsx)(type, {
+		...props,
+		$action: type
+	});
 	Component.displayName = type;
 	return Component;
 }
@@ -99,7 +126,11 @@ function createSlottedComponent(type, slotProps) {
 	const Slot = createComponent("Slot");
 	const Component = (props) => {
 		const { children, ...rest } = props;
-		const slots = slotProps.filter((prop) => rest[prop]).map((prop) => Slot({ children: rest[prop] }));
+		const slots = slotProps.filter((prop) => rest[prop]).map((prop, i) => Slot({
+			children: rest[prop],
+			key: `slot-${String(prop)}-${i}`,
+			name: String(prop)
+		}));
 		for (const prop of slotProps) delete rest[prop];
 		return (0, react_jsx_runtime.jsx)(type, {
 			...rest,
@@ -112,19 +143,19 @@ function createSlottedComponent(type, slotProps) {
 //#endregion
 //#region src/components/action.ts
 const Action = createComponent("Action");
-const CopyToClipboard = createComponent("Action.CopyToClipboard");
-const Open = createComponent("Action.Open");
-const OpenInBrowser = createComponent("Action.OpenInBrowser");
-const OpenWith = createComponent("Action.OpenWith");
-const Paste = createComponent("Action.Paste");
-const Push = createComponent("Action.Push");
-const ShowInFinder = createComponent("Action.ShowInFinder");
+const CopyToClipboard = createBuiltinActionComponent("Action.CopyToClipboard");
+const Open = createBuiltinActionComponent("Action.Open");
+const OpenInBrowser = createBuiltinActionComponent("Action.OpenInBrowser");
+const OpenWith = createBuiltinActionComponent("Action.OpenWith");
+const Paste = createBuiltinActionComponent("Action.Paste");
+const Push = createBuiltinActionComponent("Action.Push");
+const ShowInFinder = createBuiltinActionComponent("Action.ShowInFinder");
 const SubmitForm = createComponent("Action.SubmitForm");
-const Trash = createComponent("Action.Trash");
-const CreateSnippet = createComponent("Action.CreateSnippet");
-const CreateQuicklink = createComponent("Action.CreateQuicklink");
-const ToggleQuickLook = createComponent("Action.ToggleQuickLook");
-const PickDate = createComponent("Action.PickDate");
+const Trash = createBuiltinActionComponent("Action.Trash");
+const CreateSnippet = createBuiltinActionComponent("Action.CreateSnippet");
+const CreateQuicklink = createBuiltinActionComponent("Action.CreateQuicklink");
+const ToggleQuickLook = createBuiltinActionComponent("Action.ToggleQuickLook");
+const PickDate = createBuiltinActionComponent("Action.PickDate");
 Action.CopyToClipboard = CopyToClipboard;
 Action.Open = Open;
 Action.OpenInBrowser = OpenInBrowser;
@@ -338,15 +369,11 @@ function ToastProvider({ children }) {
 const NavigationContext = (0, react.createContext)(null);
 function NavigationProvider({ children }) {
 	const [stack, setStack] = (0, react.useState)(() => [children]);
-	const [popCallbacks, setPopCallbacks] = (0, react.useState)(/* @__PURE__ */ new Map());
+	const popCallbacksRef = (0, react.useRef)(/* @__PURE__ */ new Map());
 	const push = (0, react.useCallback)((component, onPop) => {
 		setStack((prev) => {
 			const newStack = [...prev, component];
-			if (onPop) setPopCallbacks((callbacks) => {
-				const next = new Map(callbacks);
-				next.set(newStack.length - 1, onPop);
-				return next;
-			});
+			if (onPop) popCallbacksRef.current.set(newStack.length - 1, onPop);
 			return newStack;
 		});
 	}, []);
@@ -354,18 +381,14 @@ function NavigationProvider({ children }) {
 		setStack((prev) => {
 			if (prev.length <= 1) return prev;
 			const topIndex = prev.length - 1;
-			const callback = popCallbacks.get(topIndex);
+			const callback = popCallbacksRef.current.get(topIndex);
 			if (callback) {
 				callback();
-				setPopCallbacks((callbacks) => {
-					const next = new Map(callbacks);
-					next.delete(topIndex);
-					return next;
-				});
+				popCallbacksRef.current.delete(topIndex);
 			}
 			return prev.slice(0, -1);
 		});
-	}, [popCallbacks]);
+	}, []);
 	(0, react.useEffect)(() => {
 		if (typeof globalThis !== "undefined") globalThis.__clutchNavigationPop = pop;
 		return () => {
@@ -373,10 +396,10 @@ function NavigationProvider({ children }) {
 		};
 	}, [pop]);
 	const currentView = stack[stack.length - 1];
-	return (0, react.createElement)(NavigationContext.Provider, { value: {
+	return (0, react.createElement)("NavigationContainer", { navigationDepth: stack.length }, (0, react.createElement)(NavigationContext.Provider, { value: {
 		push,
 		pop
-	} }, currentView);
+	} }, currentView));
 }
 function useNavigation() {
 	const context = (0, react.useContext)(NavigationContext);
@@ -797,6 +820,7 @@ const clutch = { api: {
 	initializePreferences,
 	resetPreferences,
 	Cache,
+	getSelectedText,
 	showToast,
 	ToastProvider,
 	Toast: Object.assign(Toast, { Style }),

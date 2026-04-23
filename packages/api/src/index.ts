@@ -1,4 +1,5 @@
 import { Cache } from "./cache";
+import { getSelectedText } from "./clipboard";
 import { Action, ActionPanel } from "./components/action";
 import { Detail } from "./components/detail";
 import { Form } from "./components/form";
@@ -40,6 +41,7 @@ export const clutch = {
 		initializePreferences,
 		resetPreferences,
 		Cache,
+		getSelectedText,
 		showToast,
 		ToastProvider,
 		Toast: Object.assign(Toast, { Style: ToastStyle }),

@@ -1,9 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { JsonNodeData } from "@/components/JsonNode";
 import { JsonRenderer } from "@/components/JsonRenderer";
 import { ToastContainer, useToastState } from "@/components/Toast";
 import {
+	getLastRender,
 	navigationPop,
 	onError,
 	onRender,
@@ -12,6 +13,23 @@ import {
 	startExtension,
 	stopExtension,
 } from "@/services/extension";
+
+function extractNavigationDepth(json: JsonNodeData | null): number {
+	if (!json) return 1;
+	if (
+		json.type === "NavigationContainer" &&
+		typeof json.props.navigationDepth === "number"
+	) {
+		return json.props.navigationDepth;
+	}
+	for (const child of json.children) {
+		if (child.type !== "TEXT") {
+			const depth = extractNavigationDepth(child as JsonNodeData);
+			if (depth > 1) return depth;
+		}
+	}
+	return 1;
+}
 
 export const Route = createFileRoute("/extension/$name/$command")({
 	component: ExtensionPage,
@@ -22,44 +40,23 @@ function ExtensionPage() {
 	const [json, setJson] = useState<JsonNodeData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
+	const [navigationDepth, setNavigationDepth] = useState(1);
 	const { toast, handleToastData, dismissToast } = useToastState();
+	const startedRef = useRef(false);
 
 	useEffect(() => {
 		let mounted = true;
 
-		console.error("[EXTENSION PAGE] Mounting with params:", { name, command });
-
-		async function load() {
-			try {
-				console.error("[EXTENSION PAGE] Starting extension:", {
-					name,
-					command,
-				});
-				setLoading(true);
-				setError(null);
-				const ext = await startExtension(name, command);
-				console.error("[EXTENSION PAGE] Extension started:", ext);
-			} catch (err) {
-				console.error("[EXTENSION PAGE] Failed to start extension:", err);
-				if (mounted) {
-					setError(err as Error);
-					setLoading(false);
-				}
-			}
-		}
-
-		load();
-
 		const unsubRender = onRender((data) => {
-			console.error("[EXTENSION PAGE] Received render event:", data);
 			if (mounted) {
-				setJson(data as JsonNodeData);
+				const renderJson = (data as { json?: JsonNodeData }).json ?? null;
+				setJson(renderJson);
+				setNavigationDepth(extractNavigationDepth(renderJson));
 				setLoading(false);
 			}
 		});
 
 		const unsubError = onError((err) => {
-			console.error("[EXTENSION PAGE] Received error event:", err);
 			if (mounted) {
 				setError(err);
 				setLoading(false);
@@ -70,45 +67,70 @@ function ExtensionPage() {
 			handleToastData(data);
 		});
 
+		async function init() {
+			try {
+				const lastRender = await getLastRender();
+				if (mounted && lastRender) {
+					setJson(lastRender);
+					setNavigationDepth(extractNavigationDepth(lastRender));
+					setLoading(false);
+				}
+			} catch {
+				// GetLastRender not available yet or no cached render
+			}
+
+			if (!startedRef.current) {
+				startedRef.current = true;
+				try {
+					await startExtension(name, command);
+				} catch (err) {
+					if (mounted) {
+						setError(err as Error);
+						setLoading(false);
+					}
+				}
+			}
+		}
+
+		init();
+
 		return () => {
-			console.error("[EXTENSION PAGE] Unmounting, stopping extension");
 			mounted = false;
+			startedRef.current = false;
 			unsubRender();
 			unsubError();
 			unsubToast();
-			stopExtension().catch((err) => {
-				console.error("[EXTENSION PAGE] Error stopping extension:", err);
-			});
+			stopExtension().catch(() => {});
 		};
 	}, [name, command, handleToastData]);
 
 	const handleEvent = useCallback(async (handlerId: string, event: unknown) => {
-		console.error("[EXTENSION PAGE] Sending event:", { handlerId, event });
 		try {
 			await sendEvent(handlerId, event);
-		} catch (err) {
-			console.error("[EXTENSION PAGE] Failed to send event:", err);
+		} catch {
+			// ignore
 		}
 	}, []);
 
 	useEffect(() => {
 		const handleKeyDown = async (e: KeyboardEvent) => {
 			if (e.key === "Escape") {
-				console.error("[EXTENSION PAGE] ESC pressed, calling navigationPop");
-				try {
-					await navigationPop();
-				} catch (err) {
-					console.error("[EXTENSION PAGE] Failed to call navigationPop:", err);
+				e.preventDefault();
+				if (navigationDepth > 1) {
+					try {
+						await navigationPop();
+					} catch {
+						// ignore
+					}
 				}
 			}
 		};
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, []);
+	}, [navigationDepth]);
 
 	if (loading) {
-		console.error("[EXTENSION PAGE] Rendering loading state");
 		return (
 			<div className="flex items-center justify-center h-full">
 				Loading extension...
@@ -117,7 +139,6 @@ function ExtensionPage() {
 	}
 
 	if (error) {
-		console.error("[EXTENSION PAGE] Rendering error state:", error.message);
 		return (
 			<div className="flex items-center justify-center h-full text-red-500">
 				Error: {error.message}
@@ -125,7 +146,6 @@ function ExtensionPage() {
 		);
 	}
 
-	console.error("[EXTENSION PAGE] Rendering JSON");
 	return (
 		<>
 			<JsonRenderer json={json} onEvent={handleEvent} />

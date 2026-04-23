@@ -1,6 +1,8 @@
 import type { Action, SerializedEvent } from "../socket/protocol";
 
-type EventHandler = (event: SerializedEvent) => Action | Promise<Action>;
+type EventHandler = (
+	event: SerializedEvent,
+) => Action | Promise<Action> | void | unknown;
 
 interface HandlerInfo {
 	handler: EventHandler;
@@ -21,7 +23,7 @@ class HandlerRegistry {
 		return this.handlers.get(handlerId)?.handler;
 	}
 
-	async execute(handlerId: string, event: SerializedEvent): Promise<Action> {
+	async execute(handlerId: string, event: SerializedEvent): Promise<unknown> {
 		const handlerInfo = this.handlers.get(handlerId);
 		if (!handlerInfo) {
 			throw new Error(`Handler not found: ${handlerId}`);
@@ -80,7 +82,7 @@ export function registerHandler(
 export function executeHandler(
 	handlerId: string,
 	event: SerializedEvent,
-): Promise<Action> {
+): Promise<unknown> {
 	return handlerRegistry.execute(handlerId, event);
 }
 

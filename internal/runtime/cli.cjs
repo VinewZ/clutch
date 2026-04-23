@@ -24,6 +24,7 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 //#endregion
 let node_module = require("node:module");
 node_module = __toESM(node_module);
+let node_child_process = require("node:child_process");
 let node_url = require("node:url");
 let node_net = require("node:net");
 node_net = __toESM(node_net);
@@ -1477,8 +1478,32 @@ var Cache = class {
 		return this.store.size === 0;
 	}
 };
+async function getSelectedText() {
+	return new Promise((resolve, reject) => {
+		(0, node_child_process.execFile)("wl-paste", ["--primary", "--no-newline"], { timeout: 2e3 }, (error, stdout, stderr) => {
+			if (error) {
+				reject(/* @__PURE__ */ new Error("Could not get selected text: " + (stderr?.trim() || error.message)));
+				return;
+			}
+			const text = stdout.trim();
+			if (!text) {
+				reject(/* @__PURE__ */ new Error("No selected text available"));
+				return;
+			}
+			resolve(text);
+		});
+	});
+}
 function createComponent(type) {
 	const Component = (props) => (0, import_jsx_runtime.jsx)(type, props);
+	Component.displayName = type;
+	return Component;
+}
+function createBuiltinActionComponent(type) {
+	const Component = (props) => (0, import_jsx_runtime.jsx)(type, {
+		...props,
+		$action: type
+	});
 	Component.displayName = type;
 	return Component;
 }
@@ -1486,7 +1511,11 @@ function createSlottedComponent(type, slotProps) {
 	const Slot = createComponent("Slot");
 	const Component = (props) => {
 		const { children, ...rest } = props;
-		const slots = slotProps.filter((prop) => rest[prop]).map((prop) => Slot({ children: rest[prop] }));
+		const slots = slotProps.filter((prop) => rest[prop]).map((prop, i) => Slot({
+			children: rest[prop],
+			key: `slot-${String(prop)}-${i}`,
+			name: String(prop)
+		}));
 		for (const prop of slotProps) delete rest[prop];
 		return (0, import_jsx_runtime.jsx)(type, {
 			...rest,
@@ -1497,19 +1526,19 @@ function createSlottedComponent(type, slotProps) {
 	return Component;
 }
 const Action = createComponent("Action");
-const CopyToClipboard = createComponent("Action.CopyToClipboard");
-const Open = createComponent("Action.Open");
-const OpenInBrowser = createComponent("Action.OpenInBrowser");
-const OpenWith = createComponent("Action.OpenWith");
-const Paste = createComponent("Action.Paste");
-const Push = createComponent("Action.Push");
-const ShowInFinder = createComponent("Action.ShowInFinder");
+const CopyToClipboard = createBuiltinActionComponent("Action.CopyToClipboard");
+const Open = createBuiltinActionComponent("Action.Open");
+const OpenInBrowser = createBuiltinActionComponent("Action.OpenInBrowser");
+const OpenWith = createBuiltinActionComponent("Action.OpenWith");
+const Paste = createBuiltinActionComponent("Action.Paste");
+const Push = createBuiltinActionComponent("Action.Push");
+const ShowInFinder = createBuiltinActionComponent("Action.ShowInFinder");
 const SubmitForm = createComponent("Action.SubmitForm");
-const Trash = createComponent("Action.Trash");
-const CreateSnippet = createComponent("Action.CreateSnippet");
-const CreateQuicklink = createComponent("Action.CreateQuicklink");
-const ToggleQuickLook = createComponent("Action.ToggleQuickLook");
-const PickDate = createComponent("Action.PickDate");
+const Trash = createBuiltinActionComponent("Action.Trash");
+const CreateSnippet = createBuiltinActionComponent("Action.CreateSnippet");
+const CreateQuicklink = createBuiltinActionComponent("Action.CreateQuicklink");
+const ToggleQuickLook = createBuiltinActionComponent("Action.ToggleQuickLook");
+const PickDate = createBuiltinActionComponent("Action.PickDate");
 Action.CopyToClipboard = CopyToClipboard;
 Action.Open = Open;
 Action.OpenInBrowser = OpenInBrowser;
@@ -1711,15 +1740,11 @@ function ToastProvider({ children }) {
 const NavigationContext = (0, import_react.createContext)(null);
 function NavigationProvider({ children }) {
 	const [stack, setStack] = (0, import_react.useState)(() => [children]);
-	const [popCallbacks, setPopCallbacks] = (0, import_react.useState)(/* @__PURE__ */ new Map());
+	const popCallbacksRef = (0, import_react.useRef)(/* @__PURE__ */ new Map());
 	const push = (0, import_react.useCallback)((component, onPop) => {
 		setStack((prev) => {
 			const newStack = [...prev, component];
-			if (onPop) setPopCallbacks((callbacks) => {
-				const next = new Map(callbacks);
-				next.set(newStack.length - 1, onPop);
-				return next;
-			});
+			if (onPop) popCallbacksRef.current.set(newStack.length - 1, onPop);
 			return newStack;
 		});
 	}, []);
@@ -1727,18 +1752,14 @@ function NavigationProvider({ children }) {
 		setStack((prev) => {
 			if (prev.length <= 1) return prev;
 			const topIndex = prev.length - 1;
-			const callback = popCallbacks.get(topIndex);
+			const callback = popCallbacksRef.current.get(topIndex);
 			if (callback) {
 				callback();
-				setPopCallbacks((callbacks) => {
-					const next = new Map(callbacks);
-					next.delete(topIndex);
-					return next;
-				});
+				popCallbacksRef.current.delete(topIndex);
 			}
 			return prev.slice(0, -1);
 		});
-	}, [popCallbacks]);
+	}, []);
 	(0, import_react.useEffect)(() => {
 		if (typeof globalThis !== "undefined") globalThis.__clutchNavigationPop = pop;
 		return () => {
@@ -1746,10 +1767,10 @@ function NavigationProvider({ children }) {
 		};
 	}, [pop]);
 	const currentView = stack[stack.length - 1];
-	return (0, import_react.createElement)(NavigationContext.Provider, { value: {
+	return (0, import_react.createElement)("NavigationContainer", { navigationDepth: stack.length }, (0, import_react.createElement)(NavigationContext.Provider, { value: {
 		push,
 		pop
-	} }, currentView);
+	} }, currentView));
 }
 function useNavigation() {
 	const context = (0, import_react.useContext)(NavigationContext);
@@ -1779,6 +1800,7 @@ const clutch = { api: {
 	initializePreferences,
 	resetPreferences,
 	Cache,
+	getSelectedText,
 	showToast,
 	ToastProvider,
 	Toast: Object.assign(Toast, { Style }),
@@ -18266,191 +18288,56 @@ var require_react_reconciler_development = /* @__PURE__ */ __commonJSMin(((expor
 	}, module.exports.default = module.exports, Object.defineProperty(module.exports, "__esModule", { value: !0 }));
 }));
 //#endregion
-//#region src/state.ts
-var import_react_reconciler = /* @__PURE__ */ __toESM((/* @__PURE__ */ __commonJSMin(((exports, module) => {
+//#region ../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.5/node_modules/react-reconciler/index.js
+var require_react_reconciler = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	if (process.env.NODE_ENV === "production") module.exports = require_react_reconciler_production();
 	else module.exports = require_react_reconciler_development();
-})))());
-const instances = /* @__PURE__ */ new Map();
-let instanceCounter = 0;
-const getNextInstanceId = () => ++instanceCounter;
+}));
 //#endregion
-//#region src/reconciler/host-config.ts
-function createNode(type, props, id) {
-	return {
-		type,
-		props,
-		children: [],
-		id: `node_${id}`
-	};
-}
-function appendChildToParent(parent, child) {
-	if (typeof child === "string") {
-		if ("type" in parent) parent.children.push(child);
-		return;
-	}
-	if ("type" in parent) {
-		const existingIndex = parent.children.findIndex((c) => typeof c === "string" ? false : c.id === child.id);
-		if (existingIndex > -1) parent.children.splice(existingIndex, 1);
-		parent.children.push(child);
-	}
-}
-function removeChildFromParent(parent, child) {
-	if (!("children" in parent)) return;
-	parent.children = parent.children.filter((c) => typeof c === "string" ? c !== child : c.id !== child.id);
-}
-const hostConfig = {
-	supportsMutation: true,
-	supportsPersistence: false,
-	supportsHydration: false,
-	isPrimaryRenderer: true,
-	getPublicInstance(instance) {
-		if (typeof instance === "string") return {
-			type: "TEXT",
-			props: { text: instance },
-			children: [],
-			id: `text_${Date.now()}`
-		};
-		return instance;
-	},
-	getRootHostContext() {
-		return {};
-	},
-	getChildHostContext() {
-		return {};
-	},
-	prepareForCommit() {
-		return null;
-	},
-	resetAfterCommit() {},
-	createInstance(type, props, _rootContainer, _hostContext, internalInstanceHandle) {
-		const id = getNextInstanceId();
-		const { children, ...restProps } = props;
-		const instance = createNode(type, restProps, id);
-		internalInstanceHandle.stateNode = instance;
-		instances.set(id, instance);
-		return instance;
-	},
-	createTextInstance(text, _rootContainer, _hostContext, _internalInstanceHandle) {
-		return text;
-	},
-	appendInitialChild: appendChildToParent,
-	appendChild: appendChildToParent,
-	appendChildToContainer(container, child) {
-		if (typeof child === "string") return;
-		container.children.push(child);
-	},
-	insertBefore(parentInstance, child, beforeChild) {
-		const beforeIndex = parentInstance.children.findIndex((c) => typeof c === "string" ? c === beforeChild : c.id === beforeChild.id);
-		if (beforeIndex !== -1) parentInstance.children.splice(beforeIndex, 0, child);
-		else parentInstance.children.push(child);
-	},
-	insertInContainerBefore(container, child, beforeChild) {
-		if (typeof child === "string") return;
-		const beforeIndex = container.children.findIndex((c) => typeof c === "string" ? c === beforeChild : c.id === beforeChild.id);
-		if (beforeIndex !== -1) container.children.splice(beforeIndex, 0, child);
-		else container.children.push(child);
-	},
-	removeChild: removeChildFromParent,
-	removeChildFromContainer: removeChildFromParent,
-	commitUpdate(instance, _type, _oldProps, newProps) {
-		const { children, ...restProps } = newProps;
-		instance.props = restProps;
-	},
-	commitTextUpdate(_textInstance, _oldText, _newText) {},
-	finalizeInitialChildren() {
-		return false;
-	},
-	shouldSetTextContent() {
-		return false;
-	},
-	clearContainer(container) {
-		container.children = [];
-	},
-	scheduleTimeout: setTimeout,
-	cancelTimeout: (id) => clearTimeout(id),
-	noTimeout: -1,
-	getCurrentUpdatePriority() {
-		return 1;
-	},
-	setCurrentUpdatePriority() {},
-	resolveUpdatePriority() {
-		return 1;
-	},
-	resolveEventTimeStamp() {
-		return 0;
-	},
-	trackSchedulerEvent() {},
-	resolveEventType() {
-		return null;
-	},
-	shouldAttemptEagerTransition() {
-		return false;
-	},
-	maySuspendCommit() {
-		return false;
-	},
-	preloadInstance() {
-		return true;
-	},
-	startSuspendingCommit() {},
-	suspendInstance() {},
-	waitForCommitToBeReady() {
-		return null;
-	},
-	preparePortalMount() {},
-	getInstanceFromNode() {
-		return null;
-	},
-	beforeActiveInstanceBlur() {},
-	afterActiveInstanceBlur() {},
-	prepareScopeUpdate() {},
-	getInstanceFromScope() {
-		return null;
-	},
-	detachDeletedInstance() {},
-	commitMount() {},
-	hideInstance() {},
-	hideTextInstance() {},
-	unhideInstance() {},
-	unhideTextInstance() {},
-	resetTextContent() {},
-	supportsMicrotasks: true,
-	scheduleMicrotask: queueMicrotask,
-	resetFormInstance() {},
-	requestPostPaintCallback() {},
-	NotPendingTransition: null,
-	HostTransitionContext: {}
-};
+//#region ../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.5/node_modules/react-reconciler/cjs/react-reconciler-constants.production.js
+/**
+* @license React
+* react-reconciler-constants.production.js
+*
+* Copyright (c) Meta Platforms, Inc. and affiliates.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+var require_react_reconciler_constants_production = /* @__PURE__ */ __commonJSMin(((exports) => {
+	exports.ConcurrentRoot = 1;
+	exports.ContinuousEventPriority = 8;
+	exports.DefaultEventPriority = 32;
+	exports.DiscreteEventPriority = 2;
+	exports.IdleEventPriority = 268435456;
+	exports.LegacyRoot = 0;
+	exports.NoEventPriority = 0;
+}));
 //#endregion
-//#region src/reconciler/index.ts
-const reconciler = (0, import_react_reconciler.default)(hostConfig);
-const onError = (error) => {
-	console.error("[RECONCILER] Error:", error.message);
-};
-function createContainer() {
-	return {
-		id: "root",
-		children: []
-	};
-}
-function createReconciler(_options) {
-	const container = createContainer();
-	const rootHandle = reconciler.createContainer(container, 0, null, false, null, "", onError, onError, onError, () => {});
-	return {
-		render(element) {
-			reconciler.updateContainerSync(element, rootHandle, null, null);
-			if (typeof reconciler.flushSyncWork === "function") reconciler.flushSyncWork();
-			return container.children[0] ?? null;
-		},
-		unmount() {
-			reconciler.updateContainerSync(null, rootHandle, null, null);
-			if (typeof reconciler.flushSyncWork === "function") reconciler.flushSyncWork();
-		}
-	};
-}
+//#region ../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.5/node_modules/react-reconciler/cjs/react-reconciler-constants.development.js
+/**
+* @license React
+* react-reconciler-constants.development.js
+*
+* Copyright (c) Meta Platforms, Inc. and affiliates.
+*
+* This source code is licensed under the MIT license found in the
+* LICENSE file in the root directory of this source tree.
+*/
+var require_react_reconciler_constants_development = /* @__PURE__ */ __commonJSMin(((exports) => {
+	"production" !== process.env.NODE_ENV && (exports.ConcurrentRoot = 1, exports.ContinuousEventPriority = 8, exports.DefaultEventPriority = 32, exports.DiscreteEventPriority = 2, exports.IdleEventPriority = 268435456, exports.LegacyRoot = 0, exports.NoEventPriority = 0);
+}));
+//#endregion
+//#region ../../node_modules/.pnpm/react-reconciler@0.33.0_react@19.2.5/node_modules/react-reconciler/constants.js
+var require_constants = /* @__PURE__ */ __commonJSMin(((exports, module) => {
+	if (process.env.NODE_ENV === "production") module.exports = require_react_reconciler_constants_production();
+	else module.exports = require_react_reconciler_constants_development();
+}));
 //#endregion
 //#region src/reconciler/handler-registry.ts
+var import_scheduler = /* @__PURE__ */ __toESM(require_scheduler());
+var import_react_reconciler = /* @__PURE__ */ __toESM(require_react_reconciler());
+var import_constants = require_constants();
 var HandlerRegistry = class {
 	handlers = /* @__PURE__ */ new Map();
 	counter = 0;
@@ -18497,6 +18384,247 @@ function executeHandler(handlerId, event) {
 }
 function clearExtensionHandlers(extensionId) {
 	handlerRegistry.clearExtension(extensionId);
+}
+//#endregion
+//#region src/reconciler/host-config.ts
+function stringifyType(type) {
+	if (typeof type === "string") return type;
+	if (typeof type === "function") return type.displayName || type.name || "Anonymous";
+	return String(type);
+}
+function sanitizeValue(value, seen) {
+	if (value === null || value === void 0) return void 0;
+	const t = typeof value;
+	if (t === "function" || t === "symbol") return void 0;
+	if (t !== "object") return value;
+	if (seen.has(value)) return void 0;
+	if (Array.isArray(value)) {
+		seen.add(value);
+		return value.map((v) => sanitizeValue(v, seen));
+	}
+	const proto = Object.getPrototypeOf(value);
+	if (proto !== null && proto !== Object.prototype) return void 0;
+	seen.add(value);
+	const result = {};
+	for (const [key, val] of Object.entries(value)) {
+		const cleaned = sanitizeValue(val, seen);
+		if (cleaned !== void 0) result[key] = cleaned;
+	}
+	return result;
+}
+function sanitizeProps(props) {
+	const seen = /* @__PURE__ */ new WeakSet();
+	const result = {};
+	for (const [key, value] of Object.entries(props)) {
+		const cleaned = sanitizeValue(value, seen);
+		if (cleaned !== void 0) result[key] = cleaned;
+	}
+	return result;
+}
+function registerFunctionProps(props, extensionId) {
+	const result = {};
+	for (const [key, value] of Object.entries(props)) if (typeof value === "function") result[key] = { $handler: handlerRegistry.register(extensionId, value) };
+	else if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+		const proto = Object.getPrototypeOf(value);
+		if (proto === null || proto === Object.prototype) result[key] = registerFunctionProps(value, extensionId);
+		else result[key] = value;
+	} else result[key] = value;
+	return result;
+}
+function createNode(type, props, id) {
+	return {
+		type,
+		props,
+		children: [],
+		id: `node_${id}`
+	};
+}
+function createTextNode(text, id) {
+	return {
+		type: "TEXT",
+		props: { text },
+		children: [],
+		id: `text_${id}`
+	};
+}
+function appendChildToParent(parent, child) {
+	if ("type" in parent) {
+		const existingIndex = parent.children.findIndex((c) => c.id === child.id);
+		if (existingIndex > -1) parent.children.splice(existingIndex, 1);
+		parent.children.push(child);
+	}
+}
+function removeChildFromParent(parent, child) {
+	if (!("children" in parent)) return;
+	parent.children = parent.children.filter((c) => c.id !== child.id);
+}
+function createHostConfig(state) {
+	const { instances, getNextInstanceId, onUpdate, extensionId } = state;
+	return {
+		supportsMutation: true,
+		supportsPersistence: false,
+		supportsHydration: false,
+		isPrimaryRenderer: true,
+		getPublicInstance(instance) {
+			return instance;
+		},
+		getRootHostContext() {
+			return {};
+		},
+		getChildHostContext() {
+			return {};
+		},
+		prepareForCommit() {
+			return null;
+		},
+		resetAfterCommit(container) {
+			const json = container.children[0] ?? null;
+			if (onUpdate) onUpdate(json);
+		},
+		createInstance(type, props, _rootContainer, _hostContext, internalInstanceHandle) {
+			const id = getNextInstanceId();
+			const { children, ...restProps } = props;
+			const withHandlers = registerFunctionProps(restProps, extensionId);
+			const instance = createNode(stringifyType(type), sanitizeProps(withHandlers), id);
+			internalInstanceHandle.stateNode = instance;
+			instances.set(id, instance);
+			return instance;
+		},
+		createTextInstance(text, _rootContainer, _hostContext, _internalInstanceHandle) {
+			return createTextNode(text, getNextInstanceId());
+		},
+		appendInitialChild: appendChildToParent,
+		appendChild: appendChildToParent,
+		appendChildToContainer(container, child) {
+			if (child.type === "TEXT" && !("type" in container)) return;
+			container.children.push(child);
+		},
+		insertBefore(parentInstance, child, beforeChild) {
+			const beforeIndex = parentInstance.children.findIndex((c) => c.id === beforeChild.id);
+			if (beforeIndex !== -1) parentInstance.children.splice(beforeIndex, 0, child);
+			else parentInstance.children.push(child);
+		},
+		insertInContainerBefore(container, child, beforeChild) {
+			const beforeIndex = container.children.findIndex((c) => c.id === beforeChild.id);
+			if (beforeIndex !== -1) container.children.splice(beforeIndex, 0, child);
+			else container.children.push(child);
+		},
+		removeChild: removeChildFromParent,
+		removeChildFromContainer: removeChildFromParent,
+		commitUpdate(instance, _type, _oldProps, newProps) {
+			const { children, ...restProps } = newProps;
+			instance.props = sanitizeProps(registerFunctionProps(restProps, extensionId));
+		},
+		commitTextUpdate(textInstance, _oldText, newText) {
+			textInstance.props.text = newText;
+		},
+		finalizeInitialChildren() {
+			return false;
+		},
+		shouldSetTextContent() {
+			return false;
+		},
+		clearContainer(container) {
+			container.children = [];
+		},
+		scheduleTimeout: setTimeout,
+		cancelTimeout: (id) => clearTimeout(id),
+		noTimeout: -1,
+		getCurrentUpdatePriority() {
+			return 1;
+		},
+		setCurrentUpdatePriority() {},
+		resolveUpdatePriority() {
+			return 1;
+		},
+		resolveEventTimeStamp() {
+			return 0;
+		},
+		trackSchedulerEvent() {},
+		resolveEventType() {
+			return null;
+		},
+		shouldAttemptEagerTransition() {
+			return false;
+		},
+		maySuspendCommit() {
+			return false;
+		},
+		preloadInstance() {
+			return true;
+		},
+		startSuspendingCommit() {},
+		suspendInstance() {},
+		waitForCommitToBeReady() {
+			return null;
+		},
+		preparePortalMount() {},
+		getInstanceFromNode() {
+			return null;
+		},
+		beforeActiveInstanceBlur() {},
+		afterActiveInstanceBlur() {},
+		prepareScopeUpdate() {},
+		getInstanceFromScope() {
+			return null;
+		},
+		detachDeletedInstance() {},
+		commitMount() {},
+		hideInstance() {},
+		hideTextInstance() {},
+		unhideInstance() {},
+		unhideTextInstance() {},
+		resetTextContent() {},
+		supportsMicrotasks: true,
+		scheduleMicrotask: queueMicrotask,
+		scheduleCallback: import_scheduler.unstable_scheduleCallback,
+		cancelCallback: import_scheduler.unstable_cancelCallback,
+		shouldYield: import_scheduler.unstable_shouldYield,
+		now: import_scheduler.unstable_now,
+		resetFormInstance() {},
+		requestPostPaintCallback() {},
+		NotPendingTransition: null,
+		HostTransitionContext: {}
+	};
+}
+//#endregion
+//#region src/reconciler/index.ts
+const onError = (error) => {
+	console.error("[RECONCILER] Error:", error.message);
+};
+function createContainer() {
+	return {
+		id: "root",
+		children: []
+	};
+}
+function createReconcilerState(onUpdate, extensionId) {
+	let instanceCounter = 0;
+	return {
+		instances: /* @__PURE__ */ new Map(),
+		getNextInstanceId: () => ++instanceCounter,
+		onUpdate,
+		extensionId
+	};
+}
+function createReconciler(options) {
+	const reconciler = (0, import_react_reconciler.default)(createHostConfig(createReconcilerState(options?.onUpdate ?? null, options?.extensionId ?? "")));
+	const container = createContainer();
+	const rootHandle = reconciler.createContainer(container, import_constants.ConcurrentRoot, null, false, null, "", onError, onError, onError, () => {});
+	return {
+		render(element) {
+			reconciler.updateContainer(element, rootHandle, null, null);
+		},
+		update(element) {
+			reconciler.updateContainer(element, rootHandle, null, null);
+		},
+		unmount() {
+			reconciler.updateContainer(null, rootHandle, null, null);
+		},
+		flushSync() {
+			if (typeof reconciler.flushSyncWork === "function") reconciler.flushSyncWork();
+		}
+	};
 }
 //#endregion
 //#region src/socket/client.ts
@@ -18749,7 +18877,10 @@ async function main() {
 		try {
 			await client.send({
 				category: "INTERNAL",
-				type: "error"
+				type: "error",
+				extensionId: args.extensionId,
+				code,
+				message
 			});
 		} catch {}
 	};
@@ -18772,11 +18903,10 @@ async function main() {
 	}
 	console.error("[CLI] Creating reconciler...");
 	try {
-		reconciler = createReconciler({ onUpdate: (json) => {
-			console.error("[CLI] Reconciler onUpdate called, json:", json ? "present" : "null");
-			if (json && client.isConnected()) {
-				console.error("[CLI] Sending renderResponse:", JSON.stringify(json).slice(0, 200));
-				client.send({
+		reconciler = createReconciler({
+			extensionId: args.extensionId,
+			onUpdate: (json) => {
+				if (json && client.isConnected()) client.send({
 					category: "RENDER",
 					type: "renderResponse",
 					extensionId: loadedExtension.id,
@@ -18785,30 +18915,13 @@ async function main() {
 					console.error("[CLI] Failed to send render:", err instanceof Error ? err.message : err);
 				});
 			}
-		} });
+		});
 		console.error("[CLI] Rendering initial component...");
 		const NavigationProvider = clutch.api.NavigationProvider;
 		const ToastProvider = clutch.api.ToastProvider;
-		console.error("[CLI] NavigationProvider:", NavigationProvider);
-		console.error("[CLI] ToastProvider:", ToastProvider);
-		console.error("[CLI] loadedExtension.component:", loadedExtension.component);
-		console.error("[CLI] loadedExtension.component type:", loadedExtension.component?.type);
 		const wrappedComponent = import_react.createElement(ToastProvider, null, import_react.createElement(NavigationProvider, null, loadedExtension.component));
-		console.error("[CLI] wrappedComponent:", wrappedComponent);
-		console.error("[CLI] wrappedComponent type:", wrappedComponent.type);
-		console.error("[CLI] wrappedComponent $$typeof:", wrappedComponent.$$typeof);
-		const initialJson = reconciler.render(wrappedComponent);
-		console.error("[CLI] Initial render result:", initialJson ? JSON.stringify(initialJson).slice(0, 200) : "null");
-		if (initialJson && client.isConnected()) {
-			console.error("[CLI] Sending initial renderResponse...");
-			await client.send({
-				category: "RENDER",
-				type: "renderResponse",
-				extensionId: loadedExtension.id,
-				json: initialJson
-			});
-			console.error("[CLI] Initial renderResponse sent successfully");
-		}
+		reconciler.render(wrappedComponent);
+		console.error("[CLI] Initial render scheduled (JSON will be sent via onUpdate)");
 	} catch (err) {
 		const errMsg = err instanceof Error ? err.message : "Unknown error";
 		console.error("[CLI] Failed to render extension:", errMsg);
@@ -18826,7 +18939,7 @@ async function main() {
 			console.error("[CLI] Processing event:", eventMsg.handlerId);
 			try {
 				const action = await executeHandler(eventMsg.handlerId, eventMsg.event);
-				await client.send({
+				if (action && typeof action === "object" && "type" in action) await client.send({
 					category: "RUNTIME",
 					type: "action",
 					extensionId: loadedExtension.id,

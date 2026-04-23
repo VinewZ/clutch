@@ -1,11 +1,9 @@
 import type { ReactNode } from "react";
 import ReactReconciler from "react-reconciler";
-import hostConfig from "./host-config";
-import type { JSONNode, Container, JsonRendererOptions } from "./types";
-import { resetState } from "../state";
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const reconciler = ReactReconciler(hostConfig as any);
+import { ConcurrentRoot } from "react-reconciler/constants";
+import { createHostConfig } from "./host-config";
+import type { ReconcilerState } from "./host-config";
+import type { Container, JsonRendererOptions, JSONNode } from "./types";
 
 const onError = (error: Error) => {
 	console.error("[RECONCILER] Error:", error.message);
@@ -15,19 +13,43 @@ function createContainer(): Container {
 	return { id: "root", children: [] };
 }
 
+function createReconcilerState(
+	onUpdate: ((json: JSONNode | null) => void) | null,
+	extensionId: string,
+): ReconcilerState {
+	let instanceCounter = 0;
+	const instances = new Map<number, JSONNode>();
+	return {
+		instances,
+		getNextInstanceId: () => ++instanceCounter,
+		onUpdate,
+		extensionId,
+	};
+}
+
 export interface JsonRendererAPI {
-	render(component: ReactNode): JSONNode | null;
+	render(component: ReactNode): void;
+	update(component: ReactNode): void;
 	unmount(): void;
+	flushSync(): void;
 }
 
 export function createReconciler(
-	_options?: JsonRendererOptions,
+	options?: JsonRendererOptions,
 ): JsonRendererAPI {
+	const state = createReconcilerState(
+		options?.onUpdate ?? null,
+		options?.extensionId ?? "",
+	);
+	const hostConfig = createHostConfig(state);
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const reconciler = ReactReconciler(hostConfig as any);
+
 	const container = createContainer();
 
 	const rootHandle = reconciler.createContainer(
 		container,
-		0,
+		ConcurrentRoot,
 		null,
 		false,
 		null,
@@ -39,16 +61,19 @@ export function createReconciler(
 	);
 
 	return {
-		render(element: ReactNode): JSONNode | null {
-			reconciler.updateContainerSync(element, rootHandle, null, null);
-			if (typeof reconciler.flushSyncWork === "function") {
-				reconciler.flushSyncWork();
-			}
-			return container.children[0] ?? null;
+		render(element: ReactNode): void {
+			reconciler.updateContainer(element, rootHandle, null, null);
+		},
+
+		update(element: ReactNode): void {
+			reconciler.updateContainer(element, rootHandle, null, null);
 		},
 
 		unmount(): void {
-			reconciler.updateContainerSync(null, rootHandle, null, null);
+			reconciler.updateContainer(null, rootHandle, null, null);
+		},
+
+		flushSync(): void {
 			if (typeof reconciler.flushSyncWork === "function") {
 				reconciler.flushSyncWork();
 			}
@@ -56,13 +81,4 @@ export function createReconciler(
 	};
 }
 
-export function render(
-	element: ReactNode,
-	options?: JsonRendererOptions,
-): JSONNode | null {
-	const renderer = createReconciler(options);
-	return renderer.render(element);
-}
-
-export { resetState };
 export type { JSONNode, Container, JsonRendererOptions } from "./types";
