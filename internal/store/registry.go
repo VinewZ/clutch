@@ -130,3 +130,78 @@ func NewInstalledExt(ext Extension, path string) InstalledExt {
 		Icons:       ext.Icons,
 	}
 }
+
+func ExtractPreferences(extPath string, command string) ([]PreferenceSchema, map[string]interface{}) {
+	pkgPath := filepath.Join(extPath, "package.json")
+	data, err := os.ReadFile(pkgPath)
+	if err != nil {
+		return nil, nil
+	}
+
+	var pkg struct {
+		Commands []struct {
+			Name        string `json:"name"`
+			Preferences []struct {
+				Name        string      `json:"name"`
+				Type        string      `json:"type"`
+				Default     interface{} `json:"default"`
+				Required    bool        `json:"required"`
+				Title       string      `json:"title"`
+				Description string      `json:"description"`
+			} `json:"preferences"`
+		} `json:"commands"`
+		Preferences []struct {
+			Name        string      `json:"name"`
+			Type        string      `json:"type"`
+			Default     interface{} `json:"default"`
+			Required    bool        `json:"required"`
+			Title       string      `json:"title"`
+			Description string      `json:"description"`
+		} `json:"preferences"`
+	}
+
+	if err := json.Unmarshal(data, &pkg); err != nil {
+		return nil, nil
+	}
+
+	var schemas []PreferenceSchema
+	defaults := make(map[string]interface{})
+
+	for _, p := range pkg.Preferences {
+		schemas = append(schemas, PreferenceSchema{
+			Name:        p.Name,
+			Type:        p.Type,
+			Default:     p.Default,
+			Required:    p.Required,
+			Title:       p.Title,
+			Description: p.Description,
+		})
+		if p.Default != nil {
+			defaults[p.Name] = p.Default
+		}
+	}
+
+	for _, cmd := range pkg.Commands {
+		if cmd.Name == command {
+			for _, p := range cmd.Preferences {
+				schemas = append(schemas, PreferenceSchema{
+					Name:        p.Name,
+					Type:        p.Type,
+					Default:     p.Default,
+					Required:    p.Required,
+					Title:       p.Title,
+					Description: p.Description,
+				})
+				if p.Default != nil {
+					defaults[p.Name] = p.Default
+				}
+			}
+		}
+	}
+
+	if len(schemas) == 0 {
+		return nil, nil
+	}
+
+	return schemas, defaults
+}

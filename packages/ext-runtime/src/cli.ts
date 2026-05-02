@@ -199,6 +199,39 @@ async function main() {
 					}
 				}
 			},
+			onError: (error: Error) => {
+				if (client.isConnected()) {
+					client.sendNoWait({
+						category: "INTERNAL",
+						type: "error",
+						extensionId: loadedExtension!.id,
+						code: "RECONCILER_ERROR",
+						message: `${error.message}\n${error.stack ?? ""}`,
+					} as BaseMessage);
+				}
+			},
+			onCaughtError: (error: Error) => {
+				if (client.isConnected()) {
+					client.sendNoWait({
+						category: "INTERNAL",
+						type: "error",
+						extensionId: loadedExtension!.id,
+						code: "RECONCILER_CAUGHT_ERROR",
+						message: `${error.message}\n${error.stack ?? ""}`,
+					} as BaseMessage);
+				}
+			},
+			onRecoverableError: (error: Error) => {
+				if (client.isConnected()) {
+					client.sendNoWait({
+						category: "INTERNAL",
+						type: "error",
+						extensionId: loadedExtension!.id,
+						code: "RECONCILER_RECOVERABLE_ERROR",
+						message: `${error.message}\n${error.stack ?? ""}`,
+					} as BaseMessage);
+				}
+			},
 		});
 
 		console.error("[CLI] Rendering initial component...");

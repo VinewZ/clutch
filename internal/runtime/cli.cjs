@@ -1508,7 +1508,10 @@ async function getSelectedText() {
 	});
 }
 function createComponent(type) {
-	const Component = (props) => (0, import_jsx_runtime.jsx)(type, props);
+	const Component = (props) => {
+		const { key, ...rest } = props;
+		return (0, import_jsx_runtime.jsx)(type, rest);
+	};
 	Component.displayName = type;
 	return Component;
 }
@@ -18556,6 +18559,9 @@ function createHostConfig(state) {
 			if (!onUpdate) return;
 			console.error("[resetAfterCommit] container children:", container.children.length, container.children.map((c) => `${c.type}(${c.id})`));
 			if (container.children.length === 0) {
+				console.error("[resetAfterCommit] WARNING: empty container after commit");
+				console.error("[resetAfterCommit] total instances:", instances.size);
+				for (const [id, node] of instances) console.error(`  instance ${id}: ${node.type}`);
 				onUpdate(null);
 				return;
 			}
@@ -18612,7 +18618,6 @@ function createHostConfig(state) {
 		appendInitialChild: appendChildToParent,
 		appendChild: appendChildToParent,
 		appendChildToContainer(container, child) {
-			if (child.type === "TEXT" && !("type" in container)) return;
 			console.error("[appendChildToContainer]", child.type, `(${child.id})`);
 			container.children.push(child);
 		},
@@ -18707,9 +18712,6 @@ function createHostConfig(state) {
 }
 //#endregion
 //#region src/reconciler/index.ts
-const onError = (error) => {
-	console.error("[RECONCILER] Error:", error.message);
-};
 function createContainer() {
 	return {
 		id: "root",
@@ -18728,7 +18730,12 @@ function createReconcilerState(onUpdate, extensionId) {
 function createReconciler(options) {
 	const reconciler = (0, import_react_reconciler.default)(createHostConfig(createReconcilerState(options?.onUpdate ?? null, options?.extensionId ?? "")));
 	const container = createContainer();
-	const rootHandle = reconciler.createContainer(container, import_constants.ConcurrentRoot, null, false, null, "", onError, onError, onError, () => {});
+	const makeErrorHandler = (label, cb) => (error) => {
+		console.error(`[RECONCILER] ${label}:`, error.message);
+		console.error(`[RECONCILER] ${label} Stack:`, error.stack);
+		cb?.(error);
+	};
+	const rootHandle = reconciler.createContainer(container, import_constants.ConcurrentRoot, null, false, null, "", makeErrorHandler("UncaughtError", options?.onError), makeErrorHandler("CaughtError", options?.onCaughtError), makeErrorHandler("RecoverableError", options?.onRecoverableError), () => {});
 	return {
 		render(element) {
 			reconciler.updateContainer(element, rootHandle, null, null);
@@ -19091,6 +19098,33 @@ async function main() {
 					extensionId: loadedExtension.id,
 					code: "NULL_RENDER",
 					message: "Extension rendered empty tree"
+				});
+			},
+			onError: (error) => {
+				if (client.isConnected()) client.sendNoWait({
+					category: "INTERNAL",
+					type: "error",
+					extensionId: loadedExtension.id,
+					code: "RECONCILER_ERROR",
+					message: `${error.message}\n${error.stack ?? ""}`
+				});
+			},
+			onCaughtError: (error) => {
+				if (client.isConnected()) client.sendNoWait({
+					category: "INTERNAL",
+					type: "error",
+					extensionId: loadedExtension.id,
+					code: "RECONCILER_CAUGHT_ERROR",
+					message: `${error.message}\n${error.stack ?? ""}`
+				});
+			},
+			onRecoverableError: (error) => {
+				if (client.isConnected()) client.sendNoWait({
+					category: "INTERNAL",
+					type: "error",
+					extensionId: loadedExtension.id,
+					code: "RECONCILER_RECOVERABLE_ERROR",
+					message: `${error.message}\n${error.stack ?? ""}`
 				});
 			}
 		});

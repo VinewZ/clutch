@@ -5,10 +5,6 @@ import type { ReconcilerState } from "./host-config";
 import { createHostConfig } from "./host-config";
 import type { Container, JSONNode, JsonRendererOptions } from "./types";
 
-const onError = (error: Error) => {
-	console.error("[RECONCILER] Error:", error.message);
-};
-
 function createContainer(): Container {
 	return { id: "root", children: [] };
 }
@@ -34,8 +30,14 @@ export interface JsonRendererAPI {
 	flushSync(): void;
 }
 
+export type ReconcilerErrorCallback = (error: Error) => void;
+
 export function createReconciler(
-	options?: JsonRendererOptions,
+	options?: JsonRendererOptions & {
+		onError?: ReconcilerErrorCallback;
+		onCaughtError?: ReconcilerErrorCallback;
+		onRecoverableError?: ReconcilerErrorCallback;
+	},
 ): JsonRendererAPI {
 	const state = createReconcilerState(
 		options?.onUpdate ?? null,
@@ -47,6 +49,13 @@ export function createReconciler(
 
 	const container = createContainer();
 
+	const makeErrorHandler =
+		(label: string, cb?: ReconcilerErrorCallback) => (error: Error) => {
+			console.error(`[RECONCILER] ${label}:`, error.message);
+			console.error(`[RECONCILER] ${label} Stack:`, error.stack);
+			cb?.(error);
+		};
+
 	const rootHandle = reconciler.createContainer(
 		container,
 		ConcurrentRoot,
@@ -54,9 +63,9 @@ export function createReconciler(
 		false,
 		null,
 		"",
-		onError,
-		onError,
-		onError,
+		makeErrorHandler("UncaughtError", options?.onError),
+		makeErrorHandler("CaughtError", options?.onCaughtError),
+		makeErrorHandler("RecoverableError", options?.onRecoverableError),
 		() => {},
 	);
 

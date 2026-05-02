@@ -73,6 +73,16 @@ func (s *StoreService) InstallExtension(id string) error {
 	extPath := s.registry.GetExtensionPath(target.Name)
 	installed := NewInstalledExt(*target, extPath)
 
+	if len(installed.Commands) > 0 {
+		schemas, defaults := ExtractPreferences(extPath, installed.Commands[0].Name)
+		if schemas != nil {
+			installed.PreferenceSchema = schemas
+		}
+		if defaults != nil {
+			installed.PreferenceValues = defaults
+		}
+	}
+
 	if err := s.registry.Load(); err != nil {
 		return err
 	}

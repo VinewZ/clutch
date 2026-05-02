@@ -85,6 +85,7 @@ func (lm *LifecycleManager) StartRuntimeWithPreferences(extensionId, extensionPa
 	log.Debug("Executing command", "cmd", cmd.String())
 
 	cmd.Env = append(os.Environ(),
+		"NODE_ENV=production",
 		"EXTENSION_ID="+extensionId,
 		"EXTENSION_PATH="+extensionPath,
 		"EXTENSION_COMMAND="+command,

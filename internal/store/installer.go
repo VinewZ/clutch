@@ -82,34 +82,34 @@ func (i *Installer) extractFile(f *zip.File, dest string) error {
 		return nil
 	}
 
-	if strings.HasSuffix(name, ".js") || strings.HasSuffix(name, ".js.map") {
-		dstPath := filepath.Join(dest, filepath.Base(name))
+	if strings.HasPrefix(name, "__MACOSX") || strings.HasPrefix(filepath.Base(name), "._") {
+		return nil
+	}
 
-		if f.Mode().IsDir() {
-			return nil
-		}
+	if f.Mode().IsDir() {
+		return nil
+	}
 
-		if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
-			return err
-		}
+	dstPath := filepath.Join(dest, filepath.Base(name))
 
-		dstFile, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
-		if err != nil {
-			return err
-		}
-		defer dstFile.Close()
-
-		srcFile, err := f.Open()
-		if err != nil {
-			return err
-		}
-		defer srcFile.Close()
-
-		_, err = io.Copy(dstFile, srcFile)
+	if err := os.MkdirAll(filepath.Dir(dstPath), 0755); err != nil {
 		return err
 	}
 
-	return nil
+	dstFile, err := os.OpenFile(dstPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, f.Mode())
+	if err != nil {
+		return err
+	}
+	defer dstFile.Close()
+
+	srcFile, err := f.Open()
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	_, err = io.Copy(dstFile, srcFile)
+	return err
 }
 
 func (i *Installer) Uninstall(name string) error {

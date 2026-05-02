@@ -14,7 +14,7 @@ export interface TextJSONNode {
 
 export interface Container {
 	id: string;
-	children: JSONNode[];
+	children: (JSONNode | TextJSONNode)[];
 }
 
 export interface JsonRendererOptions {

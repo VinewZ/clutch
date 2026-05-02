@@ -10,7 +10,10 @@ type ComponentWithSubcomponents = {
 };
 
 export function createComponent(type: string): ComponentWithSubcomponents {
-	const Component = (props: ComponentProps) => jsx(type as ElementType, props);
+	const Component = (props: ComponentProps & { key?: string }) => {
+		const { key, ...rest } = props;
+		return jsx(type as ElementType, rest as ComponentProps);
+	};
 	Component.displayName = type;
 	return Component as ComponentWithSubcomponents;
 }

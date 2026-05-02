@@ -230,6 +230,13 @@ export function createHostConfig(state: ReconcilerState) {
 			);
 
 			if (container.children.length === 0) {
+				console.error(
+					"[resetAfterCommit] WARNING: empty container after commit",
+				);
+				console.error("[resetAfterCommit] total instances:", instances.size);
+				for (const [id, node] of instances) {
+					console.error(`  instance ${id}: ${node.type}`);
+				}
 				onUpdate(null);
 				return;
 			}
@@ -344,9 +351,8 @@ export function createHostConfig(state: ReconcilerState) {
 		appendChild: appendChildToParent,
 
 		appendChildToContainer(container: Container, child: Child): void {
-			if (child.type === "TEXT" && !("type" in container)) return;
 			console.error("[appendChildToContainer]", child.type, `(${child.id})`);
-			container.children.push(child as JSONNode);
+			container.children.push(child);
 		},
 
 		insertBefore(
@@ -381,9 +387,9 @@ export function createHostConfig(state: ReconcilerState) {
 				(c) => c.id === beforeChild.id,
 			);
 			if (beforeIndex !== -1) {
-				container.children.splice(beforeIndex, 0, child as JSONNode);
+				container.children.splice(beforeIndex, 0, child);
 			} else {
-				container.children.push(child as JSONNode);
+				container.children.push(child);
 			}
 		},
 
