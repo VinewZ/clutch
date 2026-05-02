@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useFormContext } from "./Form";
-import type { RaycastComponentProps } from "./registry";
+import type { RaycastComponentProps } from "./types";
 
 interface DropdownChildNode {
 	type: string;

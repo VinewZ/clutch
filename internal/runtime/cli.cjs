@@ -7,6 +7,15 @@ var __getOwnPropNames = Object.getOwnPropertyNames;
 var __getProtoOf = Object.getPrototypeOf;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __commonJSMin = (cb, mod) => () => (mod || (cb((mod = { exports: {} }).exports, mod), cb = null), mod.exports);
+var __exportAll = (all, no_symbols) => {
+	let target = {};
+	for (var name in all) __defProp(target, name, {
+		get: all[name],
+		enumerable: true
+	});
+	if (!no_symbols) __defProp(target, Symbol.toStringTag, { value: "Module" });
+	return target;
+};
 var __copyProps = (to, from, except, desc) => {
 	if (from && typeof from === "object" || typeof from === "function") for (var keys = __getOwnPropNames(from), i = 0, n = keys.length, key; i < n; i++) {
 		key = keys[i];
@@ -17,6 +26,7 @@ var __copyProps = (to, from, except, desc) => {
 	}
 	return to;
 };
+var __reExport = (target, mod, secondTarget) => (__copyProps(target, mod, "default"), secondTarget && __copyProps(secondTarget, mod, "default"));
 var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__getProtoOf(mod)) : {}, __copyProps(isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", {
 	value: mod,
 	enumerable: true
@@ -1386,12 +1396,15 @@ var require_react_jsx_runtime_development = /* @__PURE__ */ __commonJSMin(((expo
 	})();
 }));
 //#endregion
-//#region ../api/dist/index.mjs
-var import_jsx_runtime = (/* @__PURE__ */ __commonJSMin(((exports, module) => {
+//#region ../../node_modules/.pnpm/react@19.2.5/node_modules/react/jsx-runtime.js
+var require_jsx_runtime = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 	if (process.env.NODE_ENV === "production") module.exports = require_react_jsx_runtime_production();
 	else module.exports = require_react_jsx_runtime_development();
-})))();
+}));
+//#endregion
+//#region ../api/dist/index.mjs
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
+var import_jsx_runtime = require_jsx_runtime();
 var Cache = class {
 	store = /* @__PURE__ */ new Map();
 	subscribers = /* @__PURE__ */ new Set();
@@ -1511,15 +1524,16 @@ function createSlottedComponent(type, slotProps) {
 	const Slot = createComponent("Slot");
 	const Component = (props) => {
 		const { children, ...rest } = props;
-		const slots = slotProps.filter((prop) => rest[prop]).map((prop, i) => Slot({
+		const slots = slotProps.filter((prop) => rest[prop]).map((prop, i) => (0, import_react.createElement)(Slot, {
 			children: rest[prop],
 			key: `slot-${String(prop)}-${i}`,
 			name: String(prop)
 		}));
 		for (const prop of slotProps) delete rest[prop];
+		const flatChildren = Array.isArray(children) ? children : children ? [children] : [];
 		return (0, import_jsx_runtime.jsx)(type, {
 			...rest,
-			children: [children, ...slots].filter(Boolean)
+			children: [...flatChildren, ...slots]
 		});
 	};
 	Component.displayName = type;
@@ -2186,39 +2200,30 @@ const clutch = { api: {
 		XMarkCircleFilled: "lucide:x-circle",
 		XMarkCircleHalfDash: "lucide:circle-slash",
 		XMarkTopRightSquare: "lucide:square-x"
+	},
+	Keyboard: { Shortcut: { Common: {
+		MoveUp: "Keyboard.Shortcut.Common.MoveUp",
+		MoveDown: "Keyboard.Shortcut.Common.MoveDown",
+		CopyClipboard: "Keyboard.Shortcut.Common.CopyClipboard",
+		PasteClipboard: "Keyboard.Shortcut.Common.PasteClipboard",
+		SelectAll: "Keyboard.Shortcut.Common.SelectAll",
+		Cut: "Keyboard.Shortcut.Common.Cut",
+		Undo: "Keyboard.Shortcut.Common.Undo",
+		Redo: "Keyboard.Shortcut.Common.Redo",
+		Search: "Keyboard.Shortcut.Common.Search",
+		Delete: "Keyboard.Shortcut.Common.Delete",
+		Tab: "Keyboard.Shortcut.Common.Tab",
+		ReverseTab: "Keyboard.Shortcut.Common.ReverseTab"
+	} } },
+	LaunchType: {
+		UserInitiated: "userInitiated",
+		Background: "background"
 	}
 } };
 //#endregion
 //#region src/jsx-runtime.ts
-const jsx = import_react.createElement;
-const jsxs = import_react.createElement;
-const Fragment = import_react.Fragment;
-//#endregion
-//#region src/runtime/loader.ts
-async function loadExtension(extensionPath, command) {
-	const entryPath = `${extensionPath}/${command}.js`;
-	try {
-		const module = await import((0, node_url.pathToFileURL)(entryPath).href);
-		let component;
-		let defaultExport = module.default;
-		if (defaultExport && typeof defaultExport === "object" && "default" in defaultExport && !import_react.isValidElement(defaultExport)) defaultExport = defaultExport.default;
-		if (import_react.isValidElement(defaultExport)) component = defaultExport;
-		else if (typeof defaultExport === "function") component = import_react.createElement(defaultExport);
-		else {
-			const Wrapper = () => defaultExport;
-			component = import_react.createElement(Wrapper);
-		}
-		return {
-			id: `${extensionPath.split("/").pop()}-${command}`,
-			path: extensionPath,
-			command,
-			module,
-			component
-		};
-	} catch (error) {
-		throw new Error(`Failed to load extension at ${entryPath}: ${error instanceof Error ? error.message : "Unknown error"}`);
-	}
-}
+var jsx_runtime_exports = /* @__PURE__ */ __exportAll({});
+__reExport(jsx_runtime_exports, /* @__PURE__ */ __toESM(require_jsx_runtime()));
 //#endregion
 //#region ../../node_modules/.pnpm/scheduler@0.27.0/node_modules/scheduler/cjs/scheduler.production.js
 /**
@@ -18338,6 +18343,36 @@ var require_constants = /* @__PURE__ */ __commonJSMin(((exports, module) => {
 var import_scheduler = /* @__PURE__ */ __toESM(require_scheduler());
 var import_react_reconciler = /* @__PURE__ */ __toESM(require_react_reconciler());
 var import_constants = require_constants();
+const NO_ARGS = Symbol("NO_ARGS");
+const EVENT_EXTRACTORS = {
+	onSearchTextChange: (event) => {
+		return event?.searchText ?? NO_ARGS;
+	},
+	onChange: (event) => {
+		return event?.value ?? NO_ARGS;
+	},
+	onAction: () => NO_ARGS,
+	onSubmit: (event) => {
+		return event?.formValues ?? NO_ARGS;
+	},
+	onFocus: () => NO_ARGS,
+	onBlur: () => NO_ARGS,
+	onValidate: (event) => {
+		return event?.value ?? NO_ARGS;
+	},
+	onSelectionChange: (event) => {
+		return event?.indices ?? NO_ARGS;
+	},
+	onHover: () => NO_ARGS
+};
+function createAdaptedHandler(originalHandler, extractor) {
+	return (event) => {
+		const extracted = extractor(event);
+		console.error("[createAdaptedHandler] extractor result:", typeof extracted === "symbol" ? "NO_ARGS" : typeof extracted, "value:", typeof extracted === "string" ? extracted.slice(0, 50) : typeof extracted === "symbol" ? "NO_ARGS" : JSON.stringify(extracted)?.slice(0, 100));
+		if (extracted === NO_ARGS) return originalHandler();
+		return originalHandler(extracted);
+	};
+}
 var HandlerRegistry = class {
 	handlers = /* @__PURE__ */ new Map();
 	counter = 0;
@@ -18354,9 +18389,18 @@ var HandlerRegistry = class {
 	}
 	async execute(handlerId, event) {
 		const handlerInfo = this.handlers.get(handlerId);
-		if (!handlerInfo) throw new Error(`Handler not found: ${handlerId}`);
+		if (!handlerInfo) {
+			console.error("[HandlerRegistry] handler NOT FOUND:", handlerId, "registered handlers:", [...this.handlers.keys()].join(", "));
+			throw new Error(`Handler not found: ${handlerId}`);
+		}
+		console.error("[HandlerRegistry] executing handler:", handlerId, "event:", JSON.stringify(event)?.slice(0, 200));
 		const result = handlerInfo.handler(event);
-		if (result instanceof Promise) return await result;
+		if (result instanceof Promise) {
+			const resolved = await result;
+			console.error("[HandlerRegistry] handler resolved (async):", handlerId, "result type:", typeof resolved);
+			return resolved;
+		}
+		console.error("[HandlerRegistry] handler executed (sync):", handlerId, "result type:", typeof result);
 		return result;
 	}
 	has(handlerId) {
@@ -18387,7 +18431,13 @@ function clearExtensionHandlers(extensionId) {
 }
 //#endregion
 //#region src/reconciler/host-config.ts
+const FRAGMENT_TYPE = "FRAGMENT";
+function isFragmentType(type) {
+	return type === import_react.Fragment || type === FRAGMENT_TYPE;
+}
 function stringifyType(type) {
+	if (type === null || type === void 0) return "Unknown";
+	if (isFragmentType(type)) return FRAGMENT_TYPE;
 	if (typeof type === "string") return type;
 	if (typeof type === "function") return type.displayName || type.name || "Anonymous";
 	return String(type);
@@ -18423,13 +18473,37 @@ function sanitizeProps(props) {
 }
 function registerFunctionProps(props, extensionId) {
 	const result = {};
-	for (const [key, value] of Object.entries(props)) if (typeof value === "function") result[key] = { $handler: handlerRegistry.register(extensionId, value) };
-	else if (value !== null && typeof value === "object" && !Array.isArray(value)) {
+	for (const [key, value] of Object.entries(props)) if (typeof value === "function") {
+		const originalHandler = value;
+		const extractor = EVENT_EXTRACTORS[key];
+		const handlerToRegister = extractor ? createAdaptedHandler(originalHandler, extractor) : originalHandler;
+		const handlerId = handlerRegistry.register(extensionId, handlerToRegister);
+		console.error("[registerFunctionProps] registered handler:", key, "->", handlerId, key in EVENT_EXTRACTORS ? "(adapted)" : "(raw)");
+		result[key] = { $handler: handlerId };
+	} else if (value !== null && typeof value === "object" && !Array.isArray(value)) {
 		const proto = Object.getPrototypeOf(value);
 		if (proto === null || proto === Object.prototype) result[key] = registerFunctionProps(value, extensionId);
 		else result[key] = value;
 	} else result[key] = value;
 	return result;
+}
+function flattenFragments(node) {
+	if (node.type !== "FRAGMENT") {
+		if ("children" in node && Array.isArray(node.children)) node.children = node.children.flatMap((child) => {
+			const flattened = flattenFragments(child);
+			return flattened.type === "FRAGMENT" ? flattened.children : [flattened];
+		});
+		return node;
+	}
+	const fragment = node;
+	const flatChildren = [];
+	for (const child of fragment.children) {
+		const flattened = flattenFragments(child);
+		if (flattened.type === "FRAGMENT") flatChildren.push(...flattened.children);
+		else flatChildren.push(flattened);
+	}
+	fragment.children = flatChildren;
+	return fragment;
 }
 function createNode(type, props, id) {
 	return {
@@ -18452,6 +18526,7 @@ function appendChildToParent(parent, child) {
 		const existingIndex = parent.children.findIndex((c) => c.id === child.id);
 		if (existingIndex > -1) parent.children.splice(existingIndex, 1);
 		parent.children.push(child);
+		console.error("[appendChildToParent]", parent.type, "<-", child.type, `(${child.id})`, "total children:", parent.children.length);
 	}
 }
 function removeChildFromParent(parent, child) {
@@ -18478,11 +18553,50 @@ function createHostConfig(state) {
 			return null;
 		},
 		resetAfterCommit(container) {
-			const json = container.children[0] ?? null;
-			if (onUpdate) onUpdate(json);
+			if (!onUpdate) return;
+			console.error("[resetAfterCommit] container children:", container.children.length, container.children.map((c) => `${c.type}(${c.id})`));
+			if (container.children.length === 0) {
+				onUpdate(null);
+				return;
+			}
+			if (container.children.length === 1) {
+				const root = container.children[0];
+				const flattened = flattenFragments(root);
+				if (flattened.type === "FRAGMENT") {
+					const fragChildren = flattened.children;
+					if (fragChildren.length === 1) onUpdate(fragChildren[0]);
+					else onUpdate({
+						type: "FragmentContainer",
+						props: {},
+						children: fragChildren,
+						id: root.id
+					});
+				} else onUpdate(flattened);
+				return;
+			}
+			const flatChildren = container.children.flatMap((child) => {
+				const flattened = flattenFragments(child);
+				return flattened.type === "FRAGMENT" ? flattened.children : [flattened];
+			});
+			if (flatChildren.length === 1) onUpdate(flatChildren[0]);
+			else onUpdate({
+				type: "FragmentContainer",
+				props: {},
+				children: flatChildren,
+				id: "root"
+			});
 		},
 		createInstance(type, props, _rootContainer, _hostContext, internalInstanceHandle) {
 			const id = getNextInstanceId();
+			console.error("[createInstance]", type, `(${id})`, "childrenInProps:", "children" in props, Array.isArray(props.children) ? `array[${props.children.length}]` : typeof props.children);
+			if ("children" in props && Array.isArray(props.children)) {
+				const React = require_react();
+				for (const child of props.children) if (child !== null && child !== void 0 && typeof child === "object") {
+					const isValid = React.isValidElement(child);
+					const hasType = "$$typeof" in child;
+					console.error("[createInstance] child check:", isValid ? "VALID" : "INVALID", "hasTypeSymbol:", hasType, "childType:", child?.type);
+				}
+			}
 			const { children, ...restProps } = props;
 			const withHandlers = registerFunctionProps(restProps, extensionId);
 			const instance = createNode(stringifyType(type), sanitizeProps(withHandlers), id);
@@ -18491,15 +18605,19 @@ function createHostConfig(state) {
 			return instance;
 		},
 		createTextInstance(text, _rootContainer, _hostContext, _internalInstanceHandle) {
-			return createTextNode(text, getNextInstanceId());
+			const id = getNextInstanceId();
+			console.error("[createTextInstance]", JSON.stringify(text), `(${id})`);
+			return createTextNode(text, id);
 		},
 		appendInitialChild: appendChildToParent,
 		appendChild: appendChildToParent,
 		appendChildToContainer(container, child) {
 			if (child.type === "TEXT" && !("type" in container)) return;
+			console.error("[appendChildToContainer]", child.type, `(${child.id})`);
 			container.children.push(child);
 		},
 		insertBefore(parentInstance, child, beforeChild) {
+			console.error("[insertBefore]", parentInstance.type, "<-", child.type, "before", beforeChild.type);
 			const beforeIndex = parentInstance.children.findIndex((c) => c.id === beforeChild.id);
 			if (beforeIndex !== -1) parentInstance.children.splice(beforeIndex, 0, child);
 			else parentInstance.children.push(child);
@@ -18627,12 +18745,60 @@ function createReconciler(options) {
 	};
 }
 //#endregion
+//#region src/runtime/loader.ts
+async function loadExtension(extensionPath, command) {
+	const entryPath = `${extensionPath}/${command}.js`;
+	try {
+		const module = await import((0, node_url.pathToFileURL)(entryPath).href);
+		let component;
+		let defaultExport = module.default;
+		if (defaultExport && typeof defaultExport === "object" && "default" in defaultExport && !import_react.isValidElement(defaultExport)) defaultExport = defaultExport.default;
+		if (import_react.isValidElement(defaultExport)) component = defaultExport;
+		else if (typeof defaultExport === "function") component = import_react.createElement(defaultExport);
+		else {
+			const Wrapper = () => defaultExport;
+			component = import_react.createElement(Wrapper);
+		}
+		return {
+			id: `${extensionPath.split("/").pop()}-${command}`,
+			path: extensionPath,
+			command,
+			module,
+			component
+		};
+	} catch (error) {
+		throw new Error(`Failed to load extension at ${entryPath}: ${error instanceof Error ? error.message : "Unknown error"}`);
+	}
+}
+//#endregion
 //#region src/socket/client.ts
+function isSocketResponse(obj) {
+	return typeof obj === "object" && obj !== null && "success" in obj;
+}
 function createSocketClient(config) {
 	let socket = null;
 	let connected = false;
 	let buffer = "";
 	const messageHandlers = /* @__PURE__ */ new Set();
+	const pendingResponses = [];
+	function processLine(jsonStr) {
+		let parsed;
+		try {
+			parsed = JSON.parse(jsonStr);
+		} catch {
+			console.error("[SOCKET] Failed to parse message:", jsonStr.slice(0, 100));
+			return;
+		}
+		if (isSocketResponse(parsed)) {
+			if (pendingResponses.length > 0) {
+				const pending = pendingResponses.shift();
+				clearTimeout(pending.timeout);
+				pending.resolve(parsed);
+			}
+			return;
+		}
+		for (const handler of messageHandlers) handler(parsed);
+	}
 	return {
 		async connect() {
 			return new Promise((resolve, reject) => {
@@ -18660,13 +18826,7 @@ function createSocketClient(config) {
 					while (newlineIndex !== -1) {
 						const jsonStr = buffer.slice(0, newlineIndex);
 						buffer = buffer.slice(newlineIndex + 1);
-						try {
-							const parsed = JSON.parse(jsonStr);
-							console.error("[SOCKET] Received message:", JSON.stringify(parsed).slice(0, 200));
-							for (const handler of messageHandlers) handler(parsed);
-						} catch {
-							console.error("[SOCKET] Failed to parse message:", jsonStr.slice(0, 100));
-						}
+						processLine(jsonStr);
 						newlineIndex = buffer.indexOf("\n");
 					}
 				});
@@ -18674,6 +18834,11 @@ function createSocketClient(config) {
 					console.error("[SOCKET] Connection closed");
 					connected = false;
 					socket = null;
+					for (const pending of pendingResponses) {
+						clearTimeout(pending.timeout);
+						pending.reject(/* @__PURE__ */ new Error("Socket closed"));
+					}
+					pendingResponses.length = 0;
 				});
 				socket.on("error", () => {
 					console.error("[SOCKET] Socket error event");
@@ -18690,33 +18855,27 @@ function createSocketClient(config) {
 				}
 				console.error("[SOCKET] Sending message:", JSON.stringify(msg).slice(0, 200));
 				const sendTimeout = setTimeout(() => {
+					const idx = pendingResponses.findIndex((p) => p.resolve === pendingResolve);
+					if (idx !== -1) pendingResponses.splice(idx, 1);
 					console.error("[SOCKET] Send timeout");
 					reject(/* @__PURE__ */ new Error("Response timeout"));
 				}, config.timeout ?? 5e3);
-				let localBuffer = "";
-				const onData = (data) => {
-					localBuffer += data.toString();
-					const newlineIndex = localBuffer.indexOf("\n");
-					if (newlineIndex !== -1) {
-						const jsonStr = localBuffer.slice(0, newlineIndex);
-						clearTimeout(sendTimeout);
-						socket?.off("data", onData);
-						try {
-							const response = JSON.parse(jsonStr);
-							console.error("[SOCKET] Received response:", JSON.stringify(response).slice(0, 200));
-							resolve(response);
-						} catch (err) {
-							console.error("[SOCKET] Failed to parse response:", jsonStr.slice(0, 100));
-							reject(/* @__PURE__ */ new Error(`Parse error: ${err}`));
-						}
-					}
+				let pendingResolve;
+				const pending = {
+					resolve: (response) => {
+						resolve(response);
+					},
+					reject,
+					timeout: sendTimeout
 				};
-				socket.on("data", onData);
+				pendingResolve = pending.resolve;
+				pendingResponses.push(pending);
 				const jsonStr = `${JSON.stringify(msg)}\n`;
 				socket.write(jsonStr, (err) => {
 					if (err) {
+						const idx = pendingResponses.indexOf(pending);
+						if (idx !== -1) pendingResponses.splice(idx, 1);
 						clearTimeout(sendTimeout);
-						socket?.off("data", onData);
 						console.error("[SOCKET] Write error:", err.message);
 						reject(err);
 					}
@@ -18725,6 +18884,12 @@ function createSocketClient(config) {
 		},
 		onMessage(handler) {
 			messageHandlers.add(handler);
+		},
+		sendNoWait(msg) {
+			if (!socket || !connected) return false;
+			const jsonStr = `${JSON.stringify(msg)}\n`;
+			socket.write(jsonStr);
+			return true;
 		},
 		removeMessageHandler(handler) {
 			messageHandlers.delete(handler);
@@ -18736,6 +18901,11 @@ function createSocketClient(config) {
 				socket = null;
 				connected = false;
 			}
+			for (const pending of pendingResponses) {
+				clearTimeout(pending.timeout);
+				pending.reject(/* @__PURE__ */ new Error("Socket closed"));
+			}
+			pendingResponses.length = 0;
 			messageHandlers.clear();
 		},
 		isConnected() {
@@ -18745,18 +18915,11 @@ function createSocketClient(config) {
 }
 //#endregion
 //#region src/index.ts
-const jsxRuntime = {
-	jsx,
-	jsxs,
-	Fragment
-};
-console.error("[DEBUG] jsxRuntime defined:", jsxRuntime);
-console.error("[DEBUG] jsxRuntime.jsx type:", typeof jsx);
 const REWRITE_MAP = new Map([
 	["@raycast/api", clutch.api],
 	["react", import_react.default],
-	["react/jsx-runtime", jsxRuntime],
-	["react/jsx-dev-runtime", jsxRuntime]
+	["react/jsx-runtime", jsx_runtime_exports],
+	["react/jsx-dev-runtime", jsx_runtime_exports]
 ]);
 const internal = node_module.default;
 const originalLoad = internal._load;
@@ -18866,23 +19029,33 @@ async function main() {
 		console.error("[CLI] Failed to connect to socket:", errMsg);
 		process.exit(1);
 	}
-	globalThis.__clutchSocketSend = (msg) => {
-		if (client.isConnected()) client.send(msg).catch((err) => {
-			console.error("[CLI] Failed to send toast message:", err instanceof Error ? err.message : err);
+	console.error("[CLI] Sending RUNTIME/ready handshake...");
+	try {
+		await client.send({
+			category: "RUNTIME",
+			type: "ready",
+			extensionId: args.extensionId
 		});
+		console.error("[CLI] RUNTIME/ready handshake accepted");
+	} catch (err) {
+		const errMsg = err instanceof Error ? err.message : "Unknown error";
+		console.error("[CLI] RUNTIME/ready handshake failed:", errMsg);
+		client.close();
+		process.exit(1);
+	}
+	globalThis.__clutchSocketSend = (msg) => {
+		if (client.isConnected()) client.sendNoWait(msg);
 	};
 	globalThis.__clutchExtensionId = args.extensionId;
-	const sendError = async (code, message) => {
+	const sendError = (code, message) => {
 		console.error(`[CLI] [${code}] ${message}`);
-		try {
-			await client.send({
-				category: "INTERNAL",
-				type: "error",
-				extensionId: args.extensionId,
-				code,
-				message
-			});
-		} catch {}
+		if (client.isConnected()) client.sendNoWait({
+			category: "INTERNAL",
+			type: "error",
+			extensionId: args.extensionId,
+			code,
+			message
+		});
 	};
 	let loadedExtension = null;
 	let reconciler = null;
@@ -18906,13 +19079,18 @@ async function main() {
 		reconciler = createReconciler({
 			extensionId: args.extensionId,
 			onUpdate: (json) => {
-				if (json && client.isConnected()) client.send({
+				if (client.isConnected()) if (json) client.sendNoWait({
 					category: "RENDER",
 					type: "renderResponse",
 					extensionId: loadedExtension.id,
 					json
-				}).catch((err) => {
-					console.error("[CLI] Failed to send render:", err instanceof Error ? err.message : err);
+				});
+				else client.sendNoWait({
+					category: "INTERNAL",
+					type: "error",
+					extensionId: loadedExtension.id,
+					code: "NULL_RENDER",
+					message: "Extension rendered empty tree"
 				});
 			}
 		});
@@ -18936,10 +19114,9 @@ async function main() {
 		console.error("[CLI] Received message:", JSON.stringify(msg).slice(0, 200));
 		if (msg.category === "RUNTIME" && msg.type === "event") {
 			const eventMsg = data;
-			console.error("[CLI] Processing event:", eventMsg.handlerId);
 			try {
 				const action = await executeHandler(eventMsg.handlerId, eventMsg.event);
-				if (action && typeof action === "object" && "type" in action) await client.send({
+				if (action && typeof action === "object" && "type" in action) client.sendNoWait({
 					category: "RUNTIME",
 					type: "action",
 					extensionId: loadedExtension.id,
@@ -18948,7 +19125,7 @@ async function main() {
 			} catch (err) {
 				const errMsg = err instanceof Error ? err.message : "Unknown error";
 				console.error("[CLI] Handler error:", errMsg);
-				await client.send({
+				client.sendNoWait({
 					category: "RUNTIME",
 					type: "action",
 					extensionId: loadedExtension.id,

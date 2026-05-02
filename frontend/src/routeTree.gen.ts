@@ -9,18 +9,30 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as StoreRouteImport } from './routes/store'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as ExtensionNameCommandRouteImport } from './routes/extension.$name.$command'
+import { Route as StoreIndexRouteImport } from './routes/store/index'
+import { Route as SettingsIndexRouteImport } from './routes/settings/index'
+import { Route as StoreIdRouteImport } from './routes/store/$id'
+import { Route as ExtensionNameCommandRouteImport } from './routes/extension/$name.$command'
 
-const StoreRoute = StoreRouteImport.update({
-  id: '/store',
-  path: '/store',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreIndexRoute = StoreIndexRouteImport.update({
+  id: '/store/',
+  path: '/store/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsIndexRoute = SettingsIndexRouteImport.update({
+  id: '/settings/',
+  path: '/settings/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StoreIdRoute = StoreIdRouteImport.update({
+  id: '/store/$id',
+  path: '/store/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ExtensionNameCommandRoute = ExtensionNameCommandRouteImport.update({
@@ -31,48 +43,81 @@ const ExtensionNameCommandRoute = ExtensionNameCommandRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/store': typeof StoreRoute
+  '/store/$id': typeof StoreIdRoute
+  '/settings/': typeof SettingsIndexRoute
+  '/store/': typeof StoreIndexRoute
   '/extension/$name/$command': typeof ExtensionNameCommandRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/store': typeof StoreRoute
+  '/store/$id': typeof StoreIdRoute
+  '/settings': typeof SettingsIndexRoute
+  '/store': typeof StoreIndexRoute
   '/extension/$name/$command': typeof ExtensionNameCommandRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/store': typeof StoreRoute
+  '/store/$id': typeof StoreIdRoute
+  '/settings/': typeof SettingsIndexRoute
+  '/store/': typeof StoreIndexRoute
   '/extension/$name/$command': typeof ExtensionNameCommandRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/store' | '/extension/$name/$command'
+  fullPaths:
+    | '/'
+    | '/store/$id'
+    | '/settings/'
+    | '/store/'
+    | '/extension/$name/$command'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/store' | '/extension/$name/$command'
-  id: '__root__' | '/' | '/store' | '/extension/$name/$command'
+  to: '/' | '/store/$id' | '/settings' | '/store' | '/extension/$name/$command'
+  id:
+    | '__root__'
+    | '/'
+    | '/store/$id'
+    | '/settings/'
+    | '/store/'
+    | '/extension/$name/$command'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  StoreRoute: typeof StoreRoute
+  StoreIdRoute: typeof StoreIdRoute
+  SettingsIndexRoute: typeof SettingsIndexRoute
+  StoreIndexRoute: typeof StoreIndexRoute
   ExtensionNameCommandRoute: typeof ExtensionNameCommandRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/store': {
-      id: '/store'
-      path: '/store'
-      fullPath: '/store'
-      preLoaderRoute: typeof StoreRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/': {
       id: '/'
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/': {
+      id: '/store/'
+      path: '/store'
+      fullPath: '/store/'
+      preLoaderRoute: typeof StoreIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings/': {
+      id: '/settings/'
+      path: '/settings'
+      fullPath: '/settings/'
+      preLoaderRoute: typeof SettingsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/store/$id': {
+      id: '/store/$id'
+      path: '/store/$id'
+      fullPath: '/store/$id'
+      preLoaderRoute: typeof StoreIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/extension/$name/$command': {
@@ -87,7 +132,9 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  StoreRoute: StoreRoute,
+  StoreIdRoute: StoreIdRoute,
+  SettingsIndexRoute: SettingsIndexRoute,
+  StoreIndexRoute: StoreIndexRoute,
   ExtensionNameCommandRoute: ExtensionNameCommandRoute,
 }
 export const routeTree = rootRouteImport

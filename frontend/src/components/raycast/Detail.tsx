@@ -1,6 +1,6 @@
 import Markdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import type { RaycastComponentProps } from "./registry";
+import type { RaycastComponentProps } from "./types";
 
 export function Detail({ node }: RaycastComponentProps) {
 	const markdown = node.props.markdown as string | undefined;

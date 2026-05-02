@@ -1,16 +1,16 @@
 import "./index";
+import { clutch } from "@clutch/api";
+import React from "react";
 import {
+	type BaseMessage,
 	clearExtensionHandlers,
 	createReconciler,
 	createSocketClient,
 	executeHandler,
-	loadExtension,
-	type BaseMessage,
 	type JSONNode,
 	type LoadedExtension,
+	loadExtension,
 } from "./index";
-import React from "react";
-import { clutch } from "@clutch/api";
 
 interface CliArgs {
 	socket: string;
@@ -110,35 +110,41 @@ async function main() {
 		process.exit(1);
 	}
 
+	console.error("[CLI] Sending RUNTIME/ready handshake...");
+	try {
+		await client.send<BaseMessage, void>({
+			category: "RUNTIME",
+			type: "ready",
+			extensionId: args.extensionId,
+		} as BaseMessage);
+		console.error("[CLI] RUNTIME/ready handshake accepted");
+	} catch (err) {
+		const errMsg = err instanceof Error ? err.message : "Unknown error";
+		console.error("[CLI] RUNTIME/ready handshake failed:", errMsg);
+		client.close();
+		process.exit(1);
+	}
+
 	(globalThis as unknown as Record<string, unknown>).__clutchSocketSend = (
 		msg: Record<string, unknown>,
 	) => {
 		if (client.isConnected()) {
-			client
-				.send<BaseMessage, void>(msg as unknown as BaseMessage)
-				.catch((err: unknown) => {
-					console.error(
-						"[CLI] Failed to send toast message:",
-						err instanceof Error ? err.message : err,
-					);
-				});
+			client.sendNoWait(msg as unknown as BaseMessage);
 		}
 	};
 	(globalThis as unknown as Record<string, unknown>).__clutchExtensionId =
 		args.extensionId;
 
-	const sendError = async (code: string, message: string) => {
+	const sendError = (code: string, message: string) => {
 		console.error(`[CLI] [${code}] ${message}`);
-		try {
-			await client.send<BaseMessage, void>({
+		if (client.isConnected()) {
+			client.sendNoWait({
 				category: "INTERNAL",
 				type: "error",
 				extensionId: args.extensionId,
 				code,
 				message,
 			} as BaseMessage);
-		} catch {
-			// Ignore send errors during error reporting
 		}
 	};
 
@@ -174,20 +180,23 @@ async function main() {
 		reconciler = createReconciler({
 			extensionId: args.extensionId,
 			onUpdate: (json: JSONNode | null) => {
-				if (json && client.isConnected()) {
-					client
-						.send<BaseMessage, void>({
+				if (client.isConnected()) {
+					if (json) {
+						client.sendNoWait({
 							category: "RENDER",
 							type: "renderResponse",
 							extensionId: loadedExtension!.id,
 							json,
-						} as BaseMessage)
-						.catch((err) => {
-							console.error(
-								"[CLI] Failed to send render:",
-								err instanceof Error ? err.message : err,
-							);
-						});
+						} as BaseMessage);
+					} else {
+						client.sendNoWait({
+							category: "INTERNAL",
+							type: "error",
+							extensionId: loadedExtension!.id,
+							code: "NULL_RENDER",
+							message: "Extension rendered empty tree",
+						} as BaseMessage);
+					}
 				}
 			},
 		});
@@ -226,7 +235,6 @@ async function main() {
 				handlerId: string;
 				event: unknown;
 			};
-			console.error("[CLI] Processing event:", eventMsg.handlerId);
 
 			try {
 				const action = await executeHandler(
@@ -238,7 +246,7 @@ async function main() {
 					typeof action === "object" &&
 					"type" in (action as object)
 				) {
-					await client.send<BaseMessage, void>({
+					client.sendNoWait({
 						category: "RUNTIME",
 						type: "action",
 						extensionId: loadedExtension!.id,
@@ -248,7 +256,7 @@ async function main() {
 			} catch (err) {
 				const errMsg = err instanceof Error ? err.message : "Unknown error";
 				console.error("[CLI] Handler error:", errMsg);
-				await client.send<BaseMessage, void>({
+				client.sendNoWait({
 					category: "RUNTIME",
 					type: "action",
 					extensionId: loadedExtension!.id,

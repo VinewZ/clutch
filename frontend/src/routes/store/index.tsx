@@ -1,21 +1,25 @@
-import { useHotkey } from "@tanstack/react-hotkeys";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { CheckCircle2, Circle, Download } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import { Input } from "@/components/ui/input";
 import { useListNavigation, useScrollToIndex, useSearchInput } from "@/hooks";
-import {
-	useExtensions,
-	useInstallExtension,
-	useSearchExtensions,
-	useUninstallExtension,
-} from "@/services/store";
+import { formatCount } from "@/lib/utils";
+import { useTheme } from "@/providers/theme";
+import { useExtensions, useSearchExtensions } from "@/services/store";
 
-export const Route = createFileRoute("/store")({
+export const Route = createFileRoute("/store/")({
 	component: StorePage,
 });
 
 function StorePage() {
 	const navigate = useNavigate();
+	const { theme } = useTheme();
+	const effectiveTheme =
+		theme === "system"
+			? window.matchMedia("(prefers-color-scheme: dark)").matches
+				? "dark"
+				: "light"
+			: theme;
 
 	const {
 		searchQuery,
@@ -31,8 +35,6 @@ function StorePage() {
 
 	const extensionsQuery = useExtensions();
 	const searchResults = useSearchExtensions(debouncedQuery);
-	const installMutation = useInstallExtension();
-	const uninstallMutation = useUninstallExtension();
 
 	const extensions = useMemo(() => {
 		if (debouncedQuery.length > 0 && searchResults.data) {
@@ -42,20 +44,18 @@ function StorePage() {
 	}, [debouncedQuery, searchResults.data, extensionsQuery.data]);
 
 	const handleSelect = useCallback(
-		async (index: number) => {
+		(index: number) => {
 			const ext = extensions[index];
 			if (!ext) return;
-			if (ext.installed) {
-				await uninstallMutation.mutateAsync(ext.name);
-			} else {
-				await installMutation.mutateAsync(ext.id);
-			}
+			navigate({ to: "/store/$id", params: { id: ext.id } });
 		},
-		[extensions, installMutation, uninstallMutation],
+		[extensions, navigate],
 	);
 
 	const { selectedIndex, setSelectedIndex } = useListNavigation({
 		totalItems: extensions.length,
+		isInputEmpty,
+		inputRef,
 		onSelect: handleSelect,
 		onEscape: () => {
 			if (!isInputEmpty) {
@@ -68,13 +68,6 @@ function StorePage() {
 	});
 
 	useScrollToIndex({ selectedIndex });
-
-	useHotkey("Backspace", (e) => {
-		if (isInputEmpty && document.activeElement === inputRef.current) {
-			e.preventDefault();
-			navigate({ to: "/" });
-		}
-	});
 
 	if (extensionsQuery.isLoading) {
 		return (
@@ -93,20 +86,19 @@ function StorePage() {
 	}
 
 	return (
-		<div className="h-screen flex flex-col">
-			<div className="sticky top-0 z-10 p-4 border-b border-border bg-background/95 backdrop-blur">
+		<div className="flex flex-col h-full overflow-hidden">
+			<div className="shrink-0">
 				<Input
 					ref={inputRef}
 					type="search"
 					placeholder="Search extensions..."
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value)}
-					className="w-full"
 					autoFocus
 				/>
 			</div>
 
-			<div className="flex-1 overflow-auto">
+			<div className="flex-1 overflow-y-auto">
 				{extensions.length === 0 ? (
 					<div className="p-8 text-center text-muted-foreground">
 						No extensions found
@@ -123,44 +115,37 @@ function StorePage() {
 										: "hover:bg-accent"
 								}`}
 							>
-								{ext.icons.light && (
-									<img
-										width={32}
-										height={32}
-										className="rounded-md"
-										src={ext.icons.light}
-										alt={ext.title}
-									/>
-								)}
+								{(() => {
+									const iconSrc =
+										ext.icons[effectiveTheme] ||
+										ext.icons[effectiveTheme === "dark" ? "light" : "dark"];
+									return iconSrc ? (
+										<img
+											width={28}
+											height={28}
+											className="rounded-md"
+											src={iconSrc}
+											alt={ext.title}
+										/>
+									) : null;
+								})()}
 								<div className="flex-1 min-w-0">
-									<div className="font-medium truncate">{ext.title}</div>
-									<div className="text-sm text-muted-foreground truncate">
-										{ext.author.name} · {ext.download_count.toLocaleString()}{" "}
-										downloads
+									<div className="flex items-center gap-2">
+										<p className="font-medium truncate">{ext.title}</p>
+										{ext.installed ? (
+											<CheckCircle2 className="size-4 shrink-0 text-green-500" />
+										) : (
+											<Circle className="size-4 shrink-0 text-muted-foreground/40" />
+										)}
 									</div>
-									<div className="text-xs text-muted-foreground">
-										{ext.categories.join(", ")}
-									</div>
+									<p className="text-sm truncate">{ext.description}</p>
 								</div>
-								{ext.installed ? (
-									<button
-										type="button"
-										onClick={() => uninstallMutation.mutate(ext.name)}
-										disabled={uninstallMutation.isPending}
-										className="px-3 py-1 text-sm border border-border rounded hover:bg-destructive hover:text-destructive-foreground disabled:opacity-50"
-									>
-										Uninstall
-									</button>
-								) : (
-									<button
-										type="button"
-										onClick={() => installMutation.mutate(ext.id)}
-										disabled={installMutation.isPending}
-										className="px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 disabled:opacity-50"
-									>
-										Install
-									</button>
-								)}
+								<div className="min-w-0 flex gap-2 items-center">
+									<Download className="size-5" />
+									<span className="text-sm truncate">
+										{formatCount(ext.download_count)}
+									</span>
+								</div>
 							</div>
 						))}
 					</div>

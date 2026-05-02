@@ -5,6 +5,7 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 
 import "../styles.css";
+import { Footer } from "@/components/Footer";
 
 export const Route = createRootRoute({
 	component: RootComponent,
@@ -13,10 +14,10 @@ export const Route = createRootRoute({
 function RootComponent() {
 	return (
 		<>
-			<Outlet />
 			<TanStackDevtools
 				config={{
-					position: "bottom-right",
+					position: "top-right",
+					hideUntilHover: true,
 				}}
 				plugins={[
 					{
@@ -33,6 +34,14 @@ function RootComponent() {
 					},
 				]}
 			/>
+
+			<div className="flex flex-col h-screen">
+				<div className="flex-1 min-h-0 overflow-hidden">
+					<Outlet />
+				</div>
+
+				<Footer />
+			</div>
 		</>
 	);
 }

@@ -1,11 +1,9 @@
 package socket
 
 import (
-	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"sync"
@@ -80,6 +78,9 @@ func (lm *LifecycleManager) StartRuntimeWithPreferences(extensionId, extensionPa
 	}
 
 	cmd := exec.CommandContext(ctx, "node", args...)
+	cmd.Stdin = nil
+	cmd.Stdout = nil
+	cmd.Stderr = os.Stderr
 
 	log.Debug("Executing command", "cmd", cmd.String())
 
@@ -88,20 +89,6 @@ func (lm *LifecycleManager) StartRuntimeWithPreferences(extensionId, extensionPa
 		"EXTENSION_PATH="+extensionPath,
 		"EXTENSION_COMMAND="+command,
 	)
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		cancel()
-		log.Error("Failed to create stdout pipe", "error", err)
-		return fmt.Errorf("create stdout pipe: %w", err)
-	}
-
-	stderr, err := cmd.StderrPipe()
-	if err != nil {
-		cancel()
-		log.Error("Failed to create stderr pipe", "error", err)
-		return fmt.Errorf("create stderr pipe: %w", err)
-	}
 
 	if err := cmd.Start(); err != nil {
 		cancel()
@@ -118,27 +105,10 @@ func (lm *LifecycleManager) StartRuntimeWithPreferences(extensionId, extensionPa
 	}
 	lm.runtimes[extensionId] = extRuntime
 
-	go lm.pipeOutput(stdout, extensionId, "stdout")
-	go lm.pipeOutput(stderr, extensionId, "stderr")
 	go lm.monitorProcess(cmd, extensionId)
 
 	log.Info("Extension runtime process started", "extensionId", extensionId, "pid", cmd.Process.Pid)
 	return nil
-}
-
-func (lm *LifecycleManager) pipeOutput(reader io.Reader, extensionId, stream string) {
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line := scanner.Text()
-		if stream == "stderr" {
-			log.Info("[ext-runtime]", "extensionId", extensionId, "stream", stream, "output", line)
-		} else {
-			log.Debug("[ext-runtime]", "extensionId", extensionId, "stream", stream, "output", line)
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		log.Debug("Output scanner error", "extensionId", extensionId, "stream", stream, "error", err)
-	}
 }
 
 func (lm *LifecycleManager) monitorProcess(cmd *exec.Cmd, extensionId string) {
@@ -196,6 +166,22 @@ func (lm *LifecycleManager) StopRuntime(extensionId string) error {
 
 	log.Debug("StopRuntime called", "extensionId", extensionId)
 	return lm.stopRuntimeUnsafe(extensionId)
+}
+
+func (lm *LifecycleManager) CancelRuntime(extensionId string) {
+	lm.mu.Lock()
+	defer lm.mu.Unlock()
+
+	extRuntime, exists := lm.runtimes[extensionId]
+	if !exists {
+		return
+	}
+
+	if extRuntime.cancel != nil {
+		extRuntime.cancel()
+	}
+	delete(lm.runtimes, extensionId)
+	log.Warn("Cancelled runtime", "extensionId", extensionId)
 }
 
 func (lm *LifecycleManager) StopAllRuntimes() {

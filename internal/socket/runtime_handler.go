@@ -29,6 +29,8 @@ func (h *RuntimeMessageHandler) Handle(data json.RawMessage) (*SocketResponse, e
 	}
 
 	switch base.Type {
+	case "ready":
+		return h.handleReady(data)
 	case "event":
 		return h.handleEvent(data)
 	case "action":
@@ -48,6 +50,22 @@ func (h *RuntimeMessageHandler) Handle(data json.RawMessage) (*SocketResponse, e
 			},
 		}, nil
 	}
+}
+
+func (h *RuntimeMessageHandler) handleReady(data json.RawMessage) (*SocketResponse, error) {
+	var msg RuntimeReadyMessage
+	if err := json.Unmarshal(data, &msg); err != nil {
+		return nil, fmt.Errorf("parse ready message: %w", err)
+	}
+
+	responseData, _ := json.Marshal(map[string]string{
+		"extensionId": msg.ExtensionID,
+	})
+
+	return &SocketResponse{
+		Success: true,
+		Data:    responseData,
+	}, nil
 }
 
 func (h *RuntimeMessageHandler) handleEvent(data json.RawMessage) (*SocketResponse, error) {

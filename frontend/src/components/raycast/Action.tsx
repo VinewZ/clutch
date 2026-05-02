@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import type { RaycastComponentProps } from "./registry";
-import { useFormContext } from "./Form";
 import { sendAction } from "@/services/extension";
+import { useFormContext } from "./Form";
+import type { RaycastComponentProps } from "./types";
 
 export function Action({ node, onEvent }: RaycastComponentProps) {
 	const title = node.props.title as string | undefined;

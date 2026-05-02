@@ -58,8 +58,9 @@ const RAYCAST_PROPS = new Set([
 ]);
 
 export function filterHtmlProps(
-	props: Record<string, unknown>,
+	props: Record<string, unknown> | null | undefined,
 ): Record<string, unknown> {
+	if (!props) return {};
 	const result: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(props)) {
 		if (key.startsWith("data-") || key.startsWith("aria-")) {

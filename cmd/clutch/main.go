@@ -79,8 +79,9 @@ func main() {
 	})
 
 	win := app.Window.NewWithOptions(application.WebviewWindowOptions{
-		Title:         "",
-		URL:           "/extension/translate/translate",
+		Title: "",
+		// URL:           "/extension/translate/translate",
+		URL:           "/",
 		Width:         775,
 		Height:        475,
 		AlwaysOnTop:   true,
@@ -118,6 +119,7 @@ func main() {
 		srv := socket.NewServer(nil)
 		log.Debug("Socket server created", "path", socket.SocketPath())
 
+		srv.SetOnRuntimeConnect(extService.NotifyRuntimeConnected)
 		extService.SetSocketServer(srv)
 
 		runtimeHandler := socket.NewRuntimeMessageHandler()
@@ -180,6 +182,7 @@ func middleware(next http.Handler) http.Handler {
 			serveFile(w, r)
 			return
 		}
+
 		next.ServeHTTP(w, r)
 	})
 }

@@ -21,12 +21,21 @@ export interface TextJsonNodeData {
 const COLOR_PROPS = new Set(["tintColor", "color", "backgroundColor"]);
 const ICON_PROPS = new Set(["icon"]);
 
+function isRenderable(value: unknown): boolean {
+	if (typeof value === "function") return true;
+	if (typeof value === "object" && value !== null) {
+		const obj = value as Record<string, unknown>;
+		return typeof obj.$$typeof === "symbol" || typeof obj.render === "function";
+	}
+	return false;
+}
+
 function resolveIconValue(value: unknown): unknown {
 	if (value == null) return value;
 
 	if (typeof value === "string") {
 		const resolved = resolveIcon(value);
-		if (typeof resolved === "function") return resolved;
+		if (isRenderable(resolved)) return resolved;
 		return value;
 	}
 
@@ -34,7 +43,7 @@ function resolveIconValue(value: unknown): unknown {
 		const obj = value as Record<string, unknown>;
 		if (typeof obj.source === "string") {
 			const resolved = resolveIcon(obj.source);
-			if (typeof resolved === "function") {
+			if (isRenderable(resolved)) {
 				const result: Record<string, unknown> = { source: resolved };
 				if (obj.tintColor)
 					result.tintColor = resolveColor(obj.tintColor as string);
@@ -55,7 +64,9 @@ export function renderJsonNode(
 		return <>{(node as TextJsonNodeData).props.text}</>;
 	}
 
-	const { type, props = {}, children = [] } = node as JsonNodeData;
+	const { type, props: rawProps, children: rawChildren } = node as JsonNodeData;
+	const props = rawProps ?? {};
+	const children = rawChildren ?? [];
 
 	const Component = lookupComponent(type);
 	if (Component) {

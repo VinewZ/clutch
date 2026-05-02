@@ -60,6 +60,12 @@ export interface ToastHideMessage extends BaseMessage {
 	toastId: string;
 }
 
+export interface RuntimeReadyMessage extends BaseMessage {
+	category: "RUNTIME";
+	type: "ready";
+	extensionId: string;
+}
+
 // RENDER Messages
 export interface RenderRequestMessage extends BaseMessage {
 	category: "RENDER";

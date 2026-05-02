@@ -1,5 +1,9 @@
-import type { RaycastComponentProps } from "./registry";
-import { renderJsonChildren, type JsonNodeData, type TextJsonNodeData } from "@/components/JsonNode";
+import {
+	type JsonNodeData,
+	renderJsonChildren,
+	type TextJsonNodeData,
+} from "@/components/JsonNode";
+import type { RaycastComponentProps } from "./types";
 
 export function ListSection({ node, onEvent }: RaycastComponentProps) {
 	return (

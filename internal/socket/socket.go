@@ -40,21 +40,26 @@ type RenderHandler func(msg json.RawMessage) (*SocketResponse, error)
 type InternalHandler func(msg json.RawMessage) (*SocketResponse, error)
 
 type Server struct {
-	path            string
-	handler         Handler
-	cliHandler      CLIHandler
-	runtimeHandler  RuntimeHandler
-	renderHandler   RenderHandler
-	internalHandler InternalHandler
-	mu              sync.RWMutex
-	runtimeConns    map[string]net.Conn
+	path             string
+	handler          Handler
+	cliHandler       CLIHandler
+	runtimeHandler   RuntimeHandler
+	renderHandler    RenderHandler
+	internalHandler  InternalHandler
+	mu               sync.RWMutex
+	runtimeConns     map[string]net.Conn
+	runtimeWriters   map[string]*bufio.Writer
+	runtimeWriteMu   map[string]*sync.Mutex
+	onRuntimeConnect func(extensionID string)
 }
 
 func NewServer(handler Handler) *Server {
 	return &Server{
-		path:         SocketPath(),
-		handler:      handler,
-		runtimeConns: make(map[string]net.Conn),
+		path:           SocketPath(),
+		handler:        handler,
+		runtimeConns:   make(map[string]net.Conn),
+		runtimeWriters: make(map[string]*bufio.Writer),
+		runtimeWriteMu: make(map[string]*sync.Mutex),
 	}
 }
 
@@ -68,6 +73,19 @@ func (s *Server) SetHandlers(
 	s.runtimeHandler = runtime
 	s.renderHandler = render
 	s.internalHandler = internal
+}
+
+func (s *Server) SetOnRuntimeConnect(fn func(extensionID string)) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.onRuntimeConnect = fn
+}
+
+func (s *Server) IsRuntimeConnected(extensionID string) bool {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	_, ok := s.runtimeConns[extensionID]
+	return ok
 }
 
 func (s *Server) Start() error {
@@ -126,6 +144,12 @@ func (s *Server) handleConn(conn net.Conn) {
 	log.Debug("Parsed message", "category", base.Category, "type", base.Type, "extensionId", base.ExtensionID)
 
 	if base.Category == CategoryRuntime && base.ExtensionID != "" {
+		if base.Type != "ready" {
+			log.Error("First RUNTIME message must be 'ready', got", "type", base.Type)
+			s.sendError(writer, "INVALID_HANDSHAKE", "first RUNTIME message must be type 'ready', got: "+base.Type)
+			conn.Close()
+			return
+		}
 		s.handleRuntimeConnection(conn, reader, writer, base.ExtensionID, data)
 		return
 	}
@@ -158,15 +182,26 @@ func (s *Server) handleConn(conn net.Conn) {
 }
 
 func (s *Server) handleRuntimeConnection(conn net.Conn, reader *bufio.Reader, writer *bufio.Writer, extensionID, firstData string) {
+	writeMu := &sync.Mutex{}
+
 	s.mu.Lock()
 	s.runtimeConns[extensionID] = conn
+	s.runtimeWriters[extensionID] = writer
+	s.runtimeWriteMu[extensionID] = writeMu
+	onConnect := s.onRuntimeConnect
 	s.mu.Unlock()
 
 	log.Debug("Runtime connection registered", "extensionId", extensionID)
 
+	if onConnect != nil {
+		onConnect(extensionID)
+	}
+
 	defer func() {
 		s.mu.Lock()
 		delete(s.runtimeConns, extensionID)
+		delete(s.runtimeWriters, extensionID)
+		delete(s.runtimeWriteMu, extensionID)
 		s.mu.Unlock()
 		conn.Close()
 		log.Debug("Runtime connection closed", "extensionId", extensionID)
@@ -191,6 +226,7 @@ func (s *Server) handleRuntimeConnection(conn net.Conn, reader *bufio.Reader, wr
 		var base BaseMessage
 		if err := json.Unmarshal([]byte(data), &base); err != nil {
 			log.Error("Failed to parse runtime JSON", "error", err)
+			writeMu.Lock()
 			s.sendResponse(writer, &SocketResponse{
 				Success: false,
 				Error: &ErrorInfo{
@@ -198,11 +234,38 @@ func (s *Server) handleRuntimeConnection(conn net.Conn, reader *bufio.Reader, wr
 					Message: err.Error(),
 				},
 			})
+			writeMu.Unlock()
 			continue
 		}
 
-		response := s.handleRuntime([]byte(data))
-		s.sendResponse(writer, response)
+		var response *SocketResponse
+		skipResponse := false
+		switch base.Category {
+		case CategoryRuntime:
+			response = s.handleRuntime([]byte(data))
+		case CategoryRender:
+			response = s.handleRender([]byte(data))
+			if base.Type == "renderResponse" {
+				skipResponse = true
+			}
+		case CategoryInternal:
+			response = s.handleInternal([]byte(data))
+		default:
+			log.Error("Unknown message category in runtime connection", "category", base.Category)
+			response = &SocketResponse{
+				Success: false,
+				Error: &ErrorInfo{
+					Code:    "UNKNOWN_CATEGORY",
+					Message: "unknown category: " + string(base.Category),
+				},
+			}
+		}
+		log.Debug("[handleRuntimeConnection] handled message", "extensionId", extensionID, "category", base.Category, "type", base.Type, "success", response.Success)
+		if !skipResponse {
+			writeMu.Lock()
+			s.sendResponse(writer, response)
+			writeMu.Unlock()
+		}
 	}
 }
 
@@ -382,9 +445,12 @@ func (s *Server) Stop() error {
 func (s *Server) SendToRuntime(extensionID string, msg any) error {
 	s.mu.RLock()
 	conn, exists := s.runtimeConns[extensionID]
+	writer := s.runtimeWriters[extensionID]
+	writeMu := s.runtimeWriteMu[extensionID]
 	s.mu.RUnlock()
 
 	if !exists {
+		log.Error("[SendToRuntime] runtime not connected", "extensionId", extensionID, "registeredConns", len(s.runtimeConns))
 		return fmt.Errorf("runtime not connected: %s", extensionID)
 	}
 
@@ -393,11 +459,22 @@ func (s *Server) SendToRuntime(extensionID string, msg any) error {
 		return fmt.Errorf("marshal message: %w", err)
 	}
 
-	writer := bufio.NewWriter(conn)
+	log.Info("[SendToRuntime] writing to runtime", "extensionId", extensionID, "msgLen", len(jsonBytes))
+
+	writeMu.Lock()
+	defer writeMu.Unlock()
+
 	if _, err := writer.WriteString(string(jsonBytes) + "\n"); err != nil {
+		log.Error("[SendToRuntime] write failed", "extensionId", extensionID, "error", err)
 		return fmt.Errorf("write message: %w", err)
 	}
-	return writer.Flush()
+	if err := writer.Flush(); err != nil {
+		log.Error("[SendToRuntime] flush failed", "extensionId", extensionID, "error", err)
+		return fmt.Errorf("flush message: %w", err)
+	}
+
+	_ = conn
+	return nil
 }
 
 func (s *Server) RemoveRuntimeConn(extensionID string) {

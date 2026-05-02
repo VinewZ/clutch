@@ -1,7 +1,7 @@
-import type { ElementType, ReactNode } from "react";
+import { createElement, type ElementType, type ReactNode } from "react";
 import { jsx } from "react/jsx-runtime";
 
-type ComponentProps = { children?: ReactNode; key?: string; name?: string };
+type ComponentProps = { children?: ReactNode; name?: string };
 
 type ComponentWithSubcomponents = {
 	(props: ComponentProps): ReturnType<typeof jsx>;
@@ -34,16 +34,21 @@ export function createSlottedComponent<P extends string>(
 		const slots = slotProps
 			.filter((prop) => rest[prop])
 			.map((prop, i) =>
-				Slot({
+				createElement(Slot, {
 					children: rest[prop] as ReactNode,
 					key: `slot-${String(prop)}-${i}`,
 					name: String(prop),
 				}),
 			);
 		for (const prop of slotProps) delete rest[prop];
+		const flatChildren: ReactNode[] = Array.isArray(children)
+			? (children as ReactNode[])
+			: children
+				? [children as ReactNode]
+				: [];
 		return jsx(type as ElementType, {
 			...rest,
-			children: [children as ReactNode, ...slots].filter(Boolean),
+			children: [...flatChildren, ...slots],
 		});
 	};
 	Component.displayName = type;

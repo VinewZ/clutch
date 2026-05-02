@@ -1,5 +1,1 @@
-import React from "react";
-
-export const jsx = React.createElement;
-export const jsxs = React.createElement;
-export const Fragment = React.Fragment;
+export * from "react/jsx-runtime";

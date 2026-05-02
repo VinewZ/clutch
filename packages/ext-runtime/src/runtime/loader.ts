@@ -1,6 +1,6 @@
 import { pathToFileURL } from "node:url";
+import type { FunctionComponent, ReactElement } from "react";
 import React from "react";
-import type { ReactElement, FunctionComponent } from "react";
 
 export interface ExtensionModule {
 	default: React.ReactNode | (() => React.ReactNode) | React.ComponentType;

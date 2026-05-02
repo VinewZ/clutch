@@ -1,18 +1,34 @@
 import { Search } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { cn } from "@/lib/utils";
-import type { RaycastComponentProps } from "./registry";
 import {
-	renderJsonChildren,
 	type JsonNodeData,
+	renderJsonChildren,
+	renderJsonNode,
 	type TextJsonNodeData,
 } from "@/components/JsonNode";
+import { resolveIcon } from "@/lib/resolve-icon";
+import { cn } from "@/lib/utils";
+import type { RaycastComponentProps } from "./types";
 
 interface ListChildNode {
 	type: string;
 	props: Record<string, unknown>;
 	children: unknown[];
 	id: string;
+}
+
+interface TextProp {
+	text: string;
+	tooltip?: string;
+}
+
+function resolveTextProp(value: unknown): TextProp {
+	if (typeof value === "string") return { text: value };
+	if (typeof value === "object" && value !== null && "value" in value) {
+		const obj = value as { value: string; tooltip?: string };
+		return { text: obj.value, tooltip: obj.tooltip };
+	}
+	return { text: "" };
 }
 
 function findItems(children: ListChildNode[]): ListChildNode[] {
@@ -30,6 +46,15 @@ function findItems(children: ListChildNode[]): ListChildNode[] {
 function findActions(node: ListChildNode): ListChildNode | null {
 	for (const child of node.children as ListChildNode[]) {
 		if (child.type === "Slot" && child.props.name === "actions") {
+			return (child.children as ListChildNode[])[0] ?? null;
+		}
+	}
+	return null;
+}
+
+function findDetail(node: ListChildNode): ListChildNode | null {
+	for (const child of node.children as ListChildNode[]) {
+		if (child.type === "Slot" && child.props.name === "detail") {
 			return (child.children as ListChildNode[])[0] ?? null;
 		}
 	}
@@ -60,23 +85,37 @@ function collectActions(panel: ListChildNode): ListChildNode[] {
 	return actions;
 }
 
-function renderIcon(icon: unknown) {
+function isRenderableComponent(value: unknown): value is React.ComponentType<{
+	size?: number;
+	className?: string;
+	style?: React.CSSProperties;
+}> {
+	if (typeof value === "function") return true;
+	if (typeof value === "object" && value !== null) {
+		const obj = value as Record<string, unknown>;
+		return typeof obj.$$typeof === "symbol" || typeof obj.render === "function";
+	}
+	return false;
+}
+
+export function renderIcon(icon: unknown): React.ReactNode {
 	if (!icon) return null;
-	if (typeof icon === "function") {
-		const I = icon as React.ComponentType<{
-			size?: number;
-			className?: string;
-		}>;
+	if (typeof icon === "string") {
+		const resolved = resolveIcon(icon);
+		if (isRenderableComponent(resolved)) {
+			const I = resolved;
+			return <I size={18} className="text-muted-foreground shrink-0" />;
+		}
+		return null;
+	}
+	if (isRenderableComponent(icon)) {
+		const I = icon;
 		return <I size={18} className="text-muted-foreground shrink-0" />;
 	}
 	if (typeof icon === "object" && icon !== null && "source" in icon) {
 		const obj = icon as { source: unknown; tintColor?: string };
-		if (typeof obj.source === "function") {
-			const I = obj.source as React.ComponentType<{
-				size?: number;
-				className?: string;
-				style?: React.CSSProperties;
-			}>;
+		if (isRenderableComponent(obj.source)) {
+			const I = obj.source;
 			return (
 				<I
 					size={18}
@@ -98,13 +137,37 @@ export function List({ node, onEvent }: RaycastComponentProps) {
 		| { $handler: string }
 		| undefined;
 
-	const [searchText, setSearchText] = useState("");
+	const searchTextFromProps = node.props.searchText as string | undefined;
+	const [searchText, setSearchText] = useState(searchTextFromProps ?? "");
 	const [selectedIndex, setSelectedIndex] = useState(0);
 	const listRef = useRef<HTMLDivElement>(null);
 
-	const items = findItems(node.children as ListChildNode[]);
+	// biome-ignore lint/correctness/useExhaustiveDependencies: only sync from extension, not local state
+	useEffect(() => {
+		if (
+			searchTextFromProps !== undefined &&
+			searchTextFromProps !== searchText
+		) {
+			setSearchText(searchTextFromProps);
+		}
+	}, [searchTextFromProps]);
+
+	const listChildren = node.children as ListChildNode[];
+	const searchBarAccessorySlot = listChildren.find(
+		(child) =>
+			child.type === "Slot" && child.props.name === "searchBarAccessory",
+	);
+	const searchBarAccessoryNodes = searchBarAccessorySlot
+		? (searchBarAccessorySlot.children as ListChildNode[])
+		: [];
+	const filteredChildren = searchBarAccessorySlot
+		? listChildren.filter((child) => child.id !== searchBarAccessorySlot.id)
+		: listChildren;
+
+	const items = findItems(listChildren);
 	const selectedItem = items[selectedIndex] ?? null;
 	const selectedActions = selectedItem ? findActions(selectedItem) : null;
+	const selectedDetail = selectedItem ? findDetail(selectedItem) : null;
 
 	const handleKeyDown = useCallback(
 		(e: React.KeyboardEvent) => {
@@ -137,9 +200,24 @@ export function List({ node, onEvent }: RaycastComponentProps) {
 
 	const handleSearchChange = useCallback(
 		(e: React.ChangeEvent<HTMLInputElement>) => {
-			setSearchText(e.target.value);
+			const value = e.target.value;
+			console.log(
+				"[List:handleSearchChange] value:",
+				value,
+				"has $handler:",
+				!!onSearchTextChange?.$handler,
+				"handlerId:",
+				onSearchTextChange?.$handler,
+				"onEvent defined:",
+				!!onEvent,
+			);
+			setSearchText(value);
 			if (onSearchTextChange?.$handler) {
-				onEvent?.(onSearchTextChange.$handler, { searchText: e.target.value });
+				onEvent?.(onSearchTextChange.$handler, { searchText: value });
+			} else {
+				console.warn(
+					"[List:handleSearchChange] no $handler for onSearchTextChange — event will NOT be sent to backend",
+				);
 			}
 		},
 		[onSearchTextChange, onEvent],
@@ -147,8 +225,8 @@ export function List({ node, onEvent }: RaycastComponentProps) {
 
 	const renderItemContent = (item: ListChildNode) => {
 		const icon = item.props.icon;
-		const title = item.props.title as string | undefined;
-		const subtitle = item.props.subtitle as string | undefined;
+		const titleProp = resolveTextProp(item.props.title);
+		const subtitleProp = resolveTextProp(item.props.subtitle);
 		const accessories = item.props.accessories as
 			| Array<Record<string, unknown>>
 			| undefined;
@@ -161,10 +239,18 @@ export function List({ node, onEvent }: RaycastComponentProps) {
 					</span>
 				)}
 				<div className="flex-1 min-w-0">
-					<div className="text-sm font-medium truncate">{title}</div>
-					{subtitle && (
-						<div className="text-xs text-muted-foreground truncate">
-							{subtitle}
+					<div
+						className="text-sm font-medium truncate"
+						title={titleProp.tooltip}
+					>
+						{titleProp.text}
+					</div>
+					{subtitleProp.text && (
+						<div
+							className="text-xs text-muted-foreground truncate"
+							title={subtitleProp.tooltip}
+						>
+							{subtitleProp.text}
 						</div>
 					)}
 				</div>
@@ -234,12 +320,10 @@ export function List({ node, onEvent }: RaycastComponentProps) {
 			}
 			if (child.type === "List.EmptyView") {
 				if (items.length > 0) return null;
+				if (isLoading && !searchText) return null;
 				return (
-					<div key={child.id} className="p-8 text-center text-muted-foreground">
-						{renderJsonChildren(
-							child.children as (JsonNodeData | TextJsonNodeData)[],
-							onEvent,
-						)}
+					<div key={child.id}>
+						{renderJsonNode(child as unknown as JsonNodeData, onEvent)}
 					</div>
 				);
 			}
@@ -250,6 +334,13 @@ export function List({ node, onEvent }: RaycastComponentProps) {
 							child.children as (JsonNodeData | TextJsonNodeData)[],
 							onEvent,
 						)}
+					</div>
+				);
+			}
+			if (child.type === "TEXT") {
+				return (
+					<div key={child.id} className="px-4 py-2 text-sm">
+						{(child as unknown as TextJsonNodeData).props.text}
 					</div>
 				);
 			}
@@ -282,22 +373,29 @@ export function List({ node, onEvent }: RaycastComponentProps) {
 					placeholder={searchBarPlaceholder}
 					className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
 				/>
+				{searchBarAccessoryNodes.map((acc) =>
+					renderJsonNode(acc as unknown as JsonNodeData, onEvent),
+				)}
 			</div>
+			{isLoading && (
+				<div className="h-0.5 w-full bg-muted overflow-hidden">
+					<div className="h-full w-1/3 bg-primary animate-[loading-bar_1.5s_ease-in-out_infinite]" />
+				</div>
+			)}
 
 			<div className="flex-1 flex min-h-0">
 				<div className="flex-1 overflow-y-auto">
-					{isLoading ? (
-						<div className="p-8 text-center text-muted-foreground">
-							Loading...
-						</div>
-					) : (
-						renderChildren(node.children as ListChildNode[])
-					)}
+					{renderChildren(filteredChildren)}
 				</div>
 
 				{isShowingDetail && selectedItem && (
-					<div className="w-1/2 border-l border-border p-4 overflow-y-auto">
-						<div className="text-sm text-muted-foreground">Detail view</div>
+					<div className="w-1/2 border-l border-border overflow-y-auto">
+						{selectedDetail
+							? renderJsonNode(
+									selectedDetail as unknown as JsonNodeData,
+									onEvent,
+								)
+							: null}
 					</div>
 				)}
 			</div>

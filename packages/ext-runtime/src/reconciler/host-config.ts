@@ -1,16 +1,22 @@
 import type { Fiber, OpaqueHandle } from "react-reconciler";
+import React from "react";
 import * as Scheduler from "scheduler";
-import type { JSONNode, TextJSONNode, Container } from "./types";
-import { handlerRegistry } from "./handler-registry";
+import {
+	createAdaptedHandler,
+	EVENT_EXTRACTORS,
+	handlerRegistry,
+} from "./handler-registry";
+import type { Container, JSONNode, TextJSONNode } from "./types";
 
-export interface ReconcilerState {
-	instances: Map<number, JSONNode>;
-	getNextInstanceId: () => number;
-	onUpdate: ((json: JSONNode | null) => void) | null;
-	extensionId: string;
+const FRAGMENT_TYPE = "FRAGMENT";
+
+function isFragmentType(type: unknown): boolean {
+	return type === React.Fragment || type === FRAGMENT_TYPE;
 }
 
 function stringifyType(type: unknown): string {
+	if (type === null || type === undefined) return "Unknown";
+	if (isFragmentType(type)) return FRAGMENT_TYPE;
 	if (typeof type === "string") return type;
 	if (typeof type === "function") {
 		return (
@@ -18,6 +24,13 @@ function stringifyType(type: unknown): string {
 		);
 	}
 	return String(type);
+}
+
+export interface ReconcilerState {
+	instances: Map<number, JSONNode>;
+	getNextInstanceId: () => number;
+	onUpdate: ((json: JSONNode | null) => void) | null;
+	extensionId: string;
 }
 
 function sanitizeValue(value: unknown, seen: WeakSet<object>): unknown {
@@ -60,9 +73,21 @@ function registerFunctionProps(
 	const result: Record<string, unknown> = {};
 	for (const [key, value] of Object.entries(props)) {
 		if (typeof value === "function") {
+			const originalHandler = value as (event?: unknown) => unknown;
+			const extractor = EVENT_EXTRACTORS[key];
+			const handlerToRegister = extractor
+				? createAdaptedHandler(originalHandler, extractor)
+				: originalHandler;
 			const handlerId = handlerRegistry.register(
 				extensionId,
-				value as (event: unknown) => unknown,
+				handlerToRegister,
+			);
+			console.error(
+				"[registerFunctionProps] registered handler:",
+				key,
+				"->",
+				handlerId,
+				key in EVENT_EXTRACTORS ? "(adapted)" : "(raw)",
 			);
 			result[key] = { $handler: handlerId };
 		} else if (
@@ -85,6 +110,39 @@ function registerFunctionProps(
 		}
 	}
 	return result;
+}
+
+type FlattenableChild = JSONNode | TextJSONNode;
+
+function flattenFragments(node: FlattenableChild): FlattenableChild {
+	if (node.type !== "FRAGMENT") {
+		if ("children" in node && Array.isArray(node.children)) {
+			(node as JSONNode).children = (
+				node.children as FlattenableChild[]
+			).flatMap((child) => {
+				const flattened = flattenFragments(child);
+				return flattened.type === "FRAGMENT"
+					? ((flattened as JSONNode).children as FlattenableChild[])
+					: [flattened];
+			});
+		}
+		return node;
+	}
+
+	const fragment = node as JSONNode;
+	const flatChildren: FlattenableChild[] = [];
+	for (const child of fragment.children as FlattenableChild[]) {
+		const flattened = flattenFragments(child);
+		if (flattened.type === "FRAGMENT") {
+			flatChildren.push(
+				...((flattened as JSONNode).children as FlattenableChild[]),
+			);
+		} else {
+			flatChildren.push(flattened);
+		}
+	}
+	fragment.children = flatChildren;
+	return fragment;
 }
 
 function createNode(
@@ -119,6 +177,15 @@ function appendChildToParent(parent: Parent, child: Child): void {
 			parent.children.splice(existingIndex, 1);
 		}
 		parent.children.push(child);
+		console.error(
+			"[appendChildToParent]",
+			(parent as JSONNode).type,
+			"<-",
+			child.type,
+			`(${child.id})`,
+			"total children:",
+			parent.children.length,
+		);
 	}
 }
 
@@ -154,9 +221,57 @@ export function createHostConfig(state: ReconcilerState) {
 		},
 
 		resetAfterCommit(container: Container): void {
-			const json = container.children[0] ?? null;
-			if (onUpdate) {
-				onUpdate(json);
+			if (!onUpdate) return;
+
+			console.error(
+				"[resetAfterCommit] container children:",
+				container.children.length,
+				container.children.map((c) => `${c.type}(${c.id})`),
+			);
+
+			if (container.children.length === 0) {
+				onUpdate(null);
+				return;
+			}
+
+			if (container.children.length === 1) {
+				const root = container.children[0];
+				const flattened = flattenFragments(root as FlattenableChild);
+				if (flattened.type === "FRAGMENT") {
+					const fragChildren = (flattened as JSONNode).children;
+					if (fragChildren.length === 1) {
+						onUpdate(fragChildren[0] as JSONNode);
+					} else {
+						onUpdate({
+							type: "FragmentContainer",
+							props: {},
+							children: fragChildren,
+							id: root.id,
+						});
+					}
+				} else {
+					onUpdate(flattened as JSONNode);
+				}
+				return;
+			}
+
+			const flatChildren = (container.children as FlattenableChild[]).flatMap(
+				(child) => {
+					const flattened = flattenFragments(child);
+					return flattened.type === "FRAGMENT"
+						? ((flattened as JSONNode).children as FlattenableChild[])
+						: [flattened];
+				},
+			);
+			if (flatChildren.length === 1) {
+				onUpdate(flatChildren[0] as JSONNode);
+			} else {
+				onUpdate({
+					type: "FragmentContainer",
+					props: {},
+					children: flatChildren,
+					id: "root",
+				});
 			}
 		},
 
@@ -168,6 +283,37 @@ export function createHostConfig(state: ReconcilerState) {
 			internalInstanceHandle: OpaqueHandle,
 		): JSONNode {
 			const id = getNextInstanceId();
+			console.error(
+				"[createInstance]",
+				type,
+				`(${id})`,
+				"childrenInProps:",
+				"children" in props,
+				Array.isArray(props.children)
+					? `array[${(props.children as unknown[]).length}]`
+					: typeof props.children,
+			);
+			if ("children" in props && Array.isArray(props.children)) {
+				const React = require("react") as typeof import("react");
+				for (const child of props.children as unknown[]) {
+					if (
+						child !== null &&
+						child !== undefined &&
+						typeof child === "object"
+					) {
+						const isValid = React.isValidElement(child);
+						const hasType = "$$typeof" in (child as object);
+						console.error(
+							"[createInstance] child check:",
+							isValid ? "VALID" : "INVALID",
+							"hasTypeSymbol:",
+							hasType,
+							"childType:",
+							(child as Record<string, unknown>)?.type,
+						);
+					}
+				}
+			}
 			const { children, ...restProps } = props;
 			const withHandlers = registerFunctionProps(
 				restProps as Record<string, unknown>,
@@ -190,6 +336,7 @@ export function createHostConfig(state: ReconcilerState) {
 			_internalInstanceHandle: OpaqueHandle,
 		): TextJSONNode {
 			const id = getNextInstanceId();
+			console.error("[createTextInstance]", JSON.stringify(text), `(${id})`);
 			return createTextNode(text, id);
 		},
 
@@ -198,6 +345,7 @@ export function createHostConfig(state: ReconcilerState) {
 
 		appendChildToContainer(container: Container, child: Child): void {
 			if (child.type === "TEXT" && !("type" in container)) return;
+			console.error("[appendChildToContainer]", child.type, `(${child.id})`);
 			container.children.push(child as JSONNode);
 		},
 
@@ -206,6 +354,14 @@ export function createHostConfig(state: ReconcilerState) {
 			child: Child,
 			beforeChild: Child,
 		): void {
+			console.error(
+				"[insertBefore]",
+				parentInstance.type,
+				"<-",
+				child.type,
+				"before",
+				beforeChild.type,
+			);
 			const beforeIndex = parentInstance.children.findIndex(
 				(c) => c.id === beforeChild.id,
 			);

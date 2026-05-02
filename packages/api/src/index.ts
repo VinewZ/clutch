@@ -23,8 +23,19 @@ import {
 } from "./preferences";
 import { Color } from "./utils/color";
 import { Icon } from "./utils/icon";
+import { Keyboard } from "./utils/keyboard";
+import { LaunchType } from "./utils/launch-type";
 
-export { showToast, ToastProvider, Toast, ToastStyle, Color, Icon };
+export {
+	showToast,
+	ToastProvider,
+	Toast,
+	ToastStyle,
+	Color,
+	Icon,
+	Keyboard,
+	LaunchType,
+};
 export type { ToastOptions, ToastStyleType };
 
 export const clutch = {
@@ -47,5 +58,7 @@ export const clutch = {
 		Toast: Object.assign(Toast, { Style: ToastStyle }),
 		Color,
 		Icon,
+		Keyboard,
+		LaunchType,
 	},
 };

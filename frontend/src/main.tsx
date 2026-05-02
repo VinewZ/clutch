@@ -2,6 +2,7 @@ import { HotkeysProvider } from "@tanstack/react-hotkeys";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createRouter, RouterProvider } from "@tanstack/react-router";
 import ReactDOM from "react-dom/client";
+import { ThemeProvider } from "./providers/theme";
 import { routeTree } from "./routeTree.gen";
 
 const queryClient = new QueryClient({
@@ -41,10 +42,11 @@ if (!rootElement?.innerHTML) {
 					},
 				}}
 			>
-				<QueryClientProvider client={queryClient}>
-					<RouterProvider router={router} />
-				</QueryClientProvider>
-				,
+				<ThemeProvider defaultTheme="dark" storageKey="theme">
+					<QueryClientProvider client={queryClient}>
+						<RouterProvider router={router} />
+					</QueryClientProvider>
+				</ThemeProvider>
 			</HotkeysProvider>,
 		);
 	}

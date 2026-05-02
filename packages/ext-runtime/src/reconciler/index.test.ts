@@ -1,5 +1,7 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
 import React from "react";
+import { jsx, jsxs, Fragment } from "react/jsx-runtime";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { clearAllHandlers, executeHandler } from "./handler-registry";
 import { createReconciler } from "./index";
 import type { JSONNode, TextJSONNode } from "./types";
 
@@ -71,7 +73,20 @@ describe("Reconciler", () => {
 		expect(result).not.toBeNull();
 	});
 
-	it("should handle fragment", async () => {
+	it("should handle fragment as root with single child", async () => {
+		const element = React.createElement(
+			React.Fragment,
+			null,
+			React.createElement("span", null, "only"),
+		);
+
+		const result = await waitForRender(element);
+
+		expect(result).not.toBeNull();
+		expect(result?.type).toBe("span");
+	});
+
+	it("should handle fragment as root with multiple children", async () => {
 		const element = React.createElement(
 			React.Fragment,
 			null,
@@ -82,6 +97,34 @@ describe("Reconciler", () => {
 		const result = await waitForRender(element);
 
 		expect(result).not.toBeNull();
+		expect(result?.type).toBe("FragmentContainer");
+		expect(result?.children).toHaveLength(2);
+		expect((result?.children[0] as { type: string })?.type).toBe("span");
+		expect((result?.children[1] as { type: string })?.type).toBe("span");
+	});
+
+	it("should flatten fragments inside parent element", async () => {
+		const FragmentParent = () =>
+			React.createElement(
+				"div",
+				null,
+				React.createElement(
+					React.Fragment,
+					null,
+					React.createElement("span", { key: "a" }, "first"),
+					React.createElement("span", { key: "b" }, "second"),
+				),
+				React.createElement("span", { key: "c" }, "third"),
+			);
+
+		const result = await waitForRender(React.createElement(FragmentParent));
+
+		expect(result).not.toBeNull();
+		expect(result?.type).toBe("div");
+		expect(result?.children).toHaveLength(3);
+		expect((result?.children[0] as { type: string })?.type).toBe("span");
+		expect((result?.children[1] as { type: string })?.type).toBe("span");
+		expect((result?.children[2] as { type: string })?.type).toBe("span");
 	});
 
 	it("should handle nested function components", async () => {
@@ -300,6 +343,301 @@ describe("Reconciler", () => {
 			expect(onClickRef?.$handler).toBeTruthy();
 			expect(onChangeRef?.$handler).toBeTruthy();
 			expect(onClickRef?.$handler).not.toBe(onChangeRef?.$handler);
+		});
+	});
+
+	describe("event extraction", () => {
+		beforeEach(() => {
+			clearAllHandlers();
+		});
+
+		it("should extract searchText for onSearchTextChange", async () => {
+			const received: unknown[] = [];
+			const handler = (value?: unknown) => {
+				received.push(value);
+			};
+
+			const element = React.createElement("div", {
+				onSearchTextChange: handler,
+			});
+
+			const result = await waitForRender(element);
+			const handlerRef = result?.props?.onSearchTextChange as
+				| { $handler: string }
+				| undefined;
+
+			expect(handlerRef?.$handler).toBeTruthy();
+			await executeHandler(handlerRef?.$handler as string, {
+				searchText: "hello",
+			});
+
+			expect(received).toEqual(["hello"]);
+		});
+
+		it("should extract value for onChange", async () => {
+			const received: unknown[] = [];
+			const handler = (value?: unknown) => {
+				received.push(value);
+			};
+
+			const element = React.createElement("div", {
+				onChange: handler,
+			});
+
+			const result = await waitForRender(element);
+			const handlerRef = result?.props?.onChange as
+				| { $handler: string }
+				| undefined;
+
+			expect(handlerRef?.$handler).toBeTruthy();
+			await executeHandler(handlerRef?.$handler as string, {
+				value: "en",
+			});
+
+			expect(received).toEqual(["en"]);
+		});
+
+		it("should call onAction with no arguments", async () => {
+			const received: unknown[] = [];
+			const handler = (value?: unknown) => {
+				received.push(value);
+			};
+
+			const element = React.createElement("div", {
+				onAction: handler,
+			});
+
+			const result = await waitForRender(element);
+			const handlerRef = result?.props?.onAction as
+				| { $handler: string }
+				| undefined;
+
+			expect(handlerRef?.$handler).toBeTruthy();
+			await executeHandler(handlerRef?.$handler as string, {});
+
+			expect(received).toEqual([undefined]);
+		});
+
+		it("should extract formValues for onSubmit", async () => {
+			const received: unknown[] = [];
+			const handler = (value?: unknown) => {
+				received.push(value);
+			};
+
+			const element = React.createElement("div", {
+				onSubmit: handler,
+			});
+
+			const result = await waitForRender(element);
+			const handlerRef = result?.props?.onSubmit as
+				| { $handler: string }
+				| undefined;
+
+			expect(handlerRef?.$handler).toBeTruthy();
+			await executeHandler(handlerRef?.$handler as string, {
+				formValues: { query: "test" },
+			});
+
+			expect(received).toEqual([{ query: "test" }]);
+		});
+
+		it("should pass event as-is for unknown prop names", async () => {
+			const received: unknown[] = [];
+			const handler = (value?: unknown) => {
+				received.push(value);
+			};
+
+			const element = React.createElement("div", {
+				onCustom: handler,
+			});
+
+			const result = await waitForRender(element);
+			const handlerRef = result?.props?.onCustom as
+				| { $handler: string }
+				| undefined;
+
+			expect(handlerRef?.$handler).toBeTruthy();
+			await executeHandler(handlerRef?.$handler as string, { data: "test" });
+
+			expect(received).toEqual([{ data: "test" }]);
+		});
+	});
+
+	describe("array children from .map() inside wrapper component", () => {
+		it("should not produce TEXT nodes with array indices when wrapper flattens children", async () => {
+			const Slot = ({
+				children,
+				name,
+			}: {
+				children?: React.ReactNode;
+				name?: string;
+			}) => React.createElement("Slot", { name }, children);
+			const Wrapper = ({
+				children,
+				accessory,
+			}: {
+				children?: React.ReactNode;
+				accessory?: React.ReactNode;
+			}) => {
+				const flatChildren: React.ReactNode[] = Array.isArray(children)
+					? (children as React.ReactNode[])
+					: children
+						? [children]
+						: [];
+				const slots = accessory
+					? [
+							React.createElement(
+								Slot,
+								{ key: "slot-0", name: "accessory" },
+								accessory,
+							),
+						]
+					: [];
+				return React.createElement("List", null, ...flatChildren, ...slots);
+			};
+
+			const items = ["en", "fr", "de"];
+			const element = React.createElement(
+				Wrapper,
+				{ accessory: React.createElement("Dropdown", null) },
+				items.map((lang) =>
+					React.createElement("List.Item", { key: lang, title: lang }),
+				),
+			);
+
+			const result = await waitForRender(element);
+
+			expect(result).not.toBeNull();
+			expect(result?.type).toBe("List");
+			const textChildren = result?.children?.filter(
+				(c) => (c as { type: string })?.type === "TEXT",
+			);
+			expect(textChildren).toHaveLength(0);
+			const itemChildren = result?.children?.filter(
+				(c) => (c as { type: string })?.type === "List.Item",
+			);
+			expect(itemChildren).toHaveLength(3);
+		});
+	});
+
+	describe("translate extension pattern: slotted component + jsx/jsxs Fragment with .map()", () => {
+		it("should render List.Item children from Fragment-wrapped .map() inside slotted List", async () => {
+			const createComponent = (type: string) => {
+				const C = (props: {
+					children?: React.ReactNode;
+					[k: string]: unknown;
+				}) => jsx(type as React.ElementType, props as Record<string, unknown>);
+				C.displayName = type;
+				return C;
+			};
+			const createSlottedComponent = <P extends string>(
+				type: string,
+				slotProps: readonly P[],
+			) => {
+				const Slot = createComponent("Slot");
+				const C = (props: Record<string, unknown>) => {
+					const { children, ...rest } = props;
+					const slots = slotProps
+						.filter((prop) => rest[prop])
+						.map((prop, i) =>
+							React.createElement(
+								Slot,
+								{ key: `slot-${String(prop)}-${i}`, name: String(prop) },
+								rest[prop] as React.ReactNode,
+							),
+						);
+					for (const prop of slotProps) delete rest[prop];
+					const flatChildren: React.ReactNode[] = Array.isArray(children)
+						? (children as React.ReactNode[])
+						: children
+							? [children as React.ReactNode]
+							: [];
+					return jsx(type as React.ElementType, {
+						...rest,
+						children: [...flatChildren, ...slots],
+					});
+				};
+				C.displayName = type;
+				return C;
+			};
+
+			const List = createSlottedComponent("List", [
+				"searchBarAccessory",
+			] as const);
+			const ListItem = createSlottedComponent("List.Item", [
+				"actions",
+				"detail",
+			] as const);
+
+			const TranslationResults = ({ results }: { results: string[] }) => {
+				return jsx(Fragment, {
+					children: results.map((r, i) => jsxs(ListItem, { title: r }, i)),
+				});
+			};
+
+			const App = () => {
+				const results = ["hello - en", "bonjour - fr"];
+				return jsx(List, {
+					searchBarPlaceholder: "Enter text to translate",
+					children: jsx(TranslationResults, { results }),
+				});
+			};
+
+			const result = await waitForRender(jsx(App, {}));
+
+			expect(result).not.toBeNull();
+			expect(result?.type).toBe("List");
+			const itemChildren = result?.children?.filter(
+				(c) => (c as { type: string })?.type === "List.Item",
+			);
+			expect(itemChildren).toHaveLength(2);
+			const textChildren = result?.children?.filter(
+				(c) => (c as { type: string })?.type === "TEXT",
+			);
+			expect(textChildren).toHaveLength(0);
+		});
+	});
+
+	describe("reactivity via event extraction", () => {
+		beforeEach(() => {
+			clearAllHandlers();
+		});
+
+		it("should trigger re-render when onSearchTextChange handler is a useState setter", async () => {
+			const SearchComponent = () => {
+				const [searchText, setSearchText] = React.useState("");
+				return React.createElement("div", {
+					onSearchTextChange: setSearchText,
+					"data-search": searchText,
+				});
+			};
+
+			const updates: (JSONNode | null)[] = [];
+			const renderer = createReconciler({
+				extensionId: "test",
+				onUpdate: (json) => {
+					updates.push(json);
+				},
+			});
+
+			renderer.render(React.createElement(SearchComponent));
+			renderer.flushSync();
+
+			expect(updates.length).toBeGreaterThanOrEqual(1);
+			expect(updates[0]?.props?.["data-search"]).toBe("");
+
+			const handlerRef = updates[0]?.props?.onSearchTextChange as
+				| { $handler: string }
+				| undefined;
+			expect(handlerRef?.$handler).toBeTruthy();
+
+			await executeHandler(handlerRef?.$handler as string, {
+				searchText: "hello",
+			});
+			renderer.flushSync();
+
+			const lastUpdate = updates[updates.length - 1];
+			expect(lastUpdate?.props?.["data-search"]).toBe("hello");
 		});
 	});
 });

@@ -38,8 +38,8 @@ export async function sendEvent(
 	handlerId: string,
 	event: unknown,
 ): Promise<void> {
-	const eventBytes = new TextEncoder().encode(JSON.stringify(event));
-	await ExtensionService.SendEvent(handlerId, eventBytes);
+	const eventJSON = JSON.stringify(event);
+	await ExtensionService.SendEvent(handlerId, eventJSON);
 }
 
 export async function sendAction(
@@ -47,8 +47,8 @@ export async function sendAction(
 	props: Record<string, unknown>,
 	handlerId?: string,
 ): Promise<void> {
-	const propsBytes = new TextEncoder().encode(JSON.stringify(props));
-	await ExtensionService.SendAction(actionType, propsBytes, handlerId ?? "");
+	const propsJSON = JSON.stringify(props);
+	await ExtensionService.SendAction(actionType, propsJSON, handlerId ?? "");
 }
 
 export function onRender(callback: (json: unknown) => void): () => void {
@@ -80,9 +80,10 @@ export async function getLastRender(): Promise<JsonNodeData | null> {
 	const raw = await ExtensionService.GetLastRender();
 	if (!raw) return null;
 	try {
-		const parsed = JSON.parse(new TextDecoder().decode(raw)) as {
-			json?: JsonNodeData;
-		};
+		const parsed =
+			typeof raw === "string"
+				? (JSON.parse(raw) as { json?: JsonNodeData })
+				: (raw as { json?: JsonNodeData });
 		return parsed.json ?? null;
 	} catch {
 		return null;

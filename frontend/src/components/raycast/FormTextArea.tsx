@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { useFormContext } from "./Form";
-import type { RaycastComponentProps } from "./registry";
+import type { RaycastComponentProps } from "./types";
 
 export function FormTextArea({ node, onEvent }: RaycastComponentProps) {
 	const title = node.props.title as string | undefined;

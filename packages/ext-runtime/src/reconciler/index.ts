@@ -1,9 +1,9 @@
 import type { ReactNode } from "react";
 import ReactReconciler from "react-reconciler";
 import { ConcurrentRoot } from "react-reconciler/constants";
-import { createHostConfig } from "./host-config";
 import type { ReconcilerState } from "./host-config";
-import type { Container, JsonRendererOptions, JSONNode } from "./types";
+import { createHostConfig } from "./host-config";
+import type { Container, JSONNode, JsonRendererOptions } from "./types";
 
 const onError = (error: Error) => {
 	console.error("[RECONCILER] Error:", error.message);
@@ -81,4 +81,4 @@ export function createReconciler(
 	};
 }
 
-export type { JSONNode, Container, JsonRendererOptions } from "./types";
+export type { Container, JSONNode, JsonRendererOptions } from "./types";

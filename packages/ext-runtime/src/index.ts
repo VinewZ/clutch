@@ -1,12 +1,7 @@
 import Module from "node:module";
-import React from "react";
 import { clutch } from "@clutch/api";
-import { jsx, jsxs, Fragment } from "./jsx-runtime";
-
-const jsxRuntime = { jsx, jsxs, Fragment };
-
-console.error("[DEBUG] jsxRuntime defined:", jsxRuntime);
-console.error("[DEBUG] jsxRuntime.jsx type:", typeof jsx);
+import React from "react";
+import * as jsxRuntime from "./jsx-runtime";
 
 export const REWRITE_MAP = new Map<string, unknown>([
 	["@raycast/api", clutch.api],
@@ -162,33 +157,28 @@ internal._load = function (
 };
 
 export {
-	loadExtension,
+	createReconciler,
+	type JsonRendererAPI,
+} from "./reconciler";
+export {
+	clearExtensionHandlers,
+	executeHandler,
+} from "./reconciler/handler-registry";
+export type { JSONNode } from "./reconciler/types";
+export {
 	type ExtensionModule,
 	type LoadedExtension,
+	loadExtension,
 } from "./runtime/loader";
-
 export {
 	createRuntimeManager,
 	type RuntimeManager,
 	type RuntimeManagerConfig,
 } from "./runtime/manager";
-
 export {
 	createSocketClient,
 	type SocketClient,
 	type SocketClientConfig,
 } from "./socket/client";
-
-export {
-	createReconciler,
-	type JsonRendererAPI,
-} from "./reconciler";
-
-export type { JSONNode } from "./reconciler/types";
-
-export {
-	executeHandler,
-	clearExtensionHandlers,
-} from "./reconciler/handler-registry";
 
 export * from "./socket/protocol";

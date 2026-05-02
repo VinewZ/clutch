@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useFormContext } from "./Form";
-import type { RaycastComponentProps } from "./registry";
+import type { RaycastComponentProps } from "./types";
 
 export function FormCheckbox({ node, onEvent }: RaycastComponentProps) {
 	const title = node.props.title as string | undefined;

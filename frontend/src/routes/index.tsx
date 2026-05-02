@@ -1,4 +1,3 @@
-import { useHotkey } from "@tanstack/react-hotkeys";
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
@@ -12,7 +11,10 @@ import { useExtensionCommands } from "@/services/store";
 
 export const Route = createFileRoute("/")({ component: AppContent });
 
-const routes = [{ name: "Raycast Store", path: "/store", icon: "🏪" }];
+const routes = [
+	{ name: "Raycast Store", path: "/store", icon: "🏪" },
+	{ name: "Settings", path: "/settings", icon: "⚙" },
+];
 
 function AppContent() {
 	const navigate = useNavigate();
@@ -25,7 +27,6 @@ function AppContent() {
 	const {
 		searchQuery,
 		setSearchQuery,
-		debouncedQuery,
 		inputRef,
 		clearInput,
 		focusInput,
@@ -35,7 +36,7 @@ function AppContent() {
 	});
 
 	const filteredItems = useMemo(() => {
-		const query = debouncedQuery.toLowerCase();
+		const query = searchQuery.toLocaleLowerCase();
 		return {
 			routes: routes.filter((r) => r.name.toLowerCase().includes(query)),
 			apps: apps.filter(
@@ -50,7 +51,7 @@ function AppContent() {
 					item.command.description.toLowerCase().includes(query),
 			),
 		};
-	}, [apps, debouncedQuery, extensionCommands]);
+	}, [apps, searchQuery, extensionCommands]);
 
 	const totalItems =
 		filteredItems.routes.length +
@@ -106,38 +107,36 @@ function AppContent() {
 
 	const { selectedIndex, setSelectedIndex } = useListNavigation({
 		totalItems,
+		isInputEmpty,
+		inputRef,
 		onSelect: handleSelect,
+		focusInput: focusInput,
 		onEscape: () => {
 			if (!isInputEmpty) {
 				clearInput();
 				focusInput();
+			} else {
+				AppController.Hide();
 			}
 		},
 	});
 
 	useScrollToIndex({ selectedIndex });
 
-	useHotkey("Backspace", (e) => {
-		if (isInputEmpty && document.activeElement === inputRef.current) {
-			e.preventDefault();
-		}
-	});
-
 	return (
-		<div className="h-screen flex flex-col">
-			<div className="sticky top-0 z-10 p-4 border-b border-border bg-background/95 backdrop-blur">
+		<div className="flex flex-col h-full">
+			<div className="shrink-0">
 				<Input
 					ref={inputRef}
 					type="search"
 					placeholder="Search..."
 					value={searchQuery}
 					onChange={(e) => setSearchQuery(e.target.value)}
-					className="w-full"
 					autoFocus
 				/>
 			</div>
 
-			<div className="flex-1 overflow-auto">
+			<div className="flex-1 overflow-y-auto">
 				{filteredItems.routes.length === 0 &&
 				filteredItems.apps.length === 0 &&
 				filteredItems.extensions.length === 0 ? (

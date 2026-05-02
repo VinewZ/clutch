@@ -1,10 +1,10 @@
 import { createContext, useCallback, useContext, useState } from "react";
-import type { RaycastComponentProps } from "./registry";
 import {
-	renderJsonChildren,
 	type JsonNodeData,
+	renderJsonChildren,
 	type TextJsonNodeData,
 } from "@/components/JsonNode";
+import type { RaycastComponentProps } from "./types";
 
 interface FormContextValue {
 	values: Record<string, unknown>;

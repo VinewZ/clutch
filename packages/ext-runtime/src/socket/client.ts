@@ -9,10 +9,21 @@ export interface SocketClientConfig {
 export interface SocketClient {
 	connect(): Promise<void>;
 	send<T extends BaseMessage, R>(message: T): Promise<SocketResponse<R>>;
+	sendNoWait(msg: BaseMessage): boolean;
 	onMessage(handler: (data: unknown) => void): void;
 	removeMessageHandler(handler: (data: unknown) => void): void;
 	close(): void;
 	isConnected(): boolean;
+}
+
+interface PendingResponse {
+	resolve: (response: SocketResponse) => void;
+	reject: (error: Error) => void;
+	timeout: NodeJS.Timeout;
+}
+
+function isSocketResponse(obj: unknown): obj is SocketResponse {
+	return typeof obj === "object" && obj !== null && "success" in obj;
 }
 
 export function createSocketClient(config: SocketClientConfig): SocketClient {
@@ -20,6 +31,30 @@ export function createSocketClient(config: SocketClientConfig): SocketClient {
 	let connected = false;
 	let buffer = "";
 	const messageHandlers: Set<(data: unknown) => void> = new Set();
+	const pendingResponses: PendingResponse[] = [];
+
+	function processLine(jsonStr: string): void {
+		let parsed: unknown;
+		try {
+			parsed = JSON.parse(jsonStr);
+		} catch {
+			console.error("[SOCKET] Failed to parse message:", jsonStr.slice(0, 100));
+			return;
+		}
+
+		if (isSocketResponse(parsed)) {
+			if (pendingResponses.length > 0) {
+				const pending = pendingResponses.shift()!;
+				clearTimeout(pending.timeout);
+				pending.resolve(parsed);
+			}
+			return;
+		}
+
+		for (const handler of messageHandlers) {
+			handler(parsed);
+		}
+	}
 
 	return {
 		async connect(): Promise<void> {
@@ -53,23 +88,7 @@ export function createSocketClient(config: SocketClientConfig): SocketClient {
 					while (newlineIndex !== -1) {
 						const jsonStr = buffer.slice(0, newlineIndex);
 						buffer = buffer.slice(newlineIndex + 1);
-
-						try {
-							const parsed = JSON.parse(jsonStr);
-							console.error(
-								"[SOCKET] Received message:",
-								JSON.stringify(parsed).slice(0, 200),
-							);
-							for (const handler of messageHandlers) {
-								handler(parsed);
-							}
-						} catch {
-							console.error(
-								"[SOCKET] Failed to parse message:",
-								jsonStr.slice(0, 100),
-							);
-						}
-
+						processLine(jsonStr);
 						newlineIndex = buffer.indexOf("\n");
 					}
 				});
@@ -78,6 +97,11 @@ export function createSocketClient(config: SocketClientConfig): SocketClient {
 					console.error("[SOCKET] Connection closed");
 					connected = false;
 					socket = null;
+					for (const pending of pendingResponses) {
+						clearTimeout(pending.timeout);
+						pending.reject(new Error("Socket closed"));
+					}
+					pendingResponses.length = 0;
 				});
 
 				socket.on("error", () => {
@@ -101,46 +125,31 @@ export function createSocketClient(config: SocketClientConfig): SocketClient {
 				);
 
 				const sendTimeout = setTimeout(() => {
+					const idx = pendingResponses.findIndex(
+						(p) => p.resolve === pendingResolve,
+					);
+					if (idx !== -1) pendingResponses.splice(idx, 1);
 					console.error("[SOCKET] Send timeout");
 					reject(new Error("Response timeout"));
 				}, config.timeout ?? 5000);
 
-				let localBuffer = "";
-
-				const onData = (data: Buffer) => {
-					localBuffer += data.toString();
-
-					const newlineIndex = localBuffer.indexOf("\n");
-					if (newlineIndex !== -1) {
-						const jsonStr = localBuffer.slice(0, newlineIndex);
-
-						clearTimeout(sendTimeout);
-						socket?.off("data", onData);
-
-						try {
-							const response = JSON.parse(jsonStr) as SocketResponse<R>;
-							console.error(
-								"[SOCKET] Received response:",
-								JSON.stringify(response).slice(0, 200),
-							);
-							resolve(response);
-						} catch (err) {
-							console.error(
-								"[SOCKET] Failed to parse response:",
-								jsonStr.slice(0, 100),
-							);
-							reject(new Error(`Parse error: ${err}`));
-						}
-					}
+				let pendingResolve: (response: SocketResponse) => void;
+				const pending: PendingResponse = {
+					resolve: (response: SocketResponse) => {
+						resolve(response as SocketResponse<R>);
+					},
+					reject,
+					timeout: sendTimeout,
 				};
-
-				socket.on("data", onData);
+				pendingResolve = pending.resolve;
+				pendingResponses.push(pending);
 
 				const jsonStr = `${JSON.stringify(msg)}\n`;
 				socket.write(jsonStr, (err) => {
 					if (err) {
+						const idx = pendingResponses.indexOf(pending);
+						if (idx !== -1) pendingResponses.splice(idx, 1);
 						clearTimeout(sendTimeout);
-						socket?.off("data", onData);
 						console.error("[SOCKET] Write error:", err.message);
 						reject(err);
 					}
@@ -150,6 +159,13 @@ export function createSocketClient(config: SocketClientConfig): SocketClient {
 
 		onMessage(handler: (data: unknown) => void): void {
 			messageHandlers.add(handler);
+		},
+
+		sendNoWait(msg: BaseMessage): boolean {
+			if (!socket || !connected) return false;
+			const jsonStr = `${JSON.stringify(msg)}\n`;
+			socket.write(jsonStr);
+			return true;
 		},
 
 		removeMessageHandler(handler: (data: unknown) => void): void {
@@ -163,6 +179,11 @@ export function createSocketClient(config: SocketClientConfig): SocketClient {
 				socket = null;
 				connected = false;
 			}
+			for (const pending of pendingResponses) {
+				clearTimeout(pending.timeout);
+				pending.reject(new Error("Socket closed"));
+			}
+			pendingResponses.length = 0;
 			messageHandlers.clear();
 		},
 

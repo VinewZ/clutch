@@ -76,6 +76,12 @@ type ToastHideMessage struct {
 	ToastID     string          `json:"toastId"`
 }
 
+type RuntimeReadyMessage struct {
+	Category    MessageCategory `json:"category"`
+	Type        string          `json:"type"`
+	ExtensionID string          `json:"extensionId"`
+}
+
 // RENDER Messages
 type RenderRequestMessage struct {
 	Category    MessageCategory `json:"category"`

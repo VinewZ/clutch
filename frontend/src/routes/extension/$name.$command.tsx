@@ -11,7 +11,6 @@ import {
 	onToast,
 	sendEvent,
 	startExtension,
-	stopExtension,
 } from "@/services/extension";
 
 function extractNavigationDepth(json: JsonNodeData | null): number {
@@ -35,20 +34,23 @@ export const Route = createFileRoute("/extension/$name/$command")({
 	component: ExtensionPage,
 });
 
+let globalStartedExtKey: string | null = null;
+
 function ExtensionPage() {
 	const { name, command } = Route.useParams();
+	const extKey = `${name}/${command}`;
 	const [json, setJson] = useState<JsonNodeData | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<Error | null>(null);
 	const [navigationDepth, setNavigationDepth] = useState(1);
 	const { toast, handleToastData, dismissToast } = useToastState();
-	const startedRef = useRef(false);
+	const mountedRef = useRef(false);
 
 	useEffect(() => {
-		let mounted = true;
+		mountedRef.current = true;
 
 		const unsubRender = onRender((data) => {
-			if (mounted) {
+			if (mountedRef.current) {
 				const renderJson = (data as { json?: JsonNodeData }).json ?? null;
 				setJson(renderJson);
 				setNavigationDepth(extractNavigationDepth(renderJson));
@@ -57,7 +59,7 @@ function ExtensionPage() {
 		});
 
 		const unsubError = onError((err) => {
-			if (mounted) {
+			if (mountedRef.current) {
 				setError(err);
 				setLoading(false);
 			}
@@ -68,9 +70,23 @@ function ExtensionPage() {
 		});
 
 		async function init() {
+			if (globalStartedExtKey !== extKey) {
+				globalStartedExtKey = extKey;
+				try {
+					await startExtension(name, command);
+				} catch (err) {
+					if (mountedRef.current) {
+						setError(err as Error);
+						setLoading(false);
+					}
+					globalStartedExtKey = null;
+					return;
+				}
+			}
+
 			try {
 				const lastRender = await getLastRender();
-				if (mounted && lastRender) {
+				if (mountedRef.current && lastRender) {
 					setJson(lastRender);
 					setNavigationDepth(extractNavigationDepth(lastRender));
 					setLoading(false);
@@ -78,37 +94,23 @@ function ExtensionPage() {
 			} catch {
 				// GetLastRender not available yet or no cached render
 			}
-
-			if (!startedRef.current) {
-				startedRef.current = true;
-				try {
-					await startExtension(name, command);
-				} catch (err) {
-					if (mounted) {
-						setError(err as Error);
-						setLoading(false);
-					}
-				}
-			}
 		}
 
 		init();
 
 		return () => {
-			mounted = false;
-			startedRef.current = false;
+			mountedRef.current = false;
 			unsubRender();
 			unsubError();
 			unsubToast();
-			stopExtension().catch(() => {});
 		};
-	}, [name, command, handleToastData]);
+	}, [extKey, name, command, handleToastData]);
 
 	const handleEvent = useCallback(async (handlerId: string, event: unknown) => {
 		try {
 			await sendEvent(handlerId, event);
-		} catch {
-			// ignore
+		} catch (err) {
+			console.error("[handleEvent] sendEvent failed:", err);
 		}
 	}, []);
 
@@ -147,9 +149,9 @@ function ExtensionPage() {
 	}
 
 	return (
-		<>
+		<div className="h-full overflow-y-auto">
 			<JsonRenderer json={json} onEvent={handleEvent} />
 			<ToastContainer toast={toast} onDismiss={dismissToast} />
-		</>
+		</div>
 	);
 }

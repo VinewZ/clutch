@@ -1,4 +1,4 @@
-import type { RaycastComponentProps } from "./registry";
+import type { RaycastComponentProps } from "./types";
 
 export function FormSeparator({ node }: RaycastComponentProps) {
 	return (
